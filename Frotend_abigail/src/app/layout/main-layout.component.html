@@ -1,0 +1,231 @@
+<div class="min-h-screen bg-gray-100">
+  <!-- Header con fondo oscuro y textura de libro -->
+  <header class="bg-gradient-to-r from-green-700 to-green-800 shadow-xl border-b-2 border-green-600 relative z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-20">
+        <!-- Logo y título de la Parroquia -->
+        <div class="flex items-center">
+          <div class="flex-shrink-0 flex items-center">
+            <div class="w-16 h-16 flex items-center justify-center mr-4 bg-white rounded-full shadow-lg">
+              <img src="assets/images/logos/logo-parroquia.png" alt="Logo Parroquia San Pablo Apóstol" class="w-14 h-14 object-cover rounded-full">
+            </div>
+            <div class="flex flex-col -space-y-4 mt-1">
+              <h1 class="text-2xl font-bold text-white leading-none">Parroquia San Pablo</h1>
+              <h2 class="text-xl font-semibold text-green-100 leading-none">Apóstol</h2>
+            </div>
+          </div>
+        </div>
+
+        <!-- Información del usuario y controles -->
+        <div class="flex items-center space-x-6">
+          <!-- Información del usuario visible directamente -->
+          <div class="hidden md:flex items-center space-x-4 bg-white bg-opacity-10 rounded-xl px-4 py-2 backdrop-blur-sm border border-white border-opacity-20 user-info-bar glass-effect-enhanced">
+            <!-- Avatar del usuario -->
+            <div class="w-14 h-14 bg-gradient-to-br from-green-400 to-yellow-400 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white ring-opacity-50 user-avatar">
+              <mat-icon class="text-white text-2xl">person</mat-icon>
+            </div>
+            
+            <!-- Información del usuario -->
+            <div class="text-right">
+              <p class="text-sm font-semibold text-white leading-tight">{{ currentUser?.nombre || 'Abigail Chiroy' }}</p>
+              <p class="text-xs text-green-100 leading-tight">{{ currentUser?.rol || 'Administrador' }}</p>
+            </div>
+          </div>
+          
+          <!-- Botón de menú hamburguesa para móvil -->
+          <button 
+            (click)="toggleMenu()"
+            class="md:hidden p-2 rounded-lg text-white hover:bg-white hover:bg-opacity-10 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 transition-all duration-200"
+          >
+            <mat-icon>{{ menuAbierto ? 'close' : 'menu' }}</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="flex">
+    <!-- Sidebar vertical con módulos -->
+    <aside 
+      class="fixed inset-y-0 left-0 z-70 w-80 bg-gray-900 shadow-xl transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:z-auto border-r-2 border-dashed border-purple-500"
+      [class.translate-x-0]="menuAbierto"
+      [class.-translate-x-full]="!menuAbierto"
+    >
+      <div class="h-full flex flex-col">
+        <!-- Título del sidebar -->
+        <div class="p-6 border-b border-gray-700">
+          <h2 class="text-xl font-bold text-white">MODULOS</h2>
+        </div>
+
+        <!-- Lista de módulos -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-2 pb-20">
+          <!-- Inicio -->
+          <div class="w-full">
+            <button 
+              class="w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 bg-yellow-500 text-gray-900 hover:bg-yellow-400"
+              [class.bg-yellow-600]="isActiveRoute('/dashboard')"
+              (click)="navigateToHome()"
+            >
+              <mat-icon class="mr-3 text-gray-900">dashboard</mat-icon>
+              <span class="font-medium">Inicio</span>
+            </button>
+          </div>
+
+          <!-- Feligreses -->
+          <div class="w-full">
+            <button 
+              class="w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 bg-yellow-500 text-gray-900 hover:bg-yellow-400"
+              [class.opacity-50]="!menuItems[0].disponible"
+              [class.cursor-not-allowed]="!menuItems[0].disponible"
+              (click)="onMenuClick(menuItems[0])"
+            >
+              <mat-icon class="mr-3 text-gray-900">{{ menuItems[0].icon }}</mat-icon>
+              <span class="font-medium">Feligreses</span>
+            </button>
+          </div>
+
+          <!-- Módulo Sacramentos -->
+          <div class="w-full">
+            <button 
+              class="w-full flex items-center justify-between px-4 py-3 text-left rounded-lg transition-all duration-200 bg-yellow-500 text-gray-900 hover:bg-yellow-400"
+              [class.opacity-50]="!menuItems[1].disponible"
+              [class.cursor-not-allowed]="!menuItems[1].disponible"
+              (click)="toggleMenuExpansion(menuItems[1])"
+            >
+              <div class="flex items-center">
+                <mat-icon class="mr-3 text-gray-900">{{ menuItems[1].icon }}</mat-icon>
+                <span class="font-medium">Módulo Sacramentos</span>
+              </div>
+              <mat-icon class="text-sm text-gray-900 transition-transform duration-200" 
+                [class.rotate-180]="menuItems[1].expanded">
+                {{ menuItems[1].expanded ? 'expand_less' : 'expand_more' }}
+              </mat-icon>
+            </button>
+            <!-- Submenús -->
+            <div class="ml-8 mt-2 space-y-1 overflow-hidden transition-all duration-300"
+                 [class.max-h-0]="!menuItems[1].expanded"
+                 [class.max-h-96]="menuItems[1].expanded">
+              <div *ngFor="let subItem of menuItems[1].subItems" 
+                   class="flex items-center px-4 py-2 text-gray-400 hover:text-white cursor-pointer transition-colors duration-200"
+                   [class.opacity-50]="!subItem.disponible"
+                   [class.cursor-not-allowed]="!subItem.disponible">
+                <mat-icon class="mr-3 text-sm">{{ subItem.icon || 'person' }}</mat-icon>
+                <span class="text-sm">{{ subItem.title }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actividades Religiosas -->
+          <div class="w-full">
+            <button 
+              class="w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 bg-yellow-500 text-gray-900 hover:bg-yellow-400"
+              [class.opacity-50]="!menuItems[2].disponible"
+              [class.cursor-not-allowed]="!menuItems[2].disponible"
+              (click)="onMenuClick(menuItems[2])"
+            >
+              <mat-icon class="mr-3 text-gray-900">{{ menuItems[2].icon }}</mat-icon>
+              <span class="font-medium">Actividades Religiosas</span>
+            </button>
+          </div>
+
+          <!-- Caja Parroquial -->
+          <div class="w-full">
+            <button 
+              class="w-full flex items-center justify-between px-4 py-3 text-left rounded-lg transition-all duration-200 bg-yellow-500 text-gray-900 hover:bg-yellow-400"
+              [class.opacity-50]="!menuItems[3].disponible"
+              [class.cursor-not-allowed]="!menuItems[3].disponible"
+              (click)="toggleMenuExpansion(menuItems[3])"
+            >
+              <div class="flex items-center">
+                <mat-icon class="mr-3 text-gray-900">{{ menuItems[3].icon }}</mat-icon>
+                <span class="font-medium">Caja Parroquial</span>
+              </div>
+              <mat-icon class="text-sm text-gray-900 transition-transform duration-200" 
+                [class.rotate-180]="menuItems[3].expanded">
+                {{ menuItems[3].expanded ? 'expand_less' : 'expand_more' }}
+              </mat-icon>
+            </button>
+            <!-- Submenús -->
+            <div class="ml-8 mt-2 space-y-1 overflow-hidden transition-all duration-300"
+                 [class.max-h-0]="!menuItems[3].expanded"
+                 [class.max-h-96]="menuItems[3].expanded">
+              <div *ngFor="let subItem of menuItems[3].subItems" 
+                   class="flex items-center px-4 py-2 text-gray-400 hover:text-white cursor-pointer transition-colors duration-200"
+                   [class.opacity-50]="!subItem.disponible"
+                   [class.cursor-not-allowed]="!subItem.disponible">
+                <mat-icon class="mr-3 text-sm">{{ subItem.icon || 'person' }}</mat-icon>
+                <span class="text-sm">{{ subItem.title }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reportes -->
+          <div class="w-full">
+            <button 
+              class="w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 bg-yellow-500 text-gray-900 hover:bg-yellow-400"
+              [class.opacity-50]="!menuItems[4].disponible"
+              [class.cursor-not-allowed]="!menuItems[4].disponible"
+              (click)="onMenuClick(menuItems[4])"
+            >
+              <mat-icon class="mr-3 text-gray-900">{{ menuItems[4].icon }}</mat-icon>
+              <span class="font-medium">Reportes</span>
+            </button>
+          </div>
+
+          <!-- Usuario -->
+          <div class="w-full">
+            <button 
+              class="w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 bg-yellow-500 text-gray-900 hover:bg-yellow-400"
+              [class.opacity-50]="!menuItems[5].disponible"
+              [class.cursor-not-allowed]="!menuItems[5].disponible"
+              (click)="onMenuClick(menuItems[5])"
+            >
+              <mat-icon class="mr-3 text-gray-900">{{ menuItems[5].icon }}</mat-icon>
+              <span class="font-medium">Usuario</span>
+            </button>
+          </div>
+
+          <!-- Mantenimiento -->
+          <div class="w-full">
+            <button 
+              class="w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 bg-yellow-500 text-gray-900 hover:bg-yellow-400"
+              [class.opacity-50]="!menuItems[6].disponible"
+              [class.cursor-not-allowed]="!menuItems[6].disponible"
+              (click)="onMenuClick(menuItems[6])"
+            >
+              <mat-icon class="mr-3 text-gray-900">{{ menuItems[6].icon }}</mat-icon>
+              <span class="font-medium">Mantenimiento</span>
+            </button>
+          </div>
+
+          <!-- Cerrar Sesión (separado del menú) -->
+          <div class="absolute bottom-1/3 left-4 right-4">
+            <div class="h-px bg-gray-600 mb-3"></div>
+            <button 
+              class="w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 bg-red-600 hover:bg-red-700 text-white shadow-lg"
+              (click)="logout()"
+            >
+              <mat-icon class="mr-3">logout</mat-icon>
+              <span class="font-medium">Cerrar Sesión</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Overlay para móvil -->
+    <div 
+      *ngIf="menuAbierto" 
+      (click)="toggleMenu()"
+      class="fixed inset-0 bg-gray-600 bg-opacity-75 z-60 md:hidden overlay-mobile"
+    ></div>
+
+    <!-- Contenido principal -->
+    <main class="flex-1 overflow-auto bg-white relative z-10">
+      <div class="p-6">
+        <router-outlet></router-outlet>
+      </div>
+    </main>
+  </div>
+
+</div>

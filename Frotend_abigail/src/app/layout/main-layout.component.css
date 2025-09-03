@@ -1,0 +1,597 @@
+/* Estilos mínimos para Angular Material que no se pueden hacer con Tailwind */
+
+/* Personalizar los tooltips */
+::ng-deep .mat-mdc-tooltip {
+  background: #1f2937;
+  color: white;
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+/* Estilos mejorados para el header */
+.header-gradient {
+  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 50%, #1e3a8a 100%);
+}
+
+/* Efecto de brillo en el logo */
+.logo-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.logo-container::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+  transform: rotate(45deg);
+  animation: logo-shine 3s ease-in-out infinite;
+}
+
+@keyframes logo-shine {
+  0%, 100% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  50% {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
+}
+
+/* Efecto hover para el botón de logout */
+.logout-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.logout-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transition: left 0.5s;
+}
+
+.logout-button:hover::before {
+  left: 100%;
+}
+
+/* Animación para el avatar del usuario */
+.user-avatar {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.user-avatar:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2);
+}
+
+/* Estilos específicos para el icono de usuario */
+.user-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.user-icon mat-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+  line-height: 28px;
+}
+
+/* Estilos para el texto del usuario */
+.user-text {
+  line-height: 1.2;
+  margin: 0;
+}
+
+.user-text p {
+  margin: 0;
+  padding: 0;
+}
+
+/* Efecto de pulso suave para elementos activos */
+.pulse-soft {
+  animation: pulse-soft 2s infinite;
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Animaciones suaves para el menú */
+.menu-transition {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Efectos de bloqueado */
+.menu-item-blocked {
+  position: relative;
+  overflow: hidden;
+}
+
+.menu-item-blocked::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 30%, rgba(0,0,0,0.1) 50%, transparent 70%);
+  animation: shimmer 2s infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Overlay de bloqueado */
+.blocked-overlay {
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(1px);
+}
+
+/* Responsive para Angular Material */
+@media (max-width: 768px) {
+  /* Asegurar que el menú se oculte correctamente en móvil */
+  .sidebar-mobile {
+    transform: translateX(-100%);
+  }
+  
+  .sidebar-mobile.open {
+    transform: translateX(0);
+  }
+  
+  /* Asegurar que el sidebar esté por encima del contenido en móvil */
+  aside {
+    z-index: 70 !important;
+  }
+  
+  /* Asegurar que el contenido principal esté por debajo del sidebar */
+  main {
+    z-index: 10 !important;
+  }
+  
+  /* Overlay debe estar entre el sidebar y el contenido */
+  .overlay-mobile {
+    z-index: 60 !important;
+  }
+}
+
+/* Efectos hover personalizados para las tarjetas del menú */
+.menu-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Transiciones suaves */
+.transition-all {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Estilos para elementos bloqueados */
+.opacity-50 {
+  opacity: 0.5;
+}
+
+.cursor-not-allowed {
+  cursor: not-allowed !important;
+}
+
+/* Efecto de deshabilitado */
+.disabled-effect {
+  filter: grayscale(30%);
+  opacity: 0.6;
+}
+
+/* Animación de pulso para elementos bloqueados */
+@keyframes pulse-blocked {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.pulse-blocked {
+  animation: pulse-blocked 2s infinite;
+}
+
+/* Efecto de sombra mejorada para el header */
+.header-shadow {
+  box-shadow: 0 4px 20px rgba(30, 58, 138, 0.3);
+}
+
+/* Efecto de glassmorphism sutil */
+.glass-effect {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Estilos para el header minimalista */
+.header-minimalist {
+  backdrop-filter: blur(10px);
+  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 50%, #1e3a8a 100%);
+}
+
+/* Efecto hover para botones del header */
+.header-button {
+  transition: all 0.2s ease;
+}
+
+.header-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}
+
+/* Estilos para el menú de usuario */
+.user-menu-container {
+  position: relative;
+  z-index: 99999;
+}
+
+.user-menu-container .fixed {
+  z-index: 99999 !important;
+  position: fixed !important;
+  top: 5rem !important;
+  right: 1rem !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  border: 2px solid #e5e7eb !important;
+  background: white !important;
+}
+
+/* Estilos para el menú de usuario - Prioridad máxima */
+::ng-deep .user-menu-container {
+  position: relative !important;
+  z-index: 999999 !important;
+}
+
+::ng-deep .user-dropdown-menu {
+  position: fixed !important;
+  top: 80px !important;
+  right: 16px !important;
+  width: 256px !important;
+  background: white !important;
+  border-radius: 8px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  border: 2px solid #e5e7eb !important;
+  z-index: 999999 !important;
+  pointer-events: auto !important;
+  transform: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+::ng-deep .global-user-menu {
+  position: fixed !important;
+  top: 80px !important;
+  right: 16px !important;
+  width: 256px !important;
+  background: white !important;
+  border-radius: 8px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  border: 2px solid #e5e7eb !important;
+  z-index: 999999 !important;
+  pointer-events: auto !important;
+  transform: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+::ng-deep .global-user-menu * {
+  z-index: 999999 !important;
+  position: relative !important;
+}
+
+/* Estilos para el snackbar informativo */
+::ng-deep .info-snackbar {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3) !important;
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(10px) !important;
+  animation: slideInDown 0.5s ease-out !important;
+}
+
+::ng-deep .info-snackbar .mdc-snackbar__surface {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+::ng-deep .info-snackbar .mdc-snackbar__label {
+  color: white !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+  padding: 16px 24px !important;
+}
+
+@keyframes slideInDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Efecto de pulso sutil para el snackbar */
+::ng-deep .info-snackbar {
+  animation: slideInDown 0.5s ease-out, pulse-gentle 2s ease-in-out infinite !important;
+}
+
+@keyframes pulse-gentle {
+  0%, 100% {
+    box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 8px 32px rgba(59, 130, 246, 0.5);
+  }
+}
+
+/* Estilos globales para forzar el menú de usuario */
+body {
+  position: relative;
+}
+
+/* Menú de usuario global - Estrategia definitiva */
+.global-user-menu {
+  position: fixed !important;
+  top: 80px !important;
+  right: 16px !important;
+  width: 256px !important;
+  background: white !important;
+  border-radius: 8px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  border: 2px solid #e5e7eb !important;
+  z-index: 999999 !important;
+  pointer-events: auto !important;
+  transform: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  max-height: none !important;
+  overflow: visible !important;
+  font-family: inherit !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+}
+
+.global-user-menu * {
+  box-sizing: border-box !important;
+}
+
+.global-user-menu button {
+  cursor: pointer !important;
+  border: none !important;
+  background: transparent !important;
+  width: 100% !important;
+  text-align: left !important;
+  padding: 8px 12px !important;
+  border-radius: 4px !important;
+  transition: background-color 0.2s !important;
+}
+
+.global-user-menu button:hover {
+  background-color: #f3f4f6 !important;
+}
+
+/* Forzar visibilidad del menú de usuario con máxima prioridad */
+[style*="z-index: 99999"] {
+  z-index: 99999 !important;
+  position: fixed !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Asegurar que el menú esté por encima de todo */
+.z-\[99999\] {
+  z-index: 99999 !important;
+}
+
+/* Estilos para el menú mejorado */
+.user-menu-enhanced {
+  animation: slideInFromTop 0.3s ease-out;
+}
+
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animación para el menú desplegable */
+.animate-fade-in-down {
+  animation: fadeInDown 0.3s ease-out forwards;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Efecto hover mejorado para botones del menú */
+.user-menu-button {
+  transition: all 0.2s ease-in-out;
+}
+
+.user-menu-button:hover {
+  transform: translateX(4px);
+  background-color: #f9fafb !important;
+}
+
+/* Sombra suave para el menú */
+.menu-shadow {
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+/* Estilos para el menú desplegable del usuario con flecha */
+.user-dropdown-with-arrow {
+  margin-top: 8px;
+}
+
+.user-dropdown-with-arrow::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 20px;
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-left: 1px solid #e5e7eb;
+  border-top: 1px solid #e5e7eb;
+  transform: rotate(45deg);
+  z-index: 1;
+}
+
+/* Asegurar que la flecha se vea correctamente */
+.user-dropdown-with-arrow .absolute.-top-2 {
+  z-index: 2;
+}
+
+/* Mejorar la animación del dropdown */
+.animate-fade-in-down {
+  animation: fadeInDownUser 0.2s ease-out forwards;
+}
+
+@keyframes fadeInDownUser {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Efecto hover mejorado para el botón de usuario */
+[data-user-menu-button]:hover {
+  transform: scale(1.05);
+}
+
+/* Asegurar que el menú esté por encima de todo */
+[data-user-menu] {
+  z-index: 99999 !important;
+}
+
+/* Estilos para la información del usuario en la barra superior */
+.user-info-bar {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  padding: 8px 16px;
+}
+
+.user-info-bar:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Avatar del usuario con efectos - Tamaño más grande */
+.user-avatar {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  width: 56px;
+  height: 56px;
+}
+
+.user-avatar::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
+  transform: rotate(45deg);
+  transition: all 0.6s ease;
+  opacity: 0;
+}
+
+.user-avatar:hover::before {
+  opacity: 1;
+  animation: avatar-shine 1.5s ease-in-out;
+}
+
+@keyframes avatar-shine {
+  0% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
+}
+
+/* Icono dentro del avatar - Tamaño más grande */
+.user-avatar mat-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+}
+
+/* Responsive para la información del usuario */
+@media (max-width: 768px) {
+  .user-info-bar {
+    display: none;
+  }
+}
+
+/* Efecto de glassmorphism mejorado */
+.glass-effect-enhanced {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}

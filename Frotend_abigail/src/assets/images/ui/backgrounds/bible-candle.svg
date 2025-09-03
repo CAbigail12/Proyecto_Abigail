@@ -1,0 +1,139 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradientes para el fondo -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a1a;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#2d1b0e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1a1a1a;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Gradiente para las páginas del libro -->
+    <linearGradient id="pageGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f4e4c1;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#e6d7b8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d4c4a8;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Gradiente para la vela -->
+    <linearGradient id="candleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f0f0f0;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#e0e0e0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d0d0d0;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Gradiente para la llama -->
+    <radialGradient id="flameGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#ffff00;stop-opacity:1" />
+      <stop offset="30%" style="stop-color:#ffaa00;stop-opacity:1" />
+      <stop offset="70%" style="stop-color:#ff6600;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#cc3300;stop-opacity:0.8" />
+    </radialGradient>
+    
+    <!-- Filtro de sombra -->
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="5" dy="5" stdDeviation="10" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+    
+    <!-- Filtro de brillo para la llama -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Fondo -->
+  <rect width="1920" height="1080" fill="url(#bgGradient)"/>
+  
+  <!-- Libro abierto - Página izquierda -->
+  <rect x="400" y="200" width="400" height="600" fill="url(#pageGradient)" filter="url(#shadow)"/>
+  
+  <!-- Libro abierto - Página derecha -->
+  <rect x="800" y="200" width="400" height="600" fill="url(#pageGradient)" filter="url(#shadow)"/>
+  
+  <!-- Lomo del libro -->
+  <rect x="780" y="200" width="40" height="600" fill="#8B4513" filter="url(#shadow)"/>
+  
+  <!-- Texto en las páginas (simulado) -->
+  <g fill="#4a4a4a" font-family="serif" font-size="14">
+    <!-- Líneas de texto en la página izquierda -->
+    <text x="420" y="240">И в начале было Слово,</text>
+    <text x="420" y="260">и Слово было у Бога,</text>
+    <text x="420" y="280">и Слово было Бог.</text>
+    <text x="420" y="320">Оно было в начале</text>
+    <text x="420" y="340">у Бога. Все через</text>
+    <text x="420" y="360">Него начало быть,</text>
+    <text x="420" y="380">и без Него ничто</text>
+    <text x="420" y="400">не начало быть,</text>
+    <text x="420" y="420">что начало быть.</text>
+    
+    <!-- Líneas de texto en la página derecha -->
+    <text x="820" y="240">В Нем была жизнь,</text>
+    <text x="820" y="260">и жизнь была свет</text>
+    <text x="820" y="280">человеков.</text>
+    <text x="820" y="320">И свет во тьме</text>
+    <text x="820" y="340">светит, и тьма</text>
+    <text x="820" y="360">не объяла его.</text>
+    <text x="820" y="400">Был человек,</text>
+    <text x="820" y="420">посланный от Бога;</text>
+    <text x="820" y="440">имя ему Иоанн.</text>
+  </g>
+  
+  <!-- Vela -->
+  <g transform="translate(600, 300)">
+    <!-- Base de la vela -->
+    <rect x="-15" y="0" width="30" height="200" fill="url(#candleGradient)" filter="url(#shadow)"/>
+    
+    <!-- Mecha -->
+    <rect x="-2" y="-10" width="4" height="15" fill="#2d1b0e"/>
+    
+    <!-- Llama principal -->
+    <ellipse cx="0" cy="-20" rx="8" ry="15" fill="url(#flameGradient)" filter="url(#glow)"/>
+    
+    <!-- Llama interna -->
+    <ellipse cx="0" cy="-18" rx="4" ry="8" fill="#ffffff" opacity="0.8"/>
+    
+    <!-- Partículas de luz alrededor de la llama -->
+    <circle cx="-5" cy="-25" r="1" fill="#ffffaa" opacity="0.6">
+      <animate attributeName="opacity" values="0.6;0.2;0.6" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="5" cy="-30" r="1" fill="#ffffaa" opacity="0.4">
+      <animate attributeName="opacity" values="0.4;0.1;0.4" dur="1.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="8" cy="-20" r="1" fill="#ffffaa" opacity="0.5">
+      <animate attributeName="opacity" values="0.5;0.2;0.5" dur="1.8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="-8" cy="-15" r="1" fill="#ffffaa" opacity="0.3">
+      <animate attributeName="opacity" values="0.3;0.1;0.3" dur="2.2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  
+  <!-- Reflejos de luz en las páginas -->
+  <ellipse cx="600" cy="400" rx="150" ry="100" fill="url(#flameGradient)" opacity="0.1"/>
+  <ellipse cx="700" cy="450" rx="100" ry="80" fill="url(#flameGradient)" opacity="0.08"/>
+  
+  <!-- Elementos decorativos adicionales -->
+  <!-- Pequeñas partículas de polvo en el aire -->
+  <g fill="#ffffff" opacity="0.3">
+    <circle cx="200" cy="150" r="1">
+      <animate attributeName="cy" values="150;100;150" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="300" cy="200" r="1">
+      <animate attributeName="cy" values="200;150;200" dur="3.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="400" cy="180" r="1">
+      <animate attributeName="cy" values="180;130;180" dur="4.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="500" cy="160" r="1">
+      <animate attributeName="cy" values="160;110;160" dur="3s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  
+  <!-- Sombras en las esquinas -->
+  <ellipse cx="0" cy="0" rx="400" ry="400" fill="radial-gradient(circle, transparent 0%, #000000 70%)" opacity="0.3"/>
+  <ellipse cx="1920" cy="0" rx="400" ry="400" fill="radial-gradient(circle, transparent 0%, #000000 70%)" opacity="0.3"/>
+  <ellipse cx="0" cy="1080" rx="400" ry="400" fill="radial-gradient(circle, transparent 0%, #000000 70%)" opacity="0.3"/>
+  <ellipse cx="1920" cy="1080" rx="400" ry="400" fill="radial-gradient(circle, transparent 0%, #000000 70%)" opacity="0.3"/>
+</svg>

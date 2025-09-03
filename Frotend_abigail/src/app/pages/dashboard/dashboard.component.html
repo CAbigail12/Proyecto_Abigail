@@ -1,0 +1,68 @@
+<div class="bg-white min-h-screen p-6">
+  <!-- Título principal con líneas decorativas -->
+  <div class="text-center mb-8">
+    <div class="flex items-center justify-center mb-4">
+      <div class="flex-1 h-px bg-gray-300"></div>
+      <h1 class="text-2xl font-bold text-gray-800 mx-4">CANTIDAD DE REGISTRADOS POR SACRAMENTO</h1>
+      <div class="flex-1 h-px bg-gray-300"></div>
+    </div>
+  </div>
+
+  <!-- Tarjetas de estadísticas -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 max-w-5xl mx-auto">
+    <!-- Tarjeta de Bautizo -->
+    <div class="bg-yellow-400 rounded-lg shadow-lg p-6 text-center min-h-[280px] flex flex-col justify-center">
+      <div class="mb-6">
+        <div class="w-64 h-64 mx-auto bg-white rounded-full flex items-center justify-center shadow-md">
+          <img src="assets/images/ui/cruz.png" alt="Bautizo" class="w-60 h-60 object-cover rounded-full">
+        </div>
+      </div>
+      <div class="text-5xl font-bold text-gray-800 mb-3">234</div>
+      <div class="text-xl font-semibold text-gray-800 uppercase">Bautizo</div>
+    </div>
+
+    <!-- Tarjeta de Confirmación -->
+    <div class="bg-yellow-400 rounded-lg shadow-lg p-6 text-center min-h-[280px] flex flex-col justify-center">
+      <div class="mb-6">
+        <div class="w-64 h-64 mx-auto bg-white rounded-full flex items-center justify-center shadow-md">
+          <img src="assets/images/ui/confirmacion.png" alt="Confirmación" class="w-60 h-60 object-cover rounded-full">
+        </div>
+      </div>
+      <div class="text-5xl font-bold text-gray-800 mb-3">67</div>
+      <div class="text-xl font-semibold text-gray-800 uppercase">Confirmación</div>
+    </div>
+
+    <!-- Tarjeta de Matrimonios -->
+    <div class="bg-yellow-400 rounded-lg shadow-lg p-6 text-center min-h-[280px] flex flex-col justify-center">
+      <div class="mb-6">
+        <div class="w-64 h-64 mx-auto bg-white rounded-full flex items-center justify-center shadow-md">
+          <img src="assets/images/ui/matrimonio.png" alt="Matrimonios" class="w-60 h-60 object-cover rounded-full">
+        </div>
+      </div>
+      <div class="text-5xl font-bold text-gray-800 mb-3">150</div>
+      <div class="text-xl font-semibold text-gray-800 uppercase">Matrimonios</div>
+    </div>
+  </div>
+
+  <!-- Botón de Estadísticas -->
+  <div class="text-center">
+    <button class="bg-green-800 hover:bg-green-900 text-white font-semibold py-3 px-8 rounded-lg shadow-lg transition-colors duration-200">
+      ESTADÍSTICAS
+    </button>
+  </div>
+
+  <!-- Información adicional -->
+  <div class="mt-8 max-w-4xl mx-auto">
+    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-8 border border-blue-200 shadow-lg">
+      <div class="flex items-center mb-4">
+        <mat-icon class="text-blue-600 mr-3 text-2xl">info</mat-icon>
+        <h3 class="text-xl font-bold text-gray-800">Información del Sistema</h3>
+      </div>
+      <p class="text-gray-700 text-lg leading-relaxed">
+        Bienvenido al sistema de gestión de la <strong>Parroquia San Pablo Apóstol</strong>. 
+        Actualmente tienes acceso al módulo de usuarios y al dashboard principal. 
+        Los demás módulos estarán disponibles próximamente para una gestión completa de la parroquia.
+      </p>
+    </div>
+  </div>
+</div>

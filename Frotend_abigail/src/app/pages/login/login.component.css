@@ -1,0 +1,162 @@
+/* Estilos para el login de la Parroquia San Pablo Apóstol */
+
+/* Estilos mínimos para Angular Material */
+::ng-deep .mat-mdc-progress-spinner circle {
+  stroke: #ffffff;
+}
+
+/* Estilos para el toggle switch */
+.toggle-label {
+  transition: background-color 0.2s ease-in-out;
+}
+
+.toggle-label:hover {
+  background-color: #d1d5db;
+}
+
+input[type="checkbox"]:checked + .toggle-label {
+  background-color: #f59e0b;
+}
+
+input[type="checkbox"]:checked + .toggle-label .toggle-dot {
+  transform: translateX(1.5rem);
+}
+
+/* Estilos para los inputs personalizados */
+input::placeholder {
+  color: #d1d5db;
+  opacity: 0.7;
+}
+
+input:focus::placeholder {
+  opacity: 0.5;
+}
+
+/* Efectos de hover para los inputs */
+input:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Animación de entrada para el formulario */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bg-black.bg-opacity-70 {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Efecto de brillo en el botón */
+button[type="submit"] {
+  position: relative;
+  overflow: hidden;
+}
+
+button[type="submit"]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+button[type="submit"]:hover::before {
+  left: 100%;
+}
+
+/* Efecto de sombra en el contenedor del formulario */
+.bg-black.bg-opacity-70 {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .min-h-screen {
+    padding: 1rem;
+  }
+  
+  .bg-black.bg-opacity-70 {
+    padding: 1.5rem;
+  }
+  
+  h1 {
+    font-size: 1.5rem;
+  }
+  
+  h2 {
+    font-size: 1.25rem;
+  }
+}
+
+/* Efecto de partículas de luz en el fondo */
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Estilos para el icono de visibilidad de contraseña */
+button[type="button"] mat-icon {
+  transition: all 0.2s ease-in-out;
+}
+
+button[type="button"]:hover mat-icon {
+  transform: scale(1.1);
+}
+
+/* Efecto de transición suave para todos los elementos */
+* {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Estilos para el texto de error */
+.text-red-400 {
+  text-shadow: 0 0 5px rgba(248, 113, 113, 0.3);
+}
+
+/* Efecto de profundidad para el overlay */
+.bg-black.bg-opacity-60 {
+  backdrop-filter: blur(5px);
+}
+
+/* Estilos para el separador "Or" */
+.text-white.text-sm {
+  position: relative;
+  display: inline-block;
+  padding: 0 1rem;
+}
+
+.text-white.text-sm::before,
+.text-white.text-sm::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 30px;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.text-white.text-sm::before {
+  left: -40px;
+}
+
+.text-white.text-sm::after {
+  right: -40px;
+}
+
