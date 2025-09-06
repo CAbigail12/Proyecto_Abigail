@@ -45,7 +45,7 @@ export class MainLayoutComponent implements OnInit {
       description: 'Gestión de feligreses de la parroquia',
       icon: 'people_alt',
       route: '/feligreses',
-      disponible: false,
+      disponible: true,
       expanded: false
     },
     {
@@ -103,7 +103,7 @@ export class MainLayoutComponent implements OnInit {
       description: 'Mantenimiento del sistema',
       icon: 'engineering',
       route: '/mantenimiento',
-      disponible: false,
+      disponible: true,
       expanded: false
     }
   ];

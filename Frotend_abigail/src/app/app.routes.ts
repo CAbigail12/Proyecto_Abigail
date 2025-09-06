@@ -55,6 +55,42 @@ export const routes: Routes = [
       {
         path: 'configuracion',
         loadComponent: () => import('./pages/configuracion/configuracion.component').then(m => m.ConfiguracionComponent)
+      },
+      {
+        path: 'mantenimiento',
+        loadComponent: () => import('./pages/mantenimiento/mantenimiento.component').then(m => m.MantenimientoComponent)
+      },
+      {
+        path: 'mantenimiento/sacramentos',
+        loadComponent: () => import('./pages/mantenimiento/sacramentos/sacramentos.component').then(m => m.SacramentosComponent)
+      },
+      {
+        path: 'mantenimiento/tipos-documento',
+        loadComponent: () => import('./pages/mantenimiento/tipos-documento/tipos-documento.component').then(m => m.TiposDocumentoComponent)
+      },
+      {
+        path: 'mantenimiento/requisitos',
+        loadComponent: () => import('./pages/mantenimiento/requisitos/requisitos.component').then(m => m.RequisitosComponent)
+      },
+      {
+        path: 'mantenimiento/requisitos-por-sacramento',
+        loadComponent: () => import('./pages/mantenimiento/requisitos-por-sacramento/requisitos-por-sacramento.component').then(m => m.RequisitosPorSacramentoComponent)
+      },
+      {
+        path: 'mantenimiento/roles-participante',
+        loadComponent: () => import('./pages/mantenimiento/roles-participante/roles-participante.component').then(m => m.RolesParticipanteComponent)
+      },
+      {
+        path: 'mantenimiento/comunidades',
+        loadComponent: () => import('./pages/mantenimiento/comunidades/comunidades.component').then(m => m.ComunidadesComponent)
+      },
+      {
+        path: 'mantenimiento/tipos-espacio',
+        loadComponent: () => import('./pages/mantenimiento/tipos-espacio/tipos-espacio.component').then(m => m.TiposEspacioComponent)
+      },
+      {
+        path: 'feligreses',
+        loadComponent: () => import('./pages/feligreses/feligreses.component').then(m => m.FeligresesComponent)
       }
     ]
   },
