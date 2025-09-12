@@ -74,7 +74,7 @@ export class MainLayoutComponent implements OnInit {
       description: 'Gestión de ingresos, egresos y balance de caja',
       icon: 'account_balance',
       route: '/caja',
-      disponible: false,
+      disponible: true,
       expanded: false,
       subItems: [
         { title: 'Agregar Ingresos', route: '/ingresos', disponible: false, icon: 'add_circle' },

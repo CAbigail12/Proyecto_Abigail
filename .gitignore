@@ -8,6 +8,23 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
+# Archivos de mapa de dependencias
+*.map
+*.js.map
+*.css.map
+
+
+.angular/
+.angular/cache/
+.vite/
+Frotend_abigail/.angular/
+*.map
+*.js.map
+*.css.map
+.angular/cache/**/*
+*.chunk.js
+chunk-*.js
+
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 

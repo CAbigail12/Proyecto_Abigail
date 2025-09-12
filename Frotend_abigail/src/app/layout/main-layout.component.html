@@ -131,32 +131,14 @@
           <!-- Caja Parroquial -->
           <div class="w-full">
             <button 
-              class="w-full flex items-center justify-between px-4 py-3 text-left rounded-lg transition-all duration-200 bg-yellow-500 text-gray-900 hover:bg-yellow-400"
+              class="w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 bg-yellow-500 text-gray-900 hover:bg-yellow-400"
               [class.opacity-50]="!menuItems[3].disponible"
               [class.cursor-not-allowed]="!menuItems[3].disponible"
-              (click)="toggleMenuExpansion(menuItems[3])"
+              (click)="onMenuClick(menuItems[3])"
             >
-              <div class="flex items-center">
-                <mat-icon class="mr-3 text-gray-900">{{ menuItems[3].icon }}</mat-icon>
-                <span class="font-medium">Caja Parroquial</span>
-              </div>
-              <mat-icon class="text-sm text-gray-900 transition-transform duration-200" 
-                [class.rotate-180]="menuItems[3].expanded">
-                {{ menuItems[3].expanded ? 'expand_less' : 'expand_more' }}
-              </mat-icon>
+              <mat-icon class="mr-3 text-gray-900">{{ menuItems[3].icon }}</mat-icon>
+              <span class="font-medium">Caja Parroquial</span>
             </button>
-            <!-- Submenús -->
-            <div class="ml-8 mt-2 space-y-1 overflow-hidden transition-all duration-300"
-                 [class.max-h-0]="!menuItems[3].expanded"
-                 [class.max-h-96]="menuItems[3].expanded">
-              <div *ngFor="let subItem of menuItems[3].subItems" 
-                   class="flex items-center px-4 py-2 text-gray-400 hover:text-white cursor-pointer transition-colors duration-200"
-                   [class.opacity-50]="!subItem.disponible"
-                   [class.cursor-not-allowed]="!subItem.disponible">
-                <mat-icon class="mr-3 text-sm">{{ subItem.icon || 'person' }}</mat-icon>
-                <span class="text-sm">{{ subItem.title }}</span>
-              </div>
-            </div>
           </div>
 
           <!-- Reportes -->
