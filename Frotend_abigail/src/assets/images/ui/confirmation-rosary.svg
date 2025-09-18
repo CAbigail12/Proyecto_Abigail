@@ -1,0 +1,101 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradiente para el fondo oscuro -->
+    <radialGradient id="darkGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#2F2F2F;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1A1A1A;stop-opacity:1" />
+    </radialGradient>
+    
+    <!-- Gradiente para la madera -->
+    <linearGradient id="woodGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B4513;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#A0522D;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#654321;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Gradiente para el metal -->
+    <linearGradient id="metalGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#C0C0C0;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#A0A0A0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#808080;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Filtro de sombra -->
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="3" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+  
+  <!-- Fondo oscuro -->
+  <rect width="200" height="200" fill="url(#darkGradient)"/>
+  
+  <!-- Rosario principal -->
+  <g transform="translate(100, 100)">
+    <!-- Círculo principal del rosario -->
+    <circle cx="0" cy="0" r="60" fill="none" stroke="url(#woodGradient)" stroke-width="8" filter="url(#shadow)"/>
+    
+    <!-- Cuentas del rosario -->
+    <g fill="url(#woodGradient)">
+      <!-- Cuentas principales (cada 10) -->
+      <circle cx="0" cy="-60" r="6" filter="url(#shadow)"/>
+      <circle cx="30" cy="-52" r="6" filter="url(#shadow)"/>
+      <circle cx="52" cy="-30" r="6" filter="url(#shadow)"/>
+      <circle cx="60" cy="0" r="6" filter="url(#shadow)"/>
+      <circle cx="52" cy="30" r="6" filter="url(#shadow)"/>
+      <circle cx="30" cy="52" r="6" filter="url(#shadow)"/>
+      <circle cx="0" cy="60" r="6" filter="url(#shadow)"/>
+      <circle cx="-30" cy="52" r="6" filter="url(#shadow)"/>
+      <circle cx="-52" cy="30" r="6" filter="url(#shadow)"/>
+      <circle cx="-60" cy="0" r="6" filter="url(#shadow)"/>
+      <circle cx="-52" cy="-30" r="6" filter="url(#shadow)"/>
+      <circle cx="-30" cy="-52" r="6" filter="url(#shadow)"/>
+      
+      <!-- Cuentas pequeñas -->
+      <circle cx="15" cy="-56" r="3" opacity="0.8"/>
+      <circle cx="41" cy="-41" r="3" opacity="0.8"/>
+      <circle cx="56" cy="-15" r="3" opacity="0.8"/>
+      <circle cx="56" cy="15" r="3" opacity="0.8"/>
+      <circle cx="41" cy="41" r="3" opacity="0.8"/>
+      <circle cx="15" cy="56" r="3" opacity="0.8"/>
+      <circle cx="-15" cy="56" r="3" opacity="0.8"/>
+      <circle cx="-41" cy="41" r="3" opacity="0.8"/>
+      <circle cx="-56" cy="15" r="3" opacity="0.8"/>
+      <circle cx="-56" cy="-15" r="3" opacity="0.8"/>
+      <circle cx="-41" cy="-41" r="3" opacity="0.8"/>
+      <circle cx="-15" cy="-56" r="3" opacity="0.8"/>
+    </g>
+    
+    <!-- Crucifijo central -->
+    <g transform="translate(0, -10)">
+      <!-- Base del crucifijo -->
+      <rect x="-4" y="0" width="8" height="25" fill="url(#metalGradient)" rx="1" filter="url(#shadow)"/>
+      
+      <!-- Brazo horizontal del crucifijo -->
+      <rect x="-12" y="5" width="24" height="6" fill="url(#metalGradient)" rx="1" filter="url(#shadow)"/>
+      
+      <!-- Cuerpo de Cristo -->
+      <rect x="-2" y="8" width="4" height="12" fill="#8B4513" rx="1"/>
+      
+      <!-- Cabeza de Cristo -->
+      <circle cx="0" cy="7" r="2" fill="#8B4513"/>
+      
+      <!-- Brazos de Cristo -->
+      <rect x="-8" y="10" width="6" height="2" fill="#8B4513" rx="1"/>
+      <rect x="2" y="10" width="6" height="2" fill="#8B4513" rx="1"/>
+      
+      <!-- Piernas de Cristo -->
+      <rect x="-2" y="20" width="1.5" height="3" fill="#8B4513" rx="1"/>
+      <rect x="0.5" y="20" width="1.5" height="3" fill="#8B4513" rx="1"/>
+    </g>
+    
+    <!-- Cadena colgante -->
+    <g stroke="url(#metalGradient)" stroke-width="3" fill="none">
+      <path d="M 0 -68 L 0 -80" filter="url(#shadow)"/>
+      <path d="M -10 -80 L 10 -80" filter="url(#shadow)"/>
+    </g>
+  </g>
+  
+  <!-- Efectos de luz -->
+  <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <circle cx="100" cy="100" r="40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+</svg>

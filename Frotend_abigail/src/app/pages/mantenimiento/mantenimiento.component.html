@@ -1,0 +1,127 @@
+<!-- Fondo con gradiente innovador -->
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
+  <!-- Header moderno con diseño innovador -->
+  <div class="relative mb-8">
+    <!-- Decoración de fondo -->
+    <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl opacity-10"></div>
+
+    <div class="relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/50 p-8">
+      <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6">
+        <!-- Título con iconos decorativos -->
+        <div class="flex items-center gap-4">
+          <div class="relative">
+            <div
+              class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center shadow-lg">
+              <mat-icon class="text-white text-2xl">settings</mat-icon>
+            </div>
+            <div class="absolute -top-1 -right-1 w-6 h-6 bg-purple-400 rounded-full flex items-center justify-center">
+              <span class="text-xs font-bold text-gray-800">{{catalogos.length}}</span>
+            </div>
+          </div>
+          <div>
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Módulo de Mantenimiento
+            </h1>
+            <p class="text-gray-600 mt-2 text-lg">Administra los catálogos del sistema de manera intuitiva</p>
+          </div>
+        </div>
+
+        <!-- Información adicional -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+            Sistema de catálogos
+          </div>
+          <div class="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+            Parroquia San Pablo Apóstol
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grid de catálogos -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    
+    <!-- Tarjeta de catálogo -->
+    <div *ngFor="let catalogo of catalogos; trackBy: trackByCatalogoId" 
+         class="group cursor-pointer transform transition-transform duration-200 hover:scale-102 hover:-translate-y-1"
+         [routerLink]="catalogo.ruta">
+      
+      <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 overflow-hidden h-full">
+        
+        <!-- Header de la tarjeta con gradiente -->
+        <div class="relative p-6" [class]="catalogo.color">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                <mat-icon class="text-white text-xl">{{catalogo.icono}}</mat-icon>
+              </div>
+              <div>
+                <h3 class="text-white font-bold text-lg">{{catalogo.titulo}}</h3>
+                <p class="text-white/80 text-sm">Catálogo</p>
+              </div>
+            </div>
+            
+            <!-- Indicador de registros -->
+            <div class="bg-white/20 rounded-full px-3 py-1">
+              <span class="text-white text-sm font-semibold">{{catalogo.totalRegistros || 0}}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contenido de la tarjeta -->
+        <div class="p-6">
+          <p class="text-gray-600 text-sm leading-relaxed mb-4">
+            {{catalogo.descripcion}}
+          </p>
+          
+          <!-- Botón de acción -->
+          <div class="flex items-center justify-between">
+            <button class="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors duration-200 group-hover:text-blue-600">
+              <span class="text-sm font-medium">Gestionar</span>
+              <mat-icon class="text-sm transform group-hover:translate-x-1 transition-transform duration-200">arrow_forward</mat-icon>
+            </button>
+            
+            <!-- Estado -->
+            <div class="flex items-center gap-1">
+              <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span class="text-xs text-gray-500">Activo</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Efecto hover -->
+        <div class="absolute inset-0 bg-gradient-to-r from-blue-500/0 to-purple-500/0 group-hover:from-blue-500/5 group-hover:to-purple-500/5 transition-opacity duration-200 pointer-events-none"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Información adicional -->
+  <div class="mt-12 bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6">
+    <div class="text-center">
+      <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <mat-icon class="text-white text-2xl">info</mat-icon>
+      </div>
+      <h3 class="text-xl font-bold text-gray-900 mb-2">Sistema de Catálogos</h3>
+      <p class="text-gray-600 max-w-2xl mx-auto">
+        Este módulo te permite administrar todos los catálogos del sistema de gestión parroquial. 
+        Cada catálogo contiene información esencial para el funcionamiento del sistema, desde sacramentos 
+        hasta tipos de espacios y comunidades atendidas.
+      </p>
+      <div class="mt-4 flex flex-wrap justify-center gap-4 text-sm text-gray-500">
+        <span class="flex items-center gap-1">
+          <mat-icon class="text-xs">security</mat-icon>
+          Acceso restringido
+        </span>
+        <span class="flex items-center gap-1">
+          <mat-icon class="text-xs">update</mat-icon>
+          Actualización en tiempo real
+        </span>
+        <span class="flex items-center gap-1">
+          <mat-icon class="text-xs">backup</mat-icon>
+          Respaldo automático
+        </span>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,621 @@
+<!-- Fondo con gradiente innovador -->
+<div class="min-h-screen bg-gradient-to-br from-green-50 via-yellow-50 to-gray-50 p-6">
+  <!-- Header moderno con diseño innovador -->
+  <div class="relative mb-8">
+    <!-- Decoración de fondo -->
+    <div class="absolute inset-0 bg-gradient-to-r from-green-600 to-yellow-500 rounded-3xl opacity-10"></div>
+
+    <div class="relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/50 p-8">
+      <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6">
+        <!-- Título con iconos decorativos -->
+        <div class="flex items-center gap-4">
+          <div class="relative">
+            <div
+              class="w-16 h-16 bg-gradient-to-br from-green-500 to-yellow-500 rounded-2xl flex items-center justify-center shadow-lg">
+              <mat-icon class="text-white text-2xl">people</mat-icon>
+            </div>
+            <div class="absolute -top-1 -right-1 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
+              <span class="text-xs font-bold text-gray-800">{{totalUsuarios}}</span>
+            </div>
+          </div>
+          <div>
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-green-600 to-yellow-600 bg-clip-text text-transparent">
+              Gestión de Usuarios
+            </h1>
+            <p class="text-gray-600 mt-2 text-lg">Administra los usuarios del sistema de manera intuitiva</p>
+          </div>
+        </div>
+
+        <!-- Controles superiores -->
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Botones de acción -->
+          <button (click)="exportarAPDF()"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg"
+            matTooltip="Exportar usuarios filtrados a PDF" [disabled]="dataSource.data.length === 0">
+            <mat-icon class="text-white">picture_as_pdf</mat-icon>
+            Exportar PDF
+          </button>
+          <button (click)="abrirDialogoUsuario()"
+            class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg"
+            matTooltip="Agregar nuevo usuario">
+            <mat-icon class="text-white">add</mat-icon>
+            Nuevo Usuario
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel de filtros moderno -->
+  <div class="relative mb-8">
+    <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-6">
+      <!-- Header de filtros -->
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 bg-gradient-to-br from-green-500 to-yellow-500 rounded-xl flex items-center justify-center">
+            <mat-icon class="text-white text-lg">tune</mat-icon>
+          </div>
+          <h3 class="text-xl font-bold text-gray-900">Filtros Inteligentes</h3>
+        </div>
+        <div class="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+          {{dataSource.data.length}} de {{totalUsuarios}} usuarios
+        </div>
+      </div>
+
+      <!-- Filtros en grid responsivo -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Búsqueda con diseño moderno -->
+        <div class="space-y-2">
+          <label class="block text-sm font-bold text-gray-700 flex items-center gap-2">
+            <mat-icon class="text-green-600 text-lg">search</mat-icon>
+            Búsqueda Global
+          </label>
+          <div class="relative">
+            <input [(ngModel)]="filtros.busqueda" placeholder="Buscar por nombre, correo..."
+              class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:bg-white transition-all duration-200 text-gray-900 placeholder-gray-500">
+            <mat-icon class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">search</mat-icon>
+          </div>
+        </div>
+
+        <!-- Filtro de rol -->
+        <div class="space-y-2">
+          <label class="block text-sm font-bold text-gray-700 flex items-center gap-2">
+            <mat-icon class="text-yellow-600 text-lg">admin_panel_settings</mat-icon>
+            Rol del Usuario
+          </label>
+          <select [(ngModel)]="filtros.rol_id"
+            class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-yellow-500 focus:bg-white transition-all duration-200 text-gray-900">
+            <option value="">Todos los roles</option>
+            <option *ngFor="let rol of roles" [value]="rol.id">{{rol.nombre}}</option>
+          </select>
+        </div>
+
+        <!-- Filtro de estado -->
+        <div class="space-y-2">
+          <label class="block text-sm font-bold text-gray-700 flex items-center gap-2">
+            <mat-icon class="text-blue-600 text-lg">toggle_on</mat-icon>
+            Estado
+          </label>
+          <select [(ngModel)]="filtros.estado"
+            class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:bg-white transition-all duration-200 text-gray-900">
+            <option value="">Todos los estados</option>
+            <option value="ACTIVO">Activo</option>
+            <option value="INACTIVO">Inactivo</option>
+          </select>
+        </div>
+
+        <!-- Botones de acción modernos -->
+        <div class="space-y-2">
+          <label class="block text-sm font-bold text-gray-700 opacity-0">Acciones</label>
+          <div class="flex gap-2">
+            <button (click)="aplicarFiltros()"
+              class="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+              <mat-icon class="text-lg">filter_alt</mat-icon>
+              Aplicar
+            </button>
+            <button (click)="limpiarFiltros()"
+              class="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold transition-all duration-200 border-2 border-gray-200 hover:border-gray-300">
+              <mat-icon class="text-lg">clear</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading spinner moderno -->
+  <div *ngIf="loading" class="flex justify-center items-center p-16">
+    <div class="flex flex-col items-center gap-6">
+      <div class="relative">
+        <div class="w-16 h-16 border-4 border-green-200 border-t-green-600 rounded-full animate-spin"></div>
+        <div
+          class="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-yellow-600 rounded-full animate-spin"
+          style="animation-delay: -0.15s;"></div>
+      </div>
+      <div class="text-center">
+        <h3 class="text-lg font-bold text-gray-900">Cargando usuarios...</h3>
+        <p class="text-gray-600">Preparando la información más reciente</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vista de Tabla - Diseño Simple y Profesional -->
+  <div *ngIf="!loading" class="space-y-6">
+
+    
+
+    <!-- Tabla Simple y Profesional -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+
+      <!-- Header de la tabla -->
+      <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+        <div class="grid grid-cols-12 gap-4 text-gray-700 font-semibold text-sm">
+          <div class="col-span-1 flex items-center gap-2">
+            <mat-icon class="text-gray-500 text-lg">tag</mat-icon>
+            ID
+          </div>
+          <div class="col-span-3 flex items-center gap-2">
+            <mat-icon class="text-gray-500 text-lg">person</mat-icon>
+            Usuario
+          </div>
+          <div class="col-span-3 flex items-center gap-2">
+            <mat-icon class="text-gray-500 text-lg">email</mat-icon>
+            Contacto
+          </div>
+          <div class="col-span-2 flex items-center gap-2">
+            <mat-icon class="text-gray-500 text-lg">security</mat-icon>
+            Rol
+          </div>
+          <div class="col-span-1 flex items-center gap-2">
+            <mat-icon class="text-gray-500 text-lg">power_settings_new</mat-icon>
+            Estado
+          </div>
+          <div class="col-span-2 flex items-center gap-2">
+            <mat-icon class="text-gray-500 text-lg">settings</mat-icon>
+            Acciones
+          </div>
+        </div>
+      </div>
+
+      <!-- Filas de datos -->
+      <div class="divide-y divide-gray-100">
+        <div *ngFor="let usuario of dataSource.data; trackBy: trackByUserId; let i = index"
+          class="group hover:bg-gray-50 transition-colors duration-200"
+          [class]="i % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
+
+          <div class="p-6 grid grid-cols-12 gap-4 items-center">
+
+            <!-- ID -->
+            <div class="col-span-1">
+              <div class="bg-gray-100 text-gray-700 px-3 py-2 rounded-lg font-semibold text-center text-sm">
+                {{usuario.id_usuario}}
+              </div>
+            </div>
+
+            <!-- Usuario -->
+            <div class="col-span-3">
+              <div class="flex items-center gap-3">
+                <!-- Avatar simple -->
+                <div class="relative">
+                  <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-semibold text-sm shadow-sm"
+                    [class]="usuario.rol_id === 1 ? 'bg-red-500' : 
+                              usuario.rol_id === 2 ? 'bg-blue-500' : 
+                              'bg-gray-500'">
+                    {{getInitials(usuario.nombre, usuario.apellido)}}
+                  </div>
+                  <!-- Indicador de estado -->
+                  <div class="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white"
+                    [class]="usuario.estado === 'ACTIVO' ? 'bg-green-500' : 'bg-red-500'">
+                  </div>
+                </div>
+
+                <!-- Información del usuario -->
+                <div>
+                  <div class="text-gray-900 font-semibold">
+                    {{usuario.nombre}} {{usuario.apellido}}
+                  </div>
+                  <div class="text-gray-500 text-sm flex items-center gap-1">
+                    <mat-icon class="text-xs">schedule</mat-icon>
+                    {{getDiasDesdeRegistro(usuario.fecha_registro)}} días
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contacto -->
+            <div class="col-span-3">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2 text-gray-700">
+                  <mat-icon class="text-gray-500 text-sm">email</mat-icon>
+                  <span class="text-sm truncate">{{usuario.correo}}</span>
+                </div>
+                <div class="flex items-center gap-2 text-gray-500">
+                  <mat-icon class="text-gray-400 text-sm">phone</mat-icon>
+                  <span class="text-sm">{{usuario.telefono || 'N/A'}}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Rol -->
+            <div class="col-span-2">
+              <div class="flex items-center gap-2">
+                <div class="px-3 py-1 rounded-lg font-medium text-sm border" 
+                     [class]="usuario.rol_id === 1 ? 'bg-red-50 text-red-700 border-red-200' : 
+                               usuario.rol_id === 2 ? 'bg-blue-50 text-blue-700 border-blue-200' : 
+                               'bg-gray-50 text-gray-700 border-gray-200'">
+                  <mat-icon class="text-sm mr-1">{{getRolIcon(usuario.rol_id)}}</mat-icon>
+                  {{getRolNombre(usuario.rol_id)}}
+                </div>
+              </div>
+            </div>
+
+            <!-- Estado -->
+            <div class="col-span-1">
+              <div class="flex items-center justify-center">
+                <div class="px-3 py-1 rounded-full font-medium text-xs uppercase tracking-wider" 
+                     [class]="usuario.estado === 'ACTIVO' ? 
+                               'bg-green-100 text-green-700' : 
+                               'bg-red-100 text-red-700'">
+                  {{usuario.estado}}
+                </div>
+              </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="col-span-2">
+              <div class="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity duration-200">
+                <!-- Ver detalles -->
+                <button (click)="verDetallesUsuario(usuario)"
+                  class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                  matTooltip="Ver detalles del usuario">
+                  <mat-icon class="text-lg">visibility</mat-icon>
+                </button>
+
+                <!-- Editar -->
+                <button (click)="abrirDialogoUsuario(usuario)"
+                  class="p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors duration-200"
+                  matTooltip="Modificar datos">
+                  <mat-icon class="text-lg">edit</mat-icon>
+                </button>
+
+                <!-- Eliminar -->
+                <button (click)="eliminarUsuario(usuario)"
+                  class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                  matTooltip="Eliminar registro">
+                  <mat-icon class="text-lg">delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Información expandible -->
+          <div class="px-6 pb-4 opacity-0 group-hover:opacity-100 transition-all duration-300 max-h-0 group-hover:max-h-16 overflow-hidden">
+            <div class="bg-gray-100 rounded-lg p-3">
+              <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                <span class="flex items-center gap-1">
+                  <mat-icon class="text-xs text-gray-500">fingerprint</mat-icon>
+                  ID: #{{usuario.id_usuario.toString().padStart(6, '0')}}
+                </span>
+                <span class="flex items-center gap-1">
+                  <mat-icon class="text-xs text-gray-500">access_time</mat-icon>
+                  Registro: {{usuario.fecha_registro | date:'dd/MM/yyyy HH:mm'}}
+                </span>
+                <span class="flex items-center gap-1">
+                  <mat-icon class="text-xs text-gray-500">security</mat-icon>
+                  Nivel: {{usuario.rol_id}}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer de la tabla -->
+      <div class="bg-gray-50 px-6 py-3 border-t border-gray-200">
+        <div class="flex items-center justify-between text-gray-600 text-sm">
+          <div class="flex items-center gap-2">
+            <mat-icon class="text-gray-500">info</mat-icon>
+            <span>Sistema de gestión de usuarios</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+            <span>Sistema operativo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Paginación simple -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-4">
+      <mat-paginator [length]="totalUsuarios" [pageSize]="pageSize" [pageSizeOptions]="[5, 10, 25, 50]"
+        (page)="onPageChange($event)" showFirstLastButtons class="bg-transparent"></mat-paginator>
+    </div>
+  </div>
+
+  <!-- Mensaje cuando no hay datos -->
+  <div *ngIf="dataSource.data.length === 0" class="flex flex-col items-center justify-center py-12">
+    <div class="text-center">
+      <div class="mb-6">
+        <mat-icon class="text-gray-400 text-6xl">search_off</mat-icon>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-700 mb-4">No se encontraron usuarios</h3>
+      <p class="text-gray-600 mb-8 max-w-md mx-auto">Intenta ajustar los filtros de búsqueda o agregar un nuevo usuario.</p>
+      <button (click)="abrirDialogoUsuario()" class="bg-gradient-to-r from-green-500 to-yellow-500 hover:from-green-600 hover:to-yellow-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg">
+        <mat-icon class="text-xl mr-2">person_add</mat-icon>
+        Agregar Usuario
+      </button>
+    </div>
+  </div> <!-- Dialog para crear/editar
+        usuario -->
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          *ngIf="mostrarDialogo" (click)="cerrarDialogo()">
+          <div class="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            (click)="$event.stopPropagation()">
+            <!-- Header del dialog -->
+            <div class="flex justify-between items-center p-4 border-b border-gray-200">
+              <h2 class="text-lg font-semibold text-gray-900">
+                {{ editMode ? 'Editar Usuario' : 'Registrar Usuario' }}
+              </h2>
+              <button (click)="cerrarDialogo()"
+                class="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors duration-200">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+
+            <!-- Contenido del dialog -->
+            <div class="p-4">
+              <form [formGroup]="usuarioForm" (ngSubmit)="guardarUsuario()" class="space-y-4">
+                <!-- Nombre y Apellido -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Nombre *</label>
+                    <mat-form-field appearance="outline" class="w-full">
+                      <input matInput formControlName="nombre" placeholder="Ingrese el nombre">
+                      <mat-error *ngIf="usuarioForm.get('nombre')?.hasError('required')">
+                        El nombre es requerido
+                      </mat-error>
+                    </mat-form-field>
+                  </div>
+
+                  <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Apellido *</label>
+                    <mat-form-field appearance="outline" class="w-full">
+                      <input matInput formControlName="apellido" placeholder="Ingrese el apellido">
+                      <mat-error *ngIf="usuarioForm.get('apellido')?.hasError('required')">
+                        El apellido es requerido
+                      </mat-error>
+                    </mat-form-field>
+                  </div>
+                </div>
+
+                <!-- Correo y Teléfono -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Correo Electrónico *</label>
+                    <mat-form-field appearance="outline" class="w-full">
+                      <input matInput formControlName="correo" type="email" placeholder="ejemplo@correo.com">
+                      <mat-error *ngIf="usuarioForm.get('correo')?.hasError('required')">
+                        El correo es requerido
+                      </mat-error>
+                      <mat-error *ngIf="usuarioForm.get('correo')?.hasError('email')">
+                        Ingrese un correo válido
+                      </mat-error>
+                    </mat-form-field>
+                  </div>
+
+                  <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Teléfono</label>
+                    <mat-form-field appearance="outline" class="w-full">
+                      <input matInput formControlName="telefono" placeholder="+502 1234-5678">
+                      <mat-error *ngIf="usuarioForm.get('telefono')?.hasError('maxlength')">
+                        El teléfono no puede exceder 20 caracteres
+                      </mat-error>
+                    </mat-form-field>
+                  </div>
+                </div>
+
+                <!-- Contraseña y Fotografía -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Contraseña *</label>
+                    <mat-form-field appearance="outline" class="w-full">
+                      <input matInput formControlName="contrasena" type="password" placeholder="Mínimo 8 caracteres">
+                      <mat-error *ngIf="usuarioForm.get('contrasena')?.hasError('required')">
+                        La contraseña es requerida
+                      </mat-error>
+                      <mat-error *ngIf="usuarioForm.get('contrasena')?.hasError('minlength')">
+                        La contraseña debe tener al menos 8 caracteres
+                      </mat-error>
+                    </mat-form-field>
+                  </div>
+
+                  <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Fotografía</label>
+                    <div class="flex items-center gap-4">
+                      <input type="file" accept="image/*" (change)="onFileSelected($event)"
+                        class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                      <div *ngIf="selectedFile" class="text-sm text-gray-600">
+                        {{ selectedFile.name }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Rol y Estado -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Rol *</label>
+                    <mat-form-field appearance="outline" class="w-full">
+                      <mat-select formControlName="rol_id" placeholder="Seleccionar rol">
+                        <mat-option *ngFor="let rol of roles" [value]="rol.id">
+                          {{rol.nombre}}
+                        </mat-option>
+                      </mat-select>
+                      <mat-error *ngIf="usuarioForm.get('rol_id')?.hasError('required')">
+                        El rol es requerido
+                      </mat-error>
+                    </mat-form-field>
+                  </div>
+
+                  <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Estado</label>
+                    <mat-form-field appearance="outline" class="w-full">
+                      <mat-select formControlName="estado" placeholder="Seleccionar estado">
+                        <mat-option value="ACTIVO">Activo</mat-option>
+                        <mat-option value="INACTIVO">Inactivo</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                  <button type="button" (click)="cerrarDialogo()"
+                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded font-medium hover:bg-gray-50 transition-colors duration-200">
+                    Cancelar
+                  </button>
+                  <button type="submit" [disabled]="usuarioForm.invalid"
+                    class="px-4 py-2 bg-gray-800 hover:bg-gray-900 disabled:bg-gray-400 text-white rounded font-medium transition-colors duration-200">
+                    {{ editMode ? 'Actualizar' : 'Registrar' }}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal de Detalles del Usuario -->
+        <div *ngIf="mostrarDetalles"
+          class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          (click)="cerrarDetalles()">
+          <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            (click)="$event.stopPropagation()">
+
+            <!-- Header del modal simple -->
+            <div class="relative bg-gray-800 rounded-t-lg p-6 text-white">
+              <button (click)="cerrarDetalles()"
+                class="absolute top-4 right-4 p-2 text-white hover:bg-white/20 rounded transition-all duration-200">
+                <mat-icon>close</mat-icon>
+              </button>
+
+              <div class="flex items-center gap-4">
+                <!-- Avatar simple -->
+                <div
+                  class="w-16 h-16 bg-gray-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+                  {{getInitials(usuarioDetalle?.nombre || '', usuarioDetalle?.apellido || '')}}
+                </div>
+
+                <!-- Información básica -->
+                <div>
+                  <h2 class="text-2xl font-bold mb-2">
+                    {{usuarioDetalle?.nombre}} {{usuarioDetalle?.apellido}}
+                  </h2>
+                  <div class="flex items-center gap-3">
+                    <span class="bg-gray-700 px-2 py-1 rounded text-sm font-medium">
+                      ID: {{usuarioDetalle?.id_usuario}}
+                    </span>
+                    <span class="bg-gray-700 px-2 py-1 rounded text-sm font-medium flex items-center gap-1">
+                      <mat-icon class="text-sm">{{getRolIcon(usuarioDetalle?.rol_id || 0)}}</mat-icon>
+                      {{getRolNombre(usuarioDetalle?.rol_id || 0)}}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contenido del modal -->
+            <div class="p-6 space-y-6">
+              <!-- Información de contacto -->
+              <div class="bg-gray-50 rounded-lg p-4">
+                <h3 class="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <mat-icon class="text-gray-600">contact_mail</mat-icon>
+                  Información de Contacto
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="space-y-2">
+                    <label class="text-sm font-medium text-gray-600">Correo Electrónico</label>
+                    <div class="flex items-center gap-2 p-2 bg-white rounded border border-gray-200">
+                      <mat-icon class="text-gray-500 text-sm">email</mat-icon>
+                      <span class="font-medium text-gray-900">{{usuarioDetalle?.correo}}</span>
+                    </div>
+                  </div>
+                  <div class="space-y-2">
+                    <label class="text-sm font-medium text-gray-600">Teléfono</label>
+                    <div class="flex items-center gap-2 p-2 bg-white rounded border border-gray-200">
+                      <mat-icon class="text-gray-500 text-sm">phone</mat-icon>
+                      <span class="font-medium text-gray-900">{{usuarioDetalle?.telefono || 'No especificado'}}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Estado y rol -->
+              <div class="bg-gray-50 rounded-lg p-4">
+                <h3 class="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <mat-icon class="text-gray-600">admin_panel_settings</mat-icon>
+                  Estado y Permisos
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="space-y-2">
+                    <label class="text-sm font-medium text-gray-600">Estado Actual</label>
+                    <div class="flex items-center gap-2 p-2 bg-white rounded border border-gray-200">
+                      <div class="w-2 h-2 rounded-full"
+                        [class]="usuarioDetalle?.estado === 'ACTIVO' ? 'bg-green-500' : 'bg-red-500'">
+                      </div>
+                      <span class="font-medium text-gray-900">{{usuarioDetalle?.estado}}</span>
+                    </div>
+                  </div>
+                  <div class="space-y-2">
+                    <label class="text-sm font-medium text-gray-600">Nivel de Acceso</label>
+                    <div class="flex items-center gap-2 p-2 bg-white rounded border border-gray-200">
+                      <mat-icon class="text-gray-500 text-sm">{{getRolIcon(usuarioDetalle?.rol_id || 0)}}</mat-icon>
+                      <span class="font-medium text-gray-900">{{getRolNombre(usuarioDetalle?.rol_id || 0)}}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Información del sistema -->
+              <div class="bg-gray-50 rounded-lg p-4">
+                <h3 class="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <mat-icon class="text-gray-600">info</mat-icon>
+                  Información del Sistema
+                </h3>
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between p-2 bg-white rounded border border-gray-200">
+                    <div class="flex items-center gap-2">
+                      <mat-icon class="text-gray-500 text-sm">calendar_today</mat-icon>
+                      <span class="font-medium text-gray-700">Fecha de Registro</span>
+                    </div>
+                    <span class="font-medium text-gray-900">
+                      {{usuarioDetalle?.fecha_registro | date:'dd/MM/yyyy HH:mm'}}
+                    </span>
+                  </div>
+                  <div class="flex items-center justify-between p-2 bg-white rounded border border-gray-200">
+                    <div class="flex items-center gap-2">
+                      <mat-icon class="text-gray-500 text-sm">fingerprint</mat-icon>
+                      <span class="font-medium text-gray-700">ID Único</span>
+                    </div>
+                    <span class="font-mono font-medium text-gray-900 bg-gray-100 px-2 py-1 rounded">
+                      #{{usuarioDetalle?.id_usuario}}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Botones de acción -->
+              <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                <button (click)="cerrarDetalles()"
+                  class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded font-medium transition-colors duration-200">
+                  Cerrar
+                </button>
+                <button (click)="abrirDialogoUsuario(usuarioDetalle!); cerrarDetalles()"
+                  class="px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white rounded font-medium transition-colors duration-200">
+                  <mat-icon class="mr-1 text-sm">edit</mat-icon>
+                  Editar Usuario
+                </button>
+              </div>
+            </div>
+          </div>
+</div>

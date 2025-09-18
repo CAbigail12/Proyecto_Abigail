@@ -1,0 +1,61 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradiente para el cielo -->
+    <linearGradient id="skyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#87CEEB;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#B0E0E6;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Gradiente para las montañas -->
+    <linearGradient id="mountainGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B4513;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#654321;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Gradiente para las nubes -->
+    <radialGradient id="cloudGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F0F8FF;stop-opacity:1" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Fondo del cielo -->
+  <rect width="200" height="200" fill="url(#skyGradient)"/>
+  
+  <!-- Nubes -->
+  <ellipse cx="50" cy="40" rx="25" ry="15" fill="url(#cloudGradient)" opacity="0.8"/>
+  <ellipse cx="70" cy="35" rx="20" ry="12" fill="url(#cloudGradient)" opacity="0.8"/>
+  <ellipse cx="150" cy="50" rx="30" ry="18" fill="url(#cloudGradient)" opacity="0.8"/>
+  <ellipse cx="170" cy="45" rx="25" ry="15" fill="url(#cloudGradient)" opacity="0.8"/>
+  
+  <!-- Montañas -->
+  <polygon points="0,200 0,120 40,80 80,120 120,60 160,100 200,80 200,200" fill="url(#mountainGradient)"/>
+  
+  <!-- Montañas más lejanas -->
+  <polygon points="0,200 0,140 30,110 60,140 90,100 120,130 150,90 180,120 200,100 200,200" fill="url(#mountainGradient)" opacity="0.7"/>
+  
+  <!-- Cruz principal -->
+  <g transform="translate(100, 100)">
+    <!-- Palo vertical de la cruz -->
+    <rect x="-8" y="-40" width="16" height="80" fill="#000000" rx="2"/>
+    
+    <!-- Palo horizontal de la cruz -->
+    <rect x="-25" y="-8" width="50" height="16" fill="#000000" rx="2"/>
+    
+    <!-- Detalles de la cruz -->
+    <rect x="-6" y="-35" width="12" height="70" fill="#333333" rx="1"/>
+    <rect x="-22" y="-6" width="44" height="12" fill="#333333" rx="1"/>
+    
+    <!-- Brillo en la cruz -->
+    <rect x="-4" y="-38" width="8" height="4" fill="#666666" rx="1"/>
+    <rect x="-20" y="-10" width="4" height="8" fill="#666666" rx="1"/>
+  </g>
+  
+  <!-- Rayos de luz alrededor de la cruz -->
+  <g stroke="#FFD700" stroke-width="2" opacity="0.6">
+    <line x1="85" y1="85" x2="75" y2="75"/>
+    <line x1="115" y1="85" x2="125" y2="75"/>
+    <line x1="85" y1="115" x2="75" y2="125"/>
+    <line x1="115" y1="115" x2="125" y2="125"/>
+  </g>
+</svg>

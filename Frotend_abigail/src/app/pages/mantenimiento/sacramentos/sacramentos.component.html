@@ -1,0 +1,351 @@
+<!-- Fondo con gradiente innovador -->
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
+  <!-- Header moderno con diseño innovador -->
+  <div class="relative mb-8">
+    <!-- Decoración de fondo -->
+    <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-500 rounded-3xl opacity-10"></div>
+
+    <div class="relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/50 p-8">
+      <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6">
+        <!-- Título con iconos decorativos -->
+        <div class="flex items-center gap-4">
+          <div class="relative">
+            <div
+              class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <mat-icon class="text-white text-2xl">church</mat-icon>
+            </div>
+            <div class="absolute -top-1 -right-1 w-6 h-6 bg-blue-400 rounded-full flex items-center justify-center">
+              <span class="text-xs font-bold text-gray-800">{{totalSacramentos}}</span>
+            </div>
+          </div>
+          <div>
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
+              Gestión de Sacramentos
+            </h1>
+            <p class="text-gray-600 mt-2 text-lg">Administra los sacramentos que administra la parroquia</p>
+          </div>
+        </div>
+
+        <!-- Controles superiores -->
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Botón de regresar -->
+          <button (click)="goBack()"
+            class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg">
+            <mat-icon class="text-white">arrow_back</mat-icon>
+            Regresar
+          </button>
+          <!-- Botón de agregar -->
+          <button (click)="abrirDialogoSacramento()"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg">
+            <mat-icon class="text-white">add</mat-icon>
+            Nuevo Sacramento
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel de filtros moderno -->
+  <div class="relative mb-8">
+    <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-6">
+      <!-- Header de filtros -->
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+            <mat-icon class="text-white text-lg">tune</mat-icon>
+          </div>
+          <h3 class="text-xl font-bold text-gray-900">Filtros Inteligentes</h3>
+        </div>
+        <div class="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+          {{dataSource.data.length}} de {{totalSacramentos}} sacramentos
+        </div>
+      </div>
+
+      <!-- Filtros en grid responsivo -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Búsqueda con diseño moderno -->
+        <div class="space-y-2">
+          <label class="block text-sm font-bold text-gray-700 flex items-center gap-2">
+            <mat-icon class="text-blue-600 text-lg">search</mat-icon>
+            Búsqueda Global
+          </label>
+          <div class="relative">
+            <input [(ngModel)]="filtros.busqueda" placeholder="Buscar por nombre, descripción..."
+              class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:bg-white transition-all duration-200 text-gray-900 placeholder-gray-500">
+            <mat-icon class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">search</mat-icon>
+          </div>
+        </div>
+
+        <!-- Filtro de estado -->
+        <div class="space-y-2">
+          <label class="block text-sm font-bold text-gray-700 flex items-center gap-2">
+            <mat-icon class="text-green-600 text-lg">toggle_on</mat-icon>
+            Estado
+          </label>
+          <select [(ngModel)]="filtros.activo"
+            class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:bg-white transition-all duration-200 text-gray-900">
+            <option value="">Todos los estados</option>
+            <option value="true">Activo</option>
+            <option value="false">Inactivo</option>
+          </select>
+        </div>
+
+        <!-- Botones de acción modernos -->
+        <div class="space-y-2">
+          <label class="block text-sm font-bold text-gray-700 opacity-0">Acciones</label>
+          <div class="flex gap-2">
+            <button (click)="aplicarFiltros()"
+              class="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+              <mat-icon class="text-lg">filter_alt</mat-icon>
+              Aplicar
+            </button>
+            <button (click)="limpiarFiltros()"
+              class="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold transition-all duration-200 border-2 border-gray-200 hover:border-gray-300">
+              <mat-icon class="text-lg">clear</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading spinner moderno -->
+  <div *ngIf="loading" class="flex justify-center items-center p-16">
+    <div class="flex flex-col items-center gap-6">
+      <div class="relative">
+        <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+        <div
+          class="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-blue-600 rounded-full animate-spin"
+          style="animation-delay: -0.15s;"></div>
+      </div>
+      <div class="text-center">
+        <h3 class="text-lg font-bold text-gray-900">Cargando sacramentos...</h3>
+        <p class="text-gray-600">Preparando la información más reciente</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vista de Tabla - Diseño Simple y Profesional -->
+  <div *ngIf="!loading" class="space-y-6">
+    <!-- Tabla Simple y Profesional -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+      <!-- Header de la tabla -->
+      <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+        <div class="grid grid-cols-12 gap-4 text-gray-700 font-semibold text-sm">
+          <div class="col-span-1 flex items-center gap-2">
+            <mat-icon class="text-gray-500 text-lg">tag</mat-icon>
+            ID
+          </div>
+          <div class="col-span-3 flex items-center gap-2">
+            <mat-icon class="text-gray-500 text-lg">church</mat-icon>
+            Nombre
+          </div>
+          <div class="col-span-4 flex items-center gap-2">
+            <mat-icon class="text-gray-500 text-lg">description</mat-icon>
+            Descripción
+          </div>
+          <div class="col-span-1 flex items-center gap-2">
+            <mat-icon class="text-gray-500 text-lg">power_settings_new</mat-icon>
+            Estado
+          </div>
+          <div class="col-span-1 flex items-center gap-2">
+            <mat-icon class="text-gray-500 text-lg">schedule</mat-icon>
+            Fecha
+          </div>
+          <div class="col-span-2 flex items-center gap-2">
+            <mat-icon class="text-gray-500 text-lg">settings</mat-icon>
+            Acciones
+          </div>
+        </div>
+      </div>
+
+      <!-- Filas de datos -->
+      <div class="divide-y divide-gray-100">
+        <div *ngFor="let sacramento of dataSource.data; trackBy: trackBySacramentoId; let i = index"
+          class="group hover:bg-gray-50 transition-colors duration-200"
+          [class]="i % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
+
+          <div class="p-6 grid grid-cols-12 gap-4 items-center">
+            <!-- ID -->
+            <div class="col-span-1">
+              <div class="bg-gray-100 text-gray-700 px-3 py-2 rounded-lg font-semibold text-center text-sm">
+                {{sacramento.id_sacramento}}
+              </div>
+            </div>
+
+            <!-- Nombre -->
+            <div class="col-span-3">
+              <div class="flex items-center gap-3">
+                <!-- Icono -->
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <mat-icon class="text-blue-600 text-lg">church</mat-icon>
+                </div>
+                <!-- Información -->
+                <div>
+                  <div class="text-gray-900 font-semibold">
+                    {{sacramento.nombre}}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Descripción -->
+            <div class="col-span-4">
+              <div class="text-gray-700 text-sm">
+                {{sacramento.descripcion || 'Sin descripción'}}
+              </div>
+            </div>
+
+            <!-- Estado -->
+            <div class="col-span-1">
+              <div class="flex items-center justify-center">
+                <div class="px-3 py-1 rounded-full font-medium text-xs uppercase tracking-wider" 
+                     [class]="sacramento.activo ? 
+                               'bg-green-100 text-green-700' : 
+                               'bg-red-100 text-red-700'">
+                  {{sacramento.activo ? 'Activo' : 'Inactivo'}}
+                </div>
+              </div>
+            </div>
+
+            <!-- Fecha -->
+            <div class="col-span-1">
+              <div class="text-gray-500 text-sm">
+                {{sacramento.created_at | date:'dd/MM/yyyy'}}
+              </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="col-span-2">
+              <div class="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity duration-200">
+                <!-- Editar -->
+                <button (click)="abrirDialogoSacramento(sacramento)"
+                  class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                  matTooltip="Editar sacramento">
+                  <mat-icon class="text-lg">edit</mat-icon>
+                </button>
+
+                <!-- Eliminar -->
+                <button (click)="eliminarSacramento(sacramento)"
+                  class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                  matTooltip="Eliminar sacramento">
+                  <mat-icon class="text-lg">delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer de la tabla -->
+      <div class="bg-gray-50 px-6 py-3 border-t border-gray-200">
+        <div class="flex items-center justify-between text-gray-600 text-sm">
+          <div class="flex items-center gap-2">
+            <mat-icon class="text-gray-500">info</mat-icon>
+            <span>Sistema de gestión de sacramentos</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+            <span>Sistema operativo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Paginación simple -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-4">
+      <mat-paginator [length]="totalSacramentos" [pageSize]="pageSize" [pageSizeOptions]="[5, 10, 25, 50]"
+        (page)="onPageChange($event)" showFirstLastButtons class="bg-transparent"></mat-paginator>
+    </div>
+  </div>
+
+  <!-- Mensaje cuando no hay datos -->
+  <div *ngIf="dataSource.data.length === 0 && !loading" class="flex flex-col items-center justify-center py-12">
+    <div class="text-center">
+      <div class="mb-6">
+        <mat-icon class="text-gray-400 text-6xl">church</mat-icon>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-700 mb-4">No se encontraron sacramentos</h3>
+      <p class="text-gray-600 mb-8 max-w-md mx-auto">Intenta ajustar los filtros de búsqueda o agregar un nuevo sacramento.</p>
+      <button (click)="abrirDialogoSacramento()" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg">
+        <mat-icon class="text-xl mr-2">add</mat-icon>
+        Agregar Sacramento
+      </button>
+    </div>
+  </div>
+
+  <!-- Dialog para crear/editar sacramento -->
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+    *ngIf="mostrarDialogo" (click)="cerrarDialogo()">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+      (click)="$event.stopPropagation()">
+      <!-- Header del dialog -->
+      <div class="flex justify-between items-center p-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-900">
+          {{ editMode ? 'Editar Sacramento' : 'Registrar Sacramento' }}
+        </h2>
+        <button (click)="cerrarDialogo()"
+          class="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors duration-200">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Contenido del dialog -->
+      <div class="p-4">
+        <form [formGroup]="sacramentoForm" (ngSubmit)="guardarSacramento()" class="space-y-4">
+          <!-- Nombre -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Nombre *</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <input matInput formControlName="nombre" placeholder="Ingrese el nombre del sacramento">
+              <mat-error *ngIf="sacramentoForm.get('nombre')?.hasError('required')">
+                El nombre es requerido
+              </mat-error>
+              <mat-error *ngIf="sacramentoForm.get('nombre')?.hasError('minlength')">
+                El nombre debe tener al menos 2 caracteres
+              </mat-error>
+              <mat-error *ngIf="sacramentoForm.get('nombre')?.hasError('maxlength')">
+                El nombre no puede exceder 60 caracteres
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Descripción -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Descripción</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <textarea matInput formControlName="descripcion" placeholder="Ingrese una descripción del sacramento" rows="3"></textarea>
+              <mat-error *ngIf="sacramentoForm.get('descripcion')?.hasError('maxlength')">
+                La descripción no puede exceder 255 caracteres
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Estado -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Estado</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-select formControlName="activo" placeholder="Seleccionar estado">
+                <mat-option [value]="true">Activo</mat-option>
+                <mat-option [value]="false">Inactivo</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+            <button type="button" (click)="cerrarDialogo()"
+              class="px-4 py-2 border border-gray-300 text-gray-700 rounded font-medium hover:bg-gray-50 transition-colors duration-200">
+              Cancelar
+            </button>
+            <button type="submit" [disabled]="sacramentoForm.invalid"
+              class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded font-medium transition-colors duration-200">
+              {{ editMode ? 'Actualizar' : 'Registrar' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

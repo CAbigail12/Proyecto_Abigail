@@ -1,0 +1,332 @@
+/* Estilos para el componente de feligreses */
+
+/* Estilos mínimos para Angular Material que no se pueden hacer con Tailwind */
+::ng-deep .mat-mdc-form-field {
+  width: 100%;
+}
+
+::ng-deep .mat-mdc-form-field-appearance-outline .mat-mdc-form-field-outline {
+  border-radius: 8px;
+}
+
+::ng-deep .mat-mdc-form-field-appearance-outline.mat-focused .mat-mdc-form-field-outline-thick {
+  color: #10b981;
+}
+
+::ng-deep .mat-mdc-form-field.mat-focused .mat-mdc-form-field-label {
+  color: #10b981;
+}
+
+/* Personalizar la tabla de Angular Material */
+::ng-deep .mat-mdc-table {
+  background: transparent;
+}
+
+::ng-deep .mat-mdc-header-cell {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+::ng-deep .mat-mdc-cell {
+  border-bottom: 1px solid #f3f4f6;
+}
+
+/* Personalizar el paginador */
+::ng-deep .mat-mdc-paginator {
+  background: transparent;
+}
+
+/* Personalizar el spinner */
+::ng-deep .mat-mdc-progress-spinner circle {
+  stroke: #10b981;
+}
+
+/* Personalizar los tooltips */
+::ng-deep .mat-mdc-tooltip {
+  background: #1f2937;
+  color: white;
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+/* Personalizar los selects */
+::ng-deep .mat-mdc-select-value {
+  color: #1f2937;
+}
+
+::ng-deep .mat-mdc-select-arrow {
+  color: #6b7280;
+}
+
+/* Personalizar los iconos en los campos */
+::ng-deep .mat-mdc-form-field-icon-suffix {
+  color: #6b7280;
+}
+
+/* Personalizar los errores */
+::ng-deep .mat-mdc-form-field-error {
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* Personalizar el dialog de Angular Material si se usa */
+::ng-deep .mat-mdc-dialog-container {
+  border-radius: 12px;
+}
+
+::ng-deep .mat-mdc-dialog-surface {
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* Personalizar el datepicker */
+::ng-deep .mat-mdc-datepicker-toggle {
+  color: #6b7280;
+}
+
+::ng-deep .mat-mdc-datepicker-toggle.mat-focused {
+  color: #10b981;
+}
+
+/* Responsive para Angular Material */
+@media (max-width: 768px) {
+  ::ng-deep .mat-mdc-form-field {
+    font-size: 16px; /* Evita zoom en iOS */
+  }
+  
+  ::ng-deep .mat-mdc-table {
+    font-size: 14px;
+  }
+}
+
+/* Estilos para el estado de los feligreses */
+.estado-activo {
+  color: #059669;
+  background-color: #d1fae5;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.estado-inactivo {
+  color: #dc2626;
+  background-color: #fee2e2;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Estilos para la tabla */
+.mat-mdc-table {
+  width: 100%;
+}
+
+.mat-mdc-row:hover {
+  background-color: #f8fafc;
+}
+
+/* Estilos para los filtros */
+.filter-section {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+}
+
+/* Estilos para el botón de agregar feligrés */
+.add-button {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  transition: all 0.3s ease;
+}
+
+.add-button:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .header-buttons {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .add-button {
+    width: 100%;
+  }
+}
+
+/* Estilos para snackbars de éxito y error */
+::ng-deep .success-snackbar {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+::ng-deep .error-snackbar {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+/* Animaciones personalizadas */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Aplicar animación a las filas de la tabla */
+.group {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Efectos hover mejorados */
+.group:hover .bg-white\/90 {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.group:hover .shadow-lg {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Gradientes personalizados */
+.bg-gradient-to-br.from-emerald-500.to-teal-500 {
+  background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);
+}
+
+/* Efectos de glassmorphism */
+.bg-white\/80 {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.bg-white\/90 {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Efectos de transición suaves */
+* {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mejoras en la accesibilidad */
+.group:focus {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+}
+
+/* Efectos de sombra dinámicos */
+.group:hover {
+  filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.1));
+}
+
+/* Efectos de texto */
+.bg-clip-text {
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Mejoras en el contraste */
+.text-white\/80 {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.text-white\/90 {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Efectos de borde */
+.border-white\/50 {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Animación del header */
+.relative.bg-white\/80 {
+  animation: fadeInUp 0.8s ease-out;
+}
+
+/* Efectos de gradiente en el fondo */
+.bg-gradient-to-br.from-emerald-50.via-teal-50.to-cyan-50 {
+  background: linear-gradient(135deg, #ecfdf5 0%, #f0fdfa 50%, #ecfeff 100%);
+}
+
+/* Mejoras en los iconos */
+mat-icon {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Efectos de hover en los botones */
+button:hover {
+  transform: translateY(-1px);
+}
+
+/* Estilos específicos para el formulario de feligreses */
+.form-section {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.form-section h3 {
+  color: #1f2937;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+/* Estilos para los campos de fecha */
+::ng-deep .mat-mdc-datepicker-input {
+  color: #1f2937;
+}
+
+/* Estilos para los campos de texto largo */
+::ng-deep .mat-mdc-form-field textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* Estilos para el grid del formulario */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Estilos para los badges de sexo */
+.sexo-masculino {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.sexo-femenino {
+  background-color: #fce7f3;
+  color: #be185d;
+}
+
+/* Estilos para el nombre completo en la tabla */
+.nombre-completo {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.nombre-completo .email {
+  font-weight: 400;
+  color: #6b7280;
+  font-size: 0.75rem;
+}
