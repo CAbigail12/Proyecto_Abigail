@@ -53,6 +53,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/reporte/reporte.component').then(m => m.ReporteComponent)
       },
       {
+        path: 'reportes',
+        loadComponent: () => import('./pages/reportes/reportes.component').then(m => m.ReportesComponent)
+      },
+      {
         path: 'configuracion',
         loadComponent: () => import('./pages/configuracion/configuracion.component').then(m => m.ConfiguracionComponent)
       },
@@ -91,6 +95,14 @@ export const routes: Routes = [
       {
         path: 'feligreses',
         loadComponent: () => import('./pages/feligreses/feligreses.component').then(m => m.FeligresesComponent)
+      },
+      {
+        path: 'sacramentos-asignacion',
+        loadComponent: () => import('./pages/sacramentos-asignacion/sacramentos-asignacion.component').then(m => m.SacramentosAsignacionComponent)
+      },
+      {
+        path: 'actividades-religiosas',
+        loadComponent: () => import('./pages/actividades-religiosas/actividades-religiosas.component').then(m => m.ActividadesReligiosasComponent)
       }
     ]
   },

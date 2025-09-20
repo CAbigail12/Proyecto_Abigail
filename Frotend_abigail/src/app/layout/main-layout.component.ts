@@ -49,24 +49,19 @@ export class MainLayoutComponent implements OnInit {
       expanded: false
     },
     {
-      title: 'Módulo Sacramentos',
+      title: 'Asignación de Sacramentos',
       description: 'Gestión de sacramentos (Bautizo, Confirmación, Matrimonio)',
       icon: 'auto_stories',
-      route: '/sacramentos',
-      disponible: false,
-      expanded: false,
-      subItems: [
-        { title: 'Bautizo', route: '/bautizo', disponible: false, icon: 'water_drop' },
-        { title: 'Confirmación', route: '/confirmacion', disponible: false, icon: 'verified' },
-        { title: 'Matrimonio', route: '/matrimonio', disponible: false, icon: 'favorite' }
-      ]
+      route: '/sacramentos-asignacion',
+      disponible: true,
+      expanded: false
     },
     {
       title: 'Actividades Religiosas',
       description: 'Gestión de actividades religiosas',
       icon: 'event_note',
-      route: '/actividades',
-      disponible: false,
+      route: '/actividades-religiosas',
+      disponible: true,
       expanded: false
     },
     {
@@ -87,7 +82,7 @@ export class MainLayoutComponent implements OnInit {
       description: 'Reportes y estadísticas de la parroquia',
       icon: 'analytics',
       route: '/reportes',
-      disponible: false,
+      disponible: true,
       expanded: false
     },
     {
@@ -137,6 +132,25 @@ export class MainLayoutComponent implements OnInit {
       }
     } else {
       this.snackBar.open(`🚧 ${item.title} - Próximamente disponible 🚧`, '', {
+        duration: 3000,
+        panelClass: ['info-snackbar'],
+        horizontalPosition: 'center',
+        verticalPosition: 'top'
+      });
+    }
+  }
+
+  onSubMenuClick(subItem: any): void {
+    console.log('🎯 onSubMenuClick llamado con:', subItem);
+    if (subItem.disponible) {
+      console.log('🎯 Navegando a:', subItem.route);
+      this.router.navigate([subItem.route]);
+      // Cerrar menú en móvil después de navegar
+      if (window.innerWidth < 768) {
+        this.menuAbierto = false;
+      }
+    } else {
+      this.snackBar.open(`🚧 ${subItem.title} - Próximamente disponible 🚧`, '', {
         duration: 3000,
         panelClass: ['info-snackbar'],
         horizontalPosition: 'center',

@@ -1,0 +1,491 @@
+/* Estilos específicos para el componente de asignación de sacramentos */
+
+/* Estilos para los tabs de Material */
+.sacramentos-tabs .mat-mdc-tab-group {
+  --mdc-tab-indicator-active-indicator-color: #3b82f6;
+  --mdc-tab-indicator-active-indicator-height: 3px;
+}
+
+.sacramentos-tabs .mat-mdc-tab {
+  --mdc-tab-text-label-text-color: #6b7280;
+  --mdc-tab-text-label-text-color-active: #3b82f6;
+  --mdc-tab-text-label-text-size: 16px;
+  --mdc-tab-text-label-text-weight: 600;
+}
+
+/* Estilos para estados de pago */
+.estado-pagado {
+  @apply bg-green-100 text-green-700;
+}
+
+.estado-pendiente {
+  @apply bg-yellow-100 text-yellow-700;
+}
+
+/* Estilos para autocomplete */
+.mat-mdc-autocomplete-panel {
+  @apply shadow-lg border border-gray-200 rounded-lg;
+}
+
+/* Estilos para datepicker */
+.mat-mdc-datepicker-popup {
+  @apply shadow-lg border border-gray-200 rounded-lg;
+}
+
+/* Estilos para formularios */
+.mat-mdc-form-field {
+  @apply w-full;
+}
+
+.mat-mdc-form-field .mat-mdc-text-field-wrapper {
+  @apply rounded-lg;
+}
+
+/* Estilos para botones deshabilitados */
+button:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* Estilos para la tabla */
+.mat-mdc-table {
+  @apply w-full;
+}
+
+.mat-mdc-header-row {
+  @apply bg-gray-50;
+}
+
+.mat-mdc-row:hover {
+  @apply bg-gray-50;
+}
+
+/* Estilos para paginador */
+.mat-mdc-paginator {
+  @apply bg-transparent;
+}
+
+/* Estilos para loading spinner */
+.mat-mdc-progress-spinner {
+  @apply mx-auto;
+}
+
+/* Estilos para snackbar */
+.mat-mdc-snack-bar-container {
+  @apply rounded-lg;
+}
+
+/* Estilos para tooltip */
+.mat-mdc-tooltip {
+  @apply bg-gray-800 text-white text-sm rounded-md px-2 py-1;
+}
+
+/* Estilos para checkbox */
+.mat-mdc-checkbox {
+  @apply text-gray-700;
+}
+
+/* Estilos para select */
+.mat-mdc-select-panel {
+  @apply shadow-lg border border-gray-200 rounded-lg;
+}
+
+/* Animaciones personalizadas */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Estilos para cards de estadísticas */
+.stats-card {
+  @apply bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-6 transition-all duration-200 hover:shadow-2xl hover:-translate-y-1;
+}
+
+/* Estilos para botones de acción */
+.action-button {
+  @apply transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5;
+}
+
+/* Estilos para inputs con autocomplete */
+.autocomplete-input {
+  @apply w-full;
+}
+
+/* Estilos para la tabla de asignaciones */
+.assignments-table {
+  @apply bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden;
+}
+
+/* Estilos para filas de la tabla */
+.table-row {
+  @apply hover:bg-gray-50 transition-colors duration-200;
+}
+
+/* Estilos para badges de estado */
+.status-badge {
+  @apply px-3 py-1 rounded-full font-medium text-xs uppercase tracking-wider;
+}
+
+/* Estilos para iconos de acción */
+.action-icon {
+  @apply opacity-70 transition-opacity duration-200;
+}
+
+/* Estilos para el contenedor de tabs */
+.tabs-container {
+  @apply bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 overflow-hidden;
+}
+
+/* Estilos para el contenido de cada tab */
+.tab-content {
+  @apply p-8;
+}
+
+/* Estilos para formularios dentro de tabs */
+.tab-form {
+  @apply space-y-6;
+}
+
+/* Estilos para grupos de campos */
+.field-group {
+  @apply space-y-2;
+}
+
+/* Estilos para labels */
+.field-label {
+  @apply block text-sm font-bold text-gray-700;
+}
+
+/* Estilos para botones de formulario */
+.form-button {
+  @apply bg-gradient-to-r text-white px-8 py-3 rounded-lg font-semibold flex items-center gap-2 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5;
+}
+
+/* Estilos para botones de filtro */
+.filter-button {
+  @apply flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5;
+}
+
+/* Estilos para botones de limpiar */
+.clear-button {
+  @apply px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold transition-all duration-200 border-2 border-gray-200 hover:border-gray-300;
+}
+
+/* Estilos para el panel de filtros */
+.filters-panel {
+  @apply bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-6;
+}
+
+/* Estilos para el grid de filtros */
+.filters-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
+}
+
+/* Estilos para el contador de resultados */
+.results-counter {
+  @apply text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full;
+}
+
+/* Estilos para el mensaje de no datos */
+.no-data-message {
+  @apply flex flex-col items-center justify-center py-12;
+}
+
+/* Estilos para el loading de la tabla */
+.table-loading {
+  @apply flex justify-center items-center p-8;
+}
+
+/* Estilos para el footer de la tabla */
+.table-footer {
+  @apply bg-gray-50 px-6 py-3 border-t border-gray-200;
+}
+
+/* Estilos para el paginador */
+.paginator-container {
+  @apply bg-white rounded-xl shadow-lg border border-gray-200 p-4;
+}
+
+/* Estilos para el loading principal */
+.main-loading {
+  @apply flex justify-center items-center p-16;
+}
+
+/* Estilos para el loading spinner */
+.loading-spinner {
+  @apply flex flex-col items-center gap-6;
+}
+
+/* Estilos para el spinner animado */
+.spinner-container {
+  @apply relative;
+}
+
+.spinner-primary {
+  @apply w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin;
+}
+
+.spinner-secondary {
+  @apply absolute inset-0 w-16 h-16 border-4 border-transparent border-r-blue-600 rounded-full animate-spin;
+}
+
+/* Estilos para el texto de loading */
+.loading-text {
+  @apply text-center;
+}
+
+.loading-title {
+  @apply text-lg font-bold text-gray-900;
+}
+
+.loading-subtitle {
+  @apply text-gray-600;
+}
+
+/* Estilos para el grid de estadísticas */
+.stats-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8;
+}
+
+/* Estilos para cada tarjeta de estadística */
+.stat-card {
+  @apply bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-6;
+}
+
+/* Estilos para el contenido de estadística */
+.stat-content {
+  @apply flex items-center gap-4;
+}
+
+/* Estilos para el icono de estadística */
+.stat-icon {
+  @apply w-12 h-12 rounded-xl flex items-center justify-center;
+}
+
+/* Estilos para el texto de estadística */
+.stat-text {
+  @apply text-2xl font-bold text-gray-900;
+}
+
+.stat-label {
+  @apply text-gray-600 text-sm;
+}
+
+/* Estilos para el grid de formulario de matrimonio */
+.marriage-form-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+}
+
+/* Estilos para el header de cada tab */
+.tab-header {
+  @apply flex items-center gap-4 mb-6;
+}
+
+.tab-icon {
+  @apply w-12 h-12 rounded-xl flex items-center justify-center;
+}
+
+.tab-title {
+  @apply text-2xl font-bold text-gray-900;
+}
+
+.tab-subtitle {
+  @apply text-gray-600;
+}
+
+/* Estilos para el header de filtros */
+.filters-header {
+  @apply flex items-center justify-between mb-6;
+}
+
+.filters-icon {
+  @apply w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center;
+}
+
+.filters-title {
+  @apply text-xl font-bold text-gray-900;
+}
+
+/* Estilos para el header de la tabla */
+.table-header {
+  @apply bg-gray-50 px-6 py-4 border-b border-gray-200;
+}
+
+.table-header-grid {
+  @apply grid grid-cols-12 gap-4 text-gray-700 font-semibold text-sm;
+}
+
+.table-header-cell {
+  @apply flex items-center gap-2;
+}
+
+.table-header-icon {
+  @apply text-gray-500 text-lg;
+}
+
+/* Estilos para las filas de la tabla */
+.table-rows {
+  @apply divide-y divide-gray-100;
+}
+
+.table-row {
+  @apply hover:bg-gray-50 transition-colors duration-200;
+}
+
+.table-row-even {
+  @apply bg-white;
+}
+
+.table-row-odd {
+  @apply bg-gray-50;
+}
+
+.table-row-content {
+  @apply p-6 grid grid-cols-12 gap-4 items-center;
+}
+
+/* Estilos para las celdas de la tabla */
+.table-cell {
+  @apply col-span-1;
+}
+
+.table-cell-id {
+  @apply bg-gray-100 text-gray-700 px-3 py-2 rounded-lg font-semibold text-center text-sm;
+}
+
+.table-cell-sacrament {
+  @apply col-span-2;
+}
+
+.table-cell-participants {
+  @apply col-span-4;
+}
+
+.table-cell-date {
+  @apply col-span-2;
+}
+
+.table-cell-payment {
+  @apply col-span-1;
+}
+
+.table-cell-actions {
+  @apply col-span-2;
+}
+
+/* Estilos para el contenido de las celdas */
+.cell-content {
+  @apply flex items-center gap-3;
+}
+
+.cell-icon {
+  @apply w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center;
+}
+
+.cell-icon-small {
+  @apply w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center;
+}
+
+.cell-text {
+  @apply text-gray-900 font-semibold text-sm;
+}
+
+.cell-text-small {
+  @apply text-gray-700 text-sm;
+}
+
+.cell-text-date {
+  @apply text-gray-500 text-sm;
+}
+
+/* Estilos para badges de rol */
+.role-badge {
+  @apply px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full;
+}
+
+/* Estilos para el contenedor de acciones */
+.actions-container {
+  @apply flex items-center gap-1 opacity-70 transition-opacity duration-200;
+}
+
+.table-row:hover .actions-container {
+  @apply opacity-100;
+}
+
+/* Estilos para botones de acción */
+.action-button-small {
+  @apply p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200;
+}
+
+.action-icon-small {
+  @apply text-lg;
+}
+
+/* Estilos para el contenedor principal */
+.main-container {
+  @apply space-y-8;
+}
+
+/* Estilos para el contenedor de tabs */
+.tabs-container {
+  @apply bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 overflow-hidden;
+}
+
+/* Estilos para el contenedor de la tabla */
+.table-container {
+  @apply bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden;
+}
+
+/* Estilos para el contenedor de paginación */
+.pagination-container {
+  @apply bg-white rounded-xl shadow-lg border border-gray-200 p-4;
+}
+
+/* Estilos para el contenedor de loading */
+.loading-container {
+  @apply flex justify-center items-center p-16;
+}
+
+/* Estilos para el contenedor de no datos */
+.no-data-container {
+  @apply flex flex-col items-center justify-center py-12;
+}
+
+/* Estilos para el contenedor de estadísticas */
+.stats-container {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8;
+}
+
+/* Estilos para el contenedor de filtros */
+.filters-container {
+  @apply bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-6;
+}
+
+/* Estilos para el contenedor de loading de tabla */
+.table-loading-container {
+  @apply flex justify-center items-center p-8;
+}
+
+/* Estilos para el contenedor de loading de tabla con texto */
+.table-loading-with-text {
+  @apply flex items-center gap-3;
+}
+
+/* Estilos para el spinner de tabla */
+.table-spinner {
+  @apply w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin;
+}
+
+/* Estilos para el texto de loading de tabla */
+.table-loading-text {
+  @apply text-gray-600;
+}

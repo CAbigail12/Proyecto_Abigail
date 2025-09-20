@@ -1,0 +1,482 @@
+<!-- Contenedor principal -->
+<div class="min-h-screen bg-gray-50 p-6">
+  <div class="max-w-7xl mx-auto">
+    
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Asignación de Sacramentos</h1>
+          <p class="text-gray-600 mt-1">Gestiona las asignaciones de bautizo, confirmación y matrimonio</p>
+        </div>
+        <button (click)="goBack()" 
+                class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors">
+          <mat-icon>arrow_back</mat-icon>
+          Volver
+        </button>
+      </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6" *ngIf="estadisticas">
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <div class="flex items-center">
+          <div class="p-3 rounded-full bg-blue-100">
+            <mat-icon class="text-blue-600">child_care</mat-icon>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Bautizos</p>
+            <p class="text-2xl font-bold text-gray-900">{{estadisticas.total_bautizos}}</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <div class="flex items-center">
+          <div class="p-3 rounded-full bg-green-100">
+            <mat-icon class="text-green-600">verified</mat-icon>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Confirmaciones</p>
+            <p class="text-2xl font-bold text-gray-900">{{estadisticas.total_confirmaciones}}</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <div class="flex items-center">
+          <div class="p-3 rounded-full bg-pink-100">
+            <mat-icon class="text-pink-600">favorite</mat-icon>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Matrimonios</p>
+            <p class="text-2xl font-bold text-gray-900">{{estadisticas.total_matrimonios}}</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <div class="flex items-center">
+          <div class="p-3 rounded-full bg-yellow-100">
+            <mat-icon class="text-yellow-600">attach_money</mat-icon>
+          </div>
+          <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Pendientes de Pago</p>
+            <p class="text-2xl font-bold text-gray-900">{{estadisticas.pendientes_pago}}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs para diferentes sacramentos -->
+    <div class="bg-white rounded-lg shadow-sm">
+      <mat-tab-group [(selectedIndex)]="tabSeleccionado" class="sacramentos-tabs">
+        
+        <!-- Tab Bautizo -->
+        <mat-tab label="Bautizo">
+          <div class="p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">Asignar Bautizo</h2>
+            
+            <form [formGroup]="formularioBautizo" class="space-y-6">
+              <!-- Selección de feligrés -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Feligrés a Bautizar *</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput 
+                           [formControl]="controladorFeligresBautizo"
+                           placeholder="Buscar o seleccionar feligrés..."
+                           [matAutocomplete]="autoBautizo"
+                           (click)="activarAutocomplete(controladorFeligresBautizo)"
+                           (focus)="activarAutocomplete(controladorFeligresBautizo)">
+                    <mat-autocomplete #autoBautizo="matAutocomplete" 
+                                      (optionSelected)="seleccionarFeligresBautizo($event.option.value)"
+                                      [displayWith]="displayFeligres">
+                      <mat-option *ngFor="let feligres of feligresesFiltrados[0] | async" 
+                                  [value]="feligres">
+                        <div class="flex items-center justify-between">
+                          <span>{{feligres.primer_nombre}} {{feligres.primer_apellido}}</span>
+                          <span class="text-xs text-gray-500 ml-2">{{feligres.comunidad_nombre}}</span>
+                        </div>
+                      </mat-option>
+                      <mat-option *ngIf="(feligresesFiltrados[0] | async)?.length === 0" disabled>
+                        <span class="text-gray-500">No se encontraron feligreses</span>
+                      </mat-option>
+                    </mat-autocomplete>
+                  </mat-form-field>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Celebración *</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput 
+                           [matDatepicker]="pickerBautizo"
+                           formControlName="fecha_celebracion"
+                           placeholder="Seleccionar fecha">
+                    <mat-datepicker-toggle matSuffix [for]="pickerBautizo"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerBautizo></mat-datepicker>
+                  </mat-form-field>
+                </div>
+              </div>
+              
+              <!-- Estado de pago y comentarios -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="flex items-center">
+                  <mat-checkbox formControlName="pagado" class="mr-2">
+                    ¿Ya pagó el sacramento?
+                  </mat-checkbox>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Comentarios</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <textarea matInput 
+                              formControlName="comentarios"
+                              placeholder="Comentarios adicionales..."
+                              rows="3"></textarea>
+                  </mat-form-field>
+                </div>
+              </div>
+              
+              <!-- Botones -->
+              <div class="flex justify-end space-x-4">
+                <button type="button" 
+                        (click)="limpiarFormularios()"
+                        class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors">
+                  Limpiar
+                </button>
+                <button type="button" 
+                        (click)="asignarBautizo()"
+                        [disabled]="loading || !formularioBautizo.valid || !feligresSeleccionadoBautizo"
+                        class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg transition-colors">
+                  <mat-spinner *ngIf="loading" diameter="20" class="inline mr-2"></mat-spinner>
+                  Asignar Bautizo
+                </button>
+              </div>
+            </form>
+          </div>
+        </mat-tab>
+        
+        <!-- Tab Confirmación -->
+        <mat-tab label="Confirmación">
+          <div class="p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">Asignar Confirmación</h2>
+            
+            <form [formGroup]="formularioConfirmacion" class="space-y-6">
+              <!-- Selección de feligrés -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Feligrés a Confirmar *</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput 
+                           [formControl]="controladorFeligresConfirmacion"
+                           placeholder="Buscar o seleccionar feligrés..."
+                           [matAutocomplete]="autoConfirmacion"
+                           (click)="activarAutocomplete(controladorFeligresConfirmacion)"
+                           (focus)="activarAutocomplete(controladorFeligresConfirmacion)">
+                    <mat-autocomplete #autoConfirmacion="matAutocomplete" 
+                                      (optionSelected)="seleccionarFeligresConfirmacion($event.option.value)"
+                                      [displayWith]="displayFeligres">
+                      <mat-option *ngFor="let feligres of feligresesFiltrados[1] | async" 
+                                  [value]="feligres">
+                        <div class="flex items-center justify-between">
+                          <span>{{feligres.primer_nombre}} {{feligres.primer_apellido}}</span>
+                          <span class="text-xs text-gray-500 ml-2">{{feligres.comunidad_nombre}}</span>
+                        </div>
+                      </mat-option>
+                      <mat-option *ngIf="(feligresesFiltrados[1] | async)?.length === 0" disabled>
+                        <span class="text-gray-500">No se encontraron feligreses</span>
+                      </mat-option>
+                    </mat-autocomplete>
+                  </mat-form-field>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Celebración *</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput 
+                           [matDatepicker]="pickerConfirmacion"
+                           formControlName="fecha_celebracion"
+                           placeholder="Seleccionar fecha">
+                    <mat-datepicker-toggle matSuffix [for]="pickerConfirmacion"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerConfirmacion></mat-datepicker>
+                  </mat-form-field>
+                </div>
+              </div>
+              
+              <!-- Estado de pago y comentarios -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="flex items-center">
+                  <mat-checkbox formControlName="pagado" class="mr-2">
+                    ¿Ya pagó el sacramento?
+                  </mat-checkbox>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Comentarios</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <textarea matInput 
+                              formControlName="comentarios"
+                              placeholder="Comentarios adicionales..."
+                              rows="3"></textarea>
+                  </mat-form-field>
+                </div>
+              </div>
+              
+              <!-- Botones -->
+              <div class="flex justify-end space-x-4">
+                <button type="button" 
+                        (click)="limpiarFormularios()"
+                        class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors">
+                  Limpiar
+                </button>
+                <button type="button" 
+                        (click)="asignarConfirmacion()"
+                        [disabled]="loading || !formularioConfirmacion.valid || !feligresSeleccionadoConfirmacion"
+                        class="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg transition-colors">
+                  <mat-spinner *ngIf="loading" diameter="20" class="inline mr-2"></mat-spinner>
+                  Asignar Confirmación
+                </button>
+              </div>
+            </form>
+          </div>
+        </mat-tab>
+        
+        <!-- Tab Matrimonio -->
+        <mat-tab label="Matrimonio">
+          <div class="p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">Asignar Matrimonio</h2>
+            
+            <form [formGroup]="formularioMatrimonio" class="space-y-6">
+              <!-- Selección de novio y novia -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Novio *</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput 
+                           [formControl]="controladorFeligresNovio"
+                           placeholder="Buscar o seleccionar novio..."
+                           [matAutocomplete]="autoNovio"
+                           (click)="activarAutocomplete(controladorFeligresNovio)"
+                           (focus)="activarAutocomplete(controladorFeligresNovio)">
+                    <mat-autocomplete #autoNovio="matAutocomplete" 
+                                      (optionSelected)="seleccionarNovio($event.option.value)"
+                                      [displayWith]="displayFeligres">
+                      <mat-option *ngFor="let feligres of feligresesFiltradosNovio | async" 
+                                  [value]="feligres">
+                        <div class="flex items-center justify-between">
+                          <span>{{feligres.primer_nombre}} {{feligres.primer_apellido}}</span>
+                          <span class="text-xs text-gray-500 ml-2">{{feligres.comunidad_nombre}}</span>
+                        </div>
+                      </mat-option>
+                      <mat-option *ngIf="(feligresesFiltradosNovio | async)?.length === 0" disabled>
+                        <span class="text-gray-500">No se encontraron feligreses</span>
+                      </mat-option>
+                    </mat-autocomplete>
+                  </mat-form-field>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Novia *</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput 
+                           [formControl]="controladorFeligresNovia"
+                           placeholder="Buscar o seleccionar novia..."
+                           [matAutocomplete]="autoNovia"
+                           (click)="activarAutocomplete(controladorFeligresNovia)"
+                           (focus)="activarAutocomplete(controladorFeligresNovia)">
+                    <mat-autocomplete #autoNovia="matAutocomplete" 
+                                      (optionSelected)="seleccionarNovia($event.option.value)"
+                                      [displayWith]="displayFeligres">
+                      <mat-option *ngFor="let feligres of feligresesFiltradosNovia | async" 
+                                  [value]="feligres">
+                        <div class="flex items-center justify-between">
+                          <span>{{feligres.primer_nombre}} {{feligres.primer_apellido}}</span>
+                          <span class="text-xs text-gray-500 ml-2">{{feligres.comunidad_nombre}}</span>
+                        </div>
+                      </mat-option>
+                      <mat-option *ngIf="(feligresesFiltradosNovia | async)?.length === 0" disabled>
+                        <span class="text-gray-500">No se encontraron feligreses</span>
+                      </mat-option>
+                    </mat-autocomplete>
+                  </mat-form-field>
+                </div>
+              </div>
+              
+              <!-- Fecha de celebración -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Celebración *</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput 
+                           [matDatepicker]="pickerMatrimonio"
+                           formControlName="fecha_celebracion"
+                           placeholder="Seleccionar fecha">
+                    <mat-datepicker-toggle matSuffix [for]="pickerMatrimonio"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerMatrimonio></mat-datepicker>
+                  </mat-form-field>
+                </div>
+                
+                <div class="flex items-center">
+                  <mat-checkbox formControlName="pagado" class="mr-2">
+                    ¿Ya pagaron el sacramento?
+                  </mat-checkbox>
+                </div>
+              </div>
+              
+              <!-- Comentarios -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Comentarios</label>
+                <mat-form-field appearance="outline" class="w-full">
+                  <textarea matInput 
+                            formControlName="comentarios"
+                            placeholder="Comentarios adicionales..."
+                            rows="3"></textarea>
+                </mat-form-field>
+              </div>
+              
+              <!-- Botones -->
+              <div class="flex justify-end space-x-4">
+                <button type="button" 
+                        (click)="limpiarFormularios()"
+                        class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors">
+                  Limpiar
+                </button>
+                <button type="button" 
+                        (click)="asignarMatrimonio()"
+                        [disabled]="loading || !formularioMatrimonio.valid || !feligresSeleccionadoNovio || !feligresSeleccionadoNovia"
+                        class="bg-pink-600 hover:bg-pink-700 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg transition-colors">
+                  <mat-spinner *ngIf="loading" diameter="20" class="inline mr-2"></mat-spinner>
+                  Asignar Matrimonio
+                </button>
+              </div>
+            </form>
+          </div>
+        </mat-tab>
+        
+        <!-- Tab Lista de Asignaciones -->
+        <mat-tab label="Lista de Asignaciones">
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+              <h2 class="text-xl font-semibold text-gray-900">Asignaciones Existentes</h2>
+              <button (click)="cargarAsignaciones()" 
+                      class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                <mat-icon>refresh</mat-icon>
+                Actualizar
+              </button>
+            </div>
+            
+            <!-- Tabla de asignaciones -->
+            <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+              <table mat-table [dataSource]="dataSource" class="w-full">
+                
+                <!-- Columna ID -->
+                <ng-container matColumnDef="id_asignacion">
+                  <th mat-header-cell *matHeaderCellDef>ID</th>
+                  <td mat-cell *matCellDef="let element">{{element.id_asignacion}}</td>
+                </ng-container>
+                
+                <!-- Columna Sacramento -->
+                <ng-container matColumnDef="sacramento">
+                  <th mat-header-cell *matHeaderCellDef>Sacramento</th>
+                  <td mat-cell *matCellDef="let element">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                          [ngClass]="{
+                            'bg-blue-100 text-blue-800': element.id_sacramento === 1,
+                            'bg-green-100 text-green-800': element.id_sacramento === 3,
+                            'bg-pink-100 text-pink-800': element.id_sacramento === 4
+                          }">
+                      {{obtenerNombreSacramento(element.id_sacramento)}}
+                    </span>
+                  </td>
+                </ng-container>
+                
+                <!-- Columna Participantes -->
+                <ng-container matColumnDef="participantes">
+                  <th mat-header-cell *matHeaderCellDef>Participantes</th>
+                  <td mat-cell *matCellDef="let element">
+                    <div class="space-y-1">
+                      <div *ngIf="element.sacramento_nombre === 'Matrimonio' && element.participantes && element.participantes.length >= 2" 
+                           class="text-sm text-gray-600">
+                        <div class="font-medium text-blue-600">Novio:</div>
+                        <div class="ml-2">{{element.participantes[0]?.nombre_completo || 'No asignado'}}</div>
+                        <div class="font-medium text-pink-600 mt-1">Novia:</div>
+                        <div class="ml-2">{{element.participantes[1]?.nombre_completo || 'No asignado'}}</div>
+                      </div>
+                      <div *ngIf="element.sacramento_nombre !== 'Matrimonio' || !element.participantes || element.participantes.length < 2">
+                        <div *ngFor="let participante of element.participantes" 
+                             class="text-sm text-gray-600">
+                          {{participante?.nombre_completo || 'No asignado'}}
+                        </div>
+                        <div *ngIf="!element.participantes || element.participantes.length === 0" 
+                             class="text-sm text-gray-400 italic">
+                          Sin participantes
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </ng-container>
+                
+                <!-- Columna Fecha -->
+                <ng-container matColumnDef="fecha_celebracion">
+                  <th mat-header-cell *matHeaderCellDef>Fecha de Celebración</th>
+                  <td mat-cell *matCellDef="let element">{{formatearFecha(element.fecha_celebracion)}}</td>
+                </ng-container>
+                
+                <!-- Columna Estado de Pago -->
+                <ng-container matColumnDef="pagado">
+                  <th mat-header-cell *matHeaderCellDef>Estado de Pago</th>
+                  <td mat-cell *matCellDef="let element">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                          [ngClass]="element.pagado ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'">
+                      {{element.pagado ? 'Pagado' : 'Pendiente'}}
+                    </span>
+                  </td>
+                </ng-container>
+                
+                <!-- Columna Acciones -->
+                <ng-container matColumnDef="acciones">
+                  <th mat-header-cell *matHeaderCellDef>Acciones</th>
+                  <td mat-cell *matCellDef="let element">
+                    <button (click)="eliminarAsignacion(element)" 
+                            class="text-red-600 hover:text-red-800 transition-colors"
+                            matTooltip="Eliminar asignación">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </td>
+                </ng-container>
+                
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+                    [class]="'hover:bg-gray-50'"></tr>
+              </table>
+              
+              <!-- Paginador -->
+              <mat-paginator [length]="totalAsignaciones"
+                             [pageSize]="pageSize"
+                             [pageSizeOptions]="[5, 10, 25, 100]"
+                             (page)="onPageChange($event)"
+                             showFirstLastButtons>
+              </mat-paginator>
+              
+              <!-- Mensaje cuando no hay datos -->
+              <div *ngIf="dataSource.data.length === 0 && !loadingAsignaciones" 
+                   class="text-center py-8 text-gray-500">
+                <mat-icon class="text-4xl mb-2">inbox</mat-icon>
+                <p>No hay asignaciones registradas</p>
+              </div>
+              
+              <!-- Loading spinner -->
+              <div *ngIf="loadingAsignaciones" class="text-center py-8">
+                <mat-spinner diameter="40"></mat-spinner>
+                <p class="mt-2 text-gray-500">Cargando asignaciones...</p>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+        
+      </mat-tab-group>
+    </div>
+    
+  </div>
+</div>

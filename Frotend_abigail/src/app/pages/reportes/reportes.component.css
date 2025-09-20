@@ -1,0 +1,24 @@
+/* Estilos mínimos para componentes de Angular Material */
+.success-snackbar {
+  background-color: #10b981 !important;
+  color: white !important;
+}
+
+.error-snackbar {
+  background-color: #ef4444 !important;
+  color: white !important;
+}
+
+.info-snackbar {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}
+
+/* Reducir padding de los campos de formulario en reportes */
+.mat-mdc-form-field-infix {
+  padding: 2px 0 !important;
+}
+
+.mat-mdc-form-field .mat-mdc-form-field-infix {
+  padding: 2px 0 !important;
+}

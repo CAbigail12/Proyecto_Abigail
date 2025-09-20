@@ -11,6 +11,8 @@ const reporteRoutes = require('./routes/reporteRoutes');
 const mantenimientoRoutes = require('./routes/mantenimientoRoutes');
 const feligresRoutes = require('./routes/feligresRoutes');
 const cajaRoutes = require('./routes/cajaRoutes');
+const sacramentoAsignacionRoutes = require('./routes/sacramentoAsignacionRoutes');
+const actividadReligiosaRoutes = require('./routes/actividadReligiosaRoutes');
 
 const app = express();
 
@@ -66,6 +68,8 @@ app.use('/api/reportes', reporteRoutes);
 app.use('/api/mantenimiento', mantenimientoRoutes);
 app.use('/api/feligreses', feligresRoutes);
 app.use('/api/caja', cajaRoutes);
+app.use('/api/sacramentos', sacramentoAsignacionRoutes);
+app.use('/api/actividades-religiosas', actividadReligiosaRoutes);
 
 // Middleware para rutas no encontradas
 app.use('*', (req, res) => {
