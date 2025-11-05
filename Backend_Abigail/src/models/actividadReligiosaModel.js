@@ -5,22 +5,13 @@ class ActividadReligiosaModel {
   // MÉTODOS PARA ACTIVIDADES RELIGIOSAS
   // ========================================
 
-  // Obtener todas las actividades con paginación
+  // Obtener todas las actividades (sin filtros ni paginación - se aplican en el frontend)
   static async obtenerTodas(filtros = {}) {
     const cliente = await pool.connect();
     try {
-      const {
-        pagina = 1,
-        limite = 10,
-        busqueda = '',
-        fecha_desde = '',
-        fecha_hasta = '',
-        id_tipo_actividad = '',
-        activo = true
-      } = filtros;
-
-      const offset = (pagina - 1) * limite;
-      let query = `
+      // El backend siempre devuelve TODAS las actividades activas
+      // Los filtros y paginación se aplican en el frontend
+      const query = `
         SELECT 
           ar.id_actividad,
           ar.id_tipo_actividad,
@@ -36,89 +27,19 @@ class ActividadReligiosaModel {
           cta.descripcion as tipo_actividad_descripcion
         FROM actividad_religiosa ar
         INNER JOIN cat_tipo_actividad cta ON ar.id_tipo_actividad = cta.id_tipo_actividad
-        WHERE ar.activo = $1
+        WHERE ar.activo = true
+        ORDER BY ar.fecha_actividad DESC, ar.hora_actividad ASC
       `;
 
-      const params = [activo];
-      let paramCount = 1;
-
-      // Filtro de búsqueda
-      if (busqueda) {
-        paramCount++;
-        query += ` AND (ar.nombre ILIKE $${paramCount} OR ar.descripcion ILIKE $${paramCount} OR cta.nombre ILIKE $${paramCount})`;
-        params.push(`%${busqueda}%`);
-      }
-
-      // Filtro por tipo de actividad
-      if (id_tipo_actividad) {
-        paramCount++;
-        query += ` AND ar.id_tipo_actividad = $${paramCount}`;
-        params.push(id_tipo_actividad);
-      }
-
-      // Filtro por fecha desde
-      if (fecha_desde) {
-        paramCount++;
-        query += ` AND ar.fecha_actividad >= $${paramCount}`;
-        params.push(fecha_desde);
-      }
-
-      // Filtro por fecha hasta
-      if (fecha_hasta) {
-        paramCount++;
-        query += ` AND ar.fecha_actividad <= $${paramCount}`;
-        params.push(fecha_hasta);
-      }
-
-      query += ` ORDER BY ar.fecha_actividad DESC, ar.hora_actividad ASC LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
-      params.push(limite, offset);
-
-      const resultado = await cliente.query(query, params);
-
-      // Contar total de registros
-      let countQuery = `
-        SELECT COUNT(*) as total
-        FROM actividad_religiosa ar
-        INNER JOIN cat_tipo_actividad cta ON ar.id_tipo_actividad = cta.id_tipo_actividad
-        WHERE ar.activo = $1
-      `;
-
-      const countParams = [activo];
-      let countParamCount = 1;
-
-      if (busqueda) {
-        countParamCount++;
-        countQuery += ` AND (ar.nombre ILIKE $${countParamCount} OR ar.descripcion ILIKE $${countParamCount} OR cta.nombre ILIKE $${countParamCount})`;
-        countParams.push(`%${busqueda}%`);
-      }
-
-      if (id_tipo_actividad) {
-        countParamCount++;
-        countQuery += ` AND ar.id_tipo_actividad = $${countParamCount}`;
-        countParams.push(id_tipo_actividad);
-      }
-
-      if (fecha_desde) {
-        countParamCount++;
-        countQuery += ` AND ar.fecha_actividad >= $${countParamCount}`;
-        countParams.push(fecha_desde);
-      }
-
-      if (fecha_hasta) {
-        countParamCount++;
-        countQuery += ` AND ar.fecha_actividad <= $${countParamCount}`;
-        countParams.push(fecha_hasta);
-      }
-
-      const countResult = await cliente.query(countQuery, countParams);
-      const total = parseInt(countResult.rows[0].total);
+      const resultado = await cliente.query(query);
+      const total = resultado.rows.length;
 
       return {
         actividades: resultado.rows,
         total,
-        pagina: parseInt(pagina),
-        limite: parseInt(limite),
-        totalPaginas: Math.ceil(total / limite)
+        pagina: 1,
+        limite: total,
+        totalPaginas: 1
       };
     } finally {
       cliente.release();

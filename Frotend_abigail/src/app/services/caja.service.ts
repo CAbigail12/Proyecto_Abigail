@@ -98,18 +98,10 @@ export class CajaService {
     return this.http.post(`${this.apiUrl}/movimientos`, movimiento);
   }
 
-  // Obtener todos los movimientos con filtros y paginación
-  obtenerMovimientos(filtros: FiltrosMovimientos = {}): Observable<any> {
-    let params = new HttpParams();
-    
-    Object.keys(filtros).forEach(key => {
-      const value = filtros[key as keyof FiltrosMovimientos];
-      if (value !== undefined && value !== null) {
-        params = params.set(key, value.toString());
-      }
-    });
-
-    return this.http.get(`${this.apiUrl}/movimientos`, { params });
+  // Obtener todos los movimientos (sin filtros ni paginación - se aplican en el frontend)
+  obtenerMovimientos(): Observable<any> {
+    // El backend siempre devuelve todos los movimientos
+    return this.http.get(`${this.apiUrl}/movimientos`);
   }
 
   // Obtener movimiento por ID

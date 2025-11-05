@@ -219,7 +219,7 @@
 
             <!-- Lista de Ingresos -->
             <div>
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">Ingresos ({{ ingresos.length }} registros)</h3>
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">Ingresos ({{ ingresosPaginados.length }} de {{ totalIngresos }} registros)</h3>
               <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                   <thead class="bg-gray-50">
@@ -232,7 +232,7 @@
                     </tr>
                   </thead>
                   <tbody class="bg-white divide-y divide-gray-200">
-                    <tr *ngFor="let movimiento of ingresos">
+                    <tr *ngFor="let movimiento of ingresosPaginados">
                       <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {{ formatearFecha(movimiento.fecha_hora) }}
                       </td>
@@ -252,6 +252,8 @@
                   </tbody>
                 </table>
               </div>
+              <mat-paginator #paginatorIngresos [pageSize]="pageSizeIngresos" [pageSizeOptions]="[5, 10, 25, 50, 100]"
+                (page)="onPageChangeIngresos($event)" showFirstLastButtons class="bg-transparent mt-4"></mat-paginator>
             </div>
           </div>
         </mat-tab>
@@ -415,7 +417,7 @@
 
             <!-- Lista de Egresos -->
             <div>
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">Egresos ({{ egresos.length }} registros)</h3>
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">Egresos ({{ egresosPaginados.length }} de {{ totalEgresos }} registros)</h3>
               <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                   <thead class="bg-gray-50">
@@ -428,7 +430,7 @@
                     </tr>
                   </thead>
                   <tbody class="bg-white divide-y divide-gray-200">
-                    <tr *ngFor="let movimiento of egresos">
+                    <tr *ngFor="let movimiento of egresosPaginados">
                       <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {{ formatearFecha(movimiento.fecha_hora) }}
                       </td>
@@ -448,6 +450,8 @@
                   </tbody>
                 </table>
               </div>
+              <mat-paginator #paginatorEgresos [pageSize]="pageSizeEgresos" [pageSizeOptions]="[5, 10, 25, 50, 100]"
+                (page)="onPageChangeEgresos($event)" showFirstLastButtons class="bg-transparent mt-4"></mat-paginator>
             </div>
           </div>
         </mat-tab>
@@ -552,7 +556,7 @@
 
             <!-- Movimientos Recientes -->
             <div>
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">Movimientos Recientes ({{ movimientosRecientes.length }} registros)</h3>
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">Movimientos Recientes ({{ movimientosRecientesPaginados.length }} de {{ totalMovimientos }} registros)</h3>
               <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                   <thead class="bg-gray-50">
@@ -565,7 +569,7 @@
                     </tr>
                   </thead>
                   <tbody class="bg-white divide-y divide-gray-200">
-                    <tr *ngFor="let movimiento of movimientosRecientes">
+                    <tr *ngFor="let movimiento of movimientosRecientesPaginados">
                       <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {{ formatearFecha(movimiento.fecha_hora) }}
                       </td>
@@ -591,6 +595,8 @@
                   </tbody>
                 </table>
               </div>
+              <mat-paginator #paginatorBalance [pageSize]="pageSizeBalance" [pageSizeOptions]="[5, 10, 25, 50, 100]"
+                (page)="onPageChangeBalance($event)" showFirstLastButtons class="bg-transparent mt-4"></mat-paginator>
             </div>
           </div>
         </mat-tab>

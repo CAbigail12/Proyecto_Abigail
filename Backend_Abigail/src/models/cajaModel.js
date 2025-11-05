@@ -55,11 +55,13 @@ class CajaModel {
     }
   }
 
-  // Obtener todos los movimientos con paginación y filtros
+  // Obtener todos los movimientos (sin filtros ni paginación - se aplican en el frontend)
   static async obtenerTodos(filtros = {}, paginacion = {}) {
     const cliente = await pool.connect();
     try {
-      let consulta = `
+      // El backend siempre devuelve TODOS los movimientos
+      // Los filtros y paginación se aplican en el frontend
+      const consulta = `
         SELECT cm.id_mov, cm.fecha_hora, cm.naturaleza, cm.monto, cm.monto_signed, cm.cuenta, cm.medio_pago, 
                cm.concepto, cm.referencia, cm.descripcion, cm.id_feligres, cm.creado_por, cm.created_at,
                CONCAT(f.primer_nombre, ' ', f.primer_apellido) as feligres_nombre,
@@ -67,72 +69,14 @@ class CajaModel {
         FROM caja_mov cm
         LEFT JOIN feligres f ON cm.id_feligres = f.id_feligres
         LEFT JOIN usuarios u ON cm.creado_por = u.id_usuario
-        WHERE 1=1
+        ORDER BY cm.fecha_hora DESC, cm.id_mov DESC
       `;
       
-      const parametros = [];
-      let contadorParametros = 1;
-      
-      // Aplicar filtros
-      if (filtros.naturaleza) {
-        consulta += ` AND cm.naturaleza = $${contadorParametros}`;
-        parametros.push(filtros.naturaleza);
-        contadorParametros++;
-      }
-      
-      if (filtros.cuenta) {
-        consulta += ` AND cm.cuenta = $${contadorParametros}`;
-        parametros.push(filtros.cuenta);
-        contadorParametros++;
-      }
-      
-      if (filtros.concepto) {
-        consulta += ` AND LOWER(cm.concepto) LIKE $${contadorParametros}`;
-        parametros.push(`%${filtros.concepto.toLowerCase()}%`);
-        contadorParametros++;
-      }
-      
-      if (filtros.fecha_desde) {
-        consulta += ` AND cm.fecha_hora >= $${contadorParametros}`;
-        parametros.push(filtros.fecha_desde);
-        contadorParametros++;
-      }
-      
-      if (filtros.fecha_hasta) {
-        consulta += ` AND cm.fecha_hora <= $${contadorParametros}`;
-        parametros.push(filtros.fecha_hasta);
-        contadorParametros++;
-      }
-      
-      if (filtros.id_feligres) {
-        consulta += ` AND cm.id_feligres = $${contadorParametros}`;
-        parametros.push(filtros.id_feligres);
-        contadorParametros++;
-      }
-      
-      // Contar total de registros
-      const consultaCount = consulta.replace(/SELECT.*FROM/, 'SELECT COUNT(*) FROM');
-      const resultadoCount = await cliente.query(consultaCount, parametros);
-      const total = parseInt(resultadoCount.rows[0].count);
-      
-      // Aplicar paginación
-      consulta += ` ORDER BY cm.fecha_hora DESC, cm.id_mov DESC`;
-      if (paginacion.limite) {
-        consulta += ` LIMIT $${contadorParametros}`;
-        parametros.push(paginacion.limite);
-        contadorParametros++;
-      }
-      
-      if (paginacion.offset) {
-        consulta += ` OFFSET $${contadorParametros}`;
-        parametros.push(paginacion.offset);
-      }
-      
-      const resultado = await cliente.query(consulta, parametros);
+      const resultado = await cliente.query(consulta);
       
       return {
         movimientos: resultado.rows,
-        total
+        total: resultado.rows.length
       };
     } finally {
       cliente.release();

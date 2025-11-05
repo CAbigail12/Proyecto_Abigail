@@ -30,7 +30,7 @@ export class FeligresService {
     if (filtros.activo !== undefined && filtros.activo !== null && filtros.activo !== '') {
       params = params.set('activo', filtros.activo.toString());
     }
-    if (filtros.id_comunidad !== undefined && filtros.id_comunidad !== null && filtros.id_comunidad !== '') {
+    if (filtros.id_comunidad !== undefined && filtros.id_comunidad !== null) {
       params = params.set('id_comunidad', filtros.id_comunidad.toString());
     }
     if (filtros.sexo && filtros.sexo.trim() !== '') {

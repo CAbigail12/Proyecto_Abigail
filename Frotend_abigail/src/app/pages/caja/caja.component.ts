@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
@@ -31,25 +32,44 @@ import { AuthService } from '../../services/auth.service';
     MatButtonModule, 
     MatSelectModule, 
     MatDatepickerModule, 
-    MatNativeDateModule
+    MatNativeDateModule,
+    MatPaginatorModule
   ],
   templateUrl: './caja.component.html',
   styleUrls: ['./caja.component.css']
 })
-export class CajaComponent implements OnInit, OnDestroy {
+export class CajaComponent implements OnInit, AfterViewInit, OnDestroy {
   private destroy$ = new Subject<void>();
+
+  @ViewChild('paginatorIngresos') paginatorIngresos!: MatPaginator;
+  @ViewChild('paginatorEgresos') paginatorEgresos!: MatPaginator;
+  @ViewChild('paginatorBalance') paginatorBalance!: MatPaginator;
 
   // Estados del componente
   cargando = false;
   tabSeleccionado = 0;
 
-  // Datos
+  // Datos originales (todos los movimientos)
+  todosLosMovimientos: MovimientoCaja[] = [];
+  
+  // Datos filtrados y paginados
   balanceGlobal: BalanceGlobal | null = null;
   balancesPorCuenta: BalancePorCuenta[] = [];
   movimientosRecientes: MovimientoCaja[] = [];
+  movimientosRecientesPaginados: MovimientoCaja[] = [];
   ingresos: MovimientoCaja[] = [];
+  ingresosPaginados: MovimientoCaja[] = [];
   egresos: MovimientoCaja[] = [];
+  egresosPaginados: MovimientoCaja[] = [];
   feligreses: Feligres[] = [];
+
+  // Paginación
+  pageSizeIngresos = 10;
+  pageSizeEgresos = 10;
+  pageSizeBalance = 10;
+  totalIngresos = 0;
+  totalEgresos = 0;
+  totalMovimientos = 0;
 
   // Filtros y búsquedas
   filtrosIngresos = {
@@ -93,13 +113,34 @@ export class CajaComponent implements OnInit, OnDestroy {
     private feligresService: FeligresService,
     private authService: AuthService,
     private fb: FormBuilder,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private cdr: ChangeDetectorRef
   ) {
     this.inicializarFormularios();
   }
 
   ngOnInit(): void {
     this.cargarDatosIniciales();
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      if (this.paginatorIngresos) {
+        this.paginatorIngresos.pageSize = this.pageSizeIngresos;
+        this.paginatorIngresos.length = this.totalIngresos;
+        this.actualizarDatosPaginadosIngresos();
+      }
+      if (this.paginatorEgresos) {
+        this.paginatorEgresos.pageSize = this.pageSizeEgresos;
+        this.paginatorEgresos.length = this.totalEgresos;
+        this.actualizarDatosPaginadosEgresos();
+      }
+      if (this.paginatorBalance) {
+        this.paginatorBalance.pageSize = this.pageSizeBalance;
+        this.paginatorBalance.length = this.totalMovimientos;
+        this.actualizarDatosPaginadosBalance();
+      }
+    }, 0);
   }
 
   ngOnDestroy(): void {
@@ -132,11 +173,45 @@ export class CajaComponent implements OnInit, OnDestroy {
   private cargarDatosIniciales(): void {
     this.cargarBalanceGlobal();
     this.cargarBalancePorCuenta();
-    this.cargarMovimientosRecientes();
-    this.cargarIngresos();
-    this.cargarEgresos();
+    this.cargarTodosLosMovimientos();
     this.cargarFeligreses();
     this.cargarOpcionesSelects();
+  }
+
+  private cargarTodosLosMovimientos(): void {
+    this.cajaService.obtenerMovimientos()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.ok) {
+            this.todosLosMovimientos = response.datos.datos || [];
+            this.aplicarFiltrosYActualizar();
+            // Asegurar que los paginadores se actualicen después de cargar los datos
+            setTimeout(() => {
+              this.actualizarPaginadores();
+            }, 100);
+          }
+        },
+        error: (error) => {
+          console.error('Error al cargar movimientos:', error);
+          this.mostrarError('Error al cargar los movimientos');
+        }
+      });
+  }
+
+  private actualizarPaginadores(): void {
+    if (this.paginatorIngresos) {
+      this.paginatorIngresos.length = this.totalIngresos;
+      this.actualizarDatosPaginadosIngresos();
+    }
+    if (this.paginatorEgresos) {
+      this.paginatorEgresos.length = this.totalEgresos;
+      this.actualizarDatosPaginadosEgresos();
+    }
+    if (this.paginatorBalance) {
+      this.paginatorBalance.length = this.totalMovimientos;
+      this.actualizarDatosPaginadosBalance();
+    }
   }
 
   private cargarBalanceGlobal(): void {
@@ -171,52 +246,152 @@ export class CajaComponent implements OnInit, OnDestroy {
       });
   }
 
-  private cargarMovimientosRecientes(): void {
-    this.cajaService.obtenerMovimientos({ limite: 10 })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          if (response.ok) {
-            this.movimientosRecientes = response.datos.datos;
-          }
-        },
-        error: (error) => {
-          console.error('Error al cargar movimientos recientes:', error);
-          this.mostrarError('Error al cargar los movimientos recientes');
-        }
-      });
+  // Método para aplicar filtros localmente y actualizar las listas
+  aplicarFiltrosYActualizar(): void {
+    // Filtrar movimientos recientes (todos)
+    this.movimientosRecientes = this.aplicarFiltrosLocales(this.todosLosMovimientos, this.filtrosBalance);
+    this.totalMovimientos = this.movimientosRecientes.length;
+    // Inicializar datos paginados directamente
+    this.movimientosRecientesPaginados = this.movimientosRecientes.slice(0, this.pageSizeBalance);
+    
+    // Filtrar ingresos
+    const ingresosFiltrados = this.todosLosMovimientos.filter(m => m.naturaleza === 'ingreso');
+    this.ingresos = this.aplicarFiltrosLocales(ingresosFiltrados, this.filtrosIngresos);
+    this.totalIngresos = this.ingresos.length;
+    // Inicializar datos paginados directamente
+    this.ingresosPaginados = this.ingresos.slice(0, this.pageSizeIngresos);
+    
+    // Filtrar egresos
+    const egresosFiltrados = this.todosLosMovimientos.filter(m => m.naturaleza === 'egreso');
+    this.egresos = this.aplicarFiltrosLocales(egresosFiltrados, this.filtrosEgresos);
+    this.totalEgresos = this.egresos.length;
+    // Inicializar datos paginados directamente
+    this.egresosPaginados = this.egresos.slice(0, this.pageSizeEgresos);
+    
+    // Actualizar paginadores y datos paginados
+    setTimeout(() => {
+      this.actualizarPaginadores();
+    }, 0);
   }
 
-  private cargarIngresos(): void {
-    this.cajaService.obtenerMovimientos({ naturaleza: 'ingreso', limite: 10 })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          if (response.ok) {
-            this.ingresos = response.datos.datos;
-          }
-        },
-        error: (error) => {
-          console.error('Error al cargar ingresos:', error);
-          this.mostrarError('Error al cargar los ingresos');
-        }
-      });
+  // Método genérico para aplicar filtros locales
+  aplicarFiltrosLocales(movimientos: MovimientoCaja[], filtros: any): MovimientoCaja[] {
+    let resultado = [...movimientos];
+
+    if (filtros.concepto && filtros.concepto.trim() !== '') {
+      const concepto = filtros.concepto.toLowerCase().trim();
+      resultado = resultado.filter(m => m.concepto.toLowerCase().includes(concepto));
+    }
+
+    if (filtros.cuenta && filtros.cuenta !== '') {
+      resultado = resultado.filter(m => m.cuenta === filtros.cuenta);
+    }
+
+    if (filtros.medio_pago && filtros.medio_pago !== '') {
+      resultado = resultado.filter(m => m.medio_pago === filtros.medio_pago);
+    }
+
+    if (filtros.fecha_desde) {
+      const fechaDesde = new Date(filtros.fecha_desde);
+      resultado = resultado.filter(m => new Date(m.fecha_hora) >= fechaDesde);
+    }
+
+    if (filtros.fecha_hasta) {
+      const fechaHasta = new Date(filtros.fecha_hasta);
+      fechaHasta.setHours(23, 59, 59, 999);
+      resultado = resultado.filter(m => new Date(m.fecha_hora) <= fechaHasta);
+    }
+
+    if (filtros.naturaleza && filtros.naturaleza !== '') {
+      resultado = resultado.filter(m => m.naturaleza === filtros.naturaleza);
+    }
+
+    if (filtros.feligres && filtros.feligres !== '') {
+      const feligresBusqueda = filtros.feligres.toLowerCase().trim();
+      resultado = resultado.filter(m => 
+        m.feligres_nombre?.toLowerCase().includes(feligresBusqueda)
+      );
+    }
+
+    if (filtros.id_feligres) {
+      resultado = resultado.filter(m => m.id_feligres === parseInt(filtros.id_feligres));
+    }
+
+    return resultado;
   }
 
-  private cargarEgresos(): void {
-    this.cajaService.obtenerMovimientos({ naturaleza: 'egreso', limite: 10 })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          if (response.ok) {
-            this.egresos = response.datos.datos;
-          }
-        },
-        error: (error) => {
-          console.error('Error al cargar egresos:', error);
-          this.mostrarError('Error al cargar los egresos');
-        }
-      });
+  // Métodos para actualizar datos paginados
+  actualizarDatosPaginadosIngresos(): void {
+    if (!this.paginatorIngresos) {
+      this.ingresosPaginados = this.ingresos.slice(0, this.pageSizeIngresos);
+      return;
+    }
+    // Asegurar que el pageIndex no sea mayor que el número de páginas
+    const maxPageIndex = Math.max(0, Math.ceil(this.totalIngresos / this.paginatorIngresos.pageSize) - 1);
+    if (this.paginatorIngresos.pageIndex > maxPageIndex) {
+      this.paginatorIngresos.pageIndex = 0;
+    }
+    const startIndex = this.paginatorIngresos.pageIndex * this.paginatorIngresos.pageSize;
+    const endIndex = startIndex + this.paginatorIngresos.pageSize;
+    this.ingresosPaginados = this.ingresos.slice(startIndex, endIndex);
+  }
+
+  actualizarDatosPaginadosEgresos(): void {
+    if (!this.paginatorEgresos) {
+      this.egresosPaginados = this.egresos.slice(0, this.pageSizeEgresos);
+      return;
+    }
+    // Asegurar que el pageIndex no sea mayor que el número de páginas
+    const maxPageIndex = Math.max(0, Math.ceil(this.totalEgresos / this.paginatorEgresos.pageSize) - 1);
+    if (this.paginatorEgresos.pageIndex > maxPageIndex) {
+      this.paginatorEgresos.pageIndex = 0;
+    }
+    const startIndex = this.paginatorEgresos.pageIndex * this.paginatorEgresos.pageSize;
+    const endIndex = startIndex + this.paginatorEgresos.pageSize;
+    this.egresosPaginados = this.egresos.slice(startIndex, endIndex);
+  }
+
+  actualizarDatosPaginadosBalance(): void {
+    if (!this.paginatorBalance) {
+      this.movimientosRecientesPaginados = this.movimientosRecientes.slice(0, this.pageSizeBalance);
+      return;
+    }
+    // Asegurar que el pageIndex no sea mayor que el número de páginas
+    const maxPageIndex = Math.max(0, Math.ceil(this.totalMovimientos / this.paginatorBalance.pageSize) - 1);
+    if (this.paginatorBalance.pageIndex > maxPageIndex) {
+      this.paginatorBalance.pageIndex = 0;
+    }
+    const startIndex = this.paginatorBalance.pageIndex * this.paginatorBalance.pageSize;
+    const endIndex = startIndex + this.paginatorBalance.pageSize;
+    this.movimientosRecientesPaginados = this.movimientosRecientes.slice(startIndex, endIndex);
+  }
+
+  // Handlers de paginación
+  onPageChangeIngresos(event: any): void {
+    this.pageSizeIngresos = event.pageSize;
+    if (this.paginatorIngresos) {
+      this.paginatorIngresos.length = this.totalIngresos;
+    }
+    this.actualizarDatosPaginadosIngresos();
+    this.cdr.detectChanges();
+  }
+
+  onPageChangeEgresos(event: any): void {
+    this.pageSizeEgresos = event.pageSize;
+    if (this.paginatorEgresos) {
+      this.paginatorEgresos.length = this.totalEgresos;
+    }
+    this.actualizarDatosPaginadosEgresos();
+    this.cdr.detectChanges();
+  }
+
+  onPageChangeBalance(event: any): void {
+    this.pageSizeBalance = event.pageSize;
+    if (this.paginatorBalance) {
+      this.paginatorBalance.length = this.totalMovimientos;
+    }
+    this.actualizarDatosPaginadosBalance();
+    this.cdr.detectChanges();
   }
 
   private cargarFeligreses(): void {
@@ -224,7 +399,7 @@ export class CajaComponent implements OnInit, OnDestroy {
     const token = this.authService.getToken();
     console.log('🔐 Token disponible:', token ? 'Sí' : 'No');
     
-    this.feligresService.obtenerFeligreses({ activo: 'true', limite: 100 })
+    this.feligresService.obtenerFeligreses()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
@@ -320,19 +495,11 @@ export class CajaComponent implements OnInit, OnDestroy {
   onTabChange(index: number): void {
     this.tabSeleccionado = index;
     
-    // Recargar datos específicos según el tab
-    switch (index) {
-      case 0: // Ingresos
-        this.cargarIngresos();
-        break;
-      case 1: // Egresos
-        this.cargarEgresos();
-        break;
-      case 2: // Balance
-        this.cargarBalancePorCuenta();
-        this.cargarMovimientosRecientes();
-        break;
+    // Los datos ya están cargados, solo actualizar paginación
+    if (index === 2) { // Balance
+      this.cargarBalancePorCuenta();
     }
+    // Los datos ya están disponibles desde todosLosMovimientos
   }
 
   private marcarCamposComoTocados(formulario: FormGroup): void {
@@ -383,83 +550,24 @@ export class CajaComponent implements OnInit, OnDestroy {
 
   // Métodos de búsqueda y filtrado
   buscarIngresos(): void {
-    const filtros: any = {};
-    if (this.filtrosIngresos.concepto) filtros.concepto = this.filtrosIngresos.concepto;
-    if (this.filtrosIngresos.cuenta) filtros.cuenta = this.filtrosIngresos.cuenta;
-    if (this.filtrosIngresos.medio_pago) filtros.medio_pago = this.filtrosIngresos.medio_pago;
-    if (this.filtrosIngresos.fecha_desde) filtros.fecha_desde = this.filtrosIngresos.fecha_desde;
-    if (this.filtrosIngresos.fecha_hasta) filtros.fecha_hasta = this.filtrosIngresos.fecha_hasta;
-    if (this.filtrosIngresos.feligres) filtros.id_feligres = this.filtrosIngresos.feligres;
-    
-    filtros.naturaleza = 'ingreso';
-    filtros.limite = 100;
-
-    this.cajaService.obtenerMovimientos(filtros)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          if (response.ok) {
-            this.ingresos = response.datos.datos;
-          }
-        },
-        error: (error) => {
-          console.error('Error al buscar ingresos:', error);
-          this.mostrarError('Error al buscar ingresos');
-        }
-      });
+    if (this.paginatorIngresos) {
+      this.paginatorIngresos.pageIndex = 0;
+    }
+    this.aplicarFiltrosYActualizar();
   }
 
   buscarEgresos(): void {
-    const filtros: any = {};
-    if (this.filtrosEgresos.concepto) filtros.concepto = this.filtrosEgresos.concepto;
-    if (this.filtrosEgresos.cuenta) filtros.cuenta = this.filtrosEgresos.cuenta;
-    if (this.filtrosEgresos.medio_pago) filtros.medio_pago = this.filtrosEgresos.medio_pago;
-    if (this.filtrosEgresos.fecha_desde) filtros.fecha_desde = this.filtrosEgresos.fecha_desde;
-    if (this.filtrosEgresos.fecha_hasta) filtros.fecha_hasta = this.filtrosEgresos.fecha_hasta;
-    if (this.filtrosEgresos.feligres) filtros.id_feligres = this.filtrosEgresos.feligres;
-    
-    filtros.naturaleza = 'egreso';
-    filtros.limite = 100;
-
-    this.cajaService.obtenerMovimientos(filtros)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          if (response.ok) {
-            this.egresos = response.datos.datos;
-          }
-        },
-        error: (error) => {
-          console.error('Error al buscar egresos:', error);
-          this.mostrarError('Error al buscar egresos');
-        }
-      });
+    if (this.paginatorEgresos) {
+      this.paginatorEgresos.pageIndex = 0;
+    }
+    this.aplicarFiltrosYActualizar();
   }
 
   buscarMovimientosBalance(): void {
-    const filtros: any = {};
-    if (this.filtrosBalance.concepto) filtros.concepto = this.filtrosBalance.concepto;
-    if (this.filtrosBalance.cuenta) filtros.cuenta = this.filtrosBalance.cuenta;
-    if (this.filtrosBalance.naturaleza) filtros.naturaleza = this.filtrosBalance.naturaleza;
-    if (this.filtrosBalance.fecha_desde) filtros.fecha_desde = this.filtrosBalance.fecha_desde;
-    if (this.filtrosBalance.fecha_hasta) filtros.fecha_hasta = this.filtrosBalance.fecha_hasta;
-    if (this.filtrosBalance.feligres) filtros.id_feligres = this.filtrosBalance.feligres;
-    
-    filtros.limite = 100;
-
-    this.cajaService.obtenerMovimientos(filtros)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          if (response.ok) {
-            this.movimientosRecientes = response.datos.datos;
-          }
-        },
-        error: (error) => {
-          console.error('Error al buscar movimientos:', error);
-          this.mostrarError('Error al buscar movimientos');
-        }
-      });
+    if (this.paginatorBalance) {
+      this.paginatorBalance.pageIndex = 0;
+    }
+    this.aplicarFiltrosYActualizar();
   }
 
   limpiarFiltrosIngresos(): void {
@@ -471,7 +579,10 @@ export class CajaComponent implements OnInit, OnDestroy {
       fecha_hasta: '',
       feligres: ''
     };
-    this.cargarIngresos();
+    if (this.paginatorIngresos) {
+      this.paginatorIngresos.pageIndex = 0;
+    }
+    this.aplicarFiltrosYActualizar();
   }
 
   limpiarFiltrosEgresos(): void {
@@ -483,7 +594,10 @@ export class CajaComponent implements OnInit, OnDestroy {
       fecha_hasta: '',
       feligres: ''
     };
-    this.cargarEgresos();
+    if (this.paginatorEgresos) {
+      this.paginatorEgresos.pageIndex = 0;
+    }
+    this.aplicarFiltrosYActualizar();
   }
 
   limpiarFiltrosBalance(): void {
@@ -495,7 +609,10 @@ export class CajaComponent implements OnInit, OnDestroy {
       fecha_hasta: '',
       feligres: ''
     };
-    this.cargarMovimientosRecientes();
+    if (this.paginatorBalance) {
+      this.paginatorBalance.pageIndex = 0;
+    }
+    this.aplicarFiltrosYActualizar();
   }
 
   // Métodos de exportación

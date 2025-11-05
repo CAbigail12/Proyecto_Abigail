@@ -258,12 +258,6 @@ export class UsuariosComponent implements OnInit {
     this.aplicarFiltros();
   }
 
-  onPageChange(event: any): void {
-    this.currentPage = event.pageIndex + 1;
-    this.pageSize = event.pageSize;
-    this.cargarUsuarios();
-  }
-
   abrirDialogoUsuario(usuario?: Usuario): void {
     this.editMode = !!usuario;
     this.selectedUsuario = usuario || null;

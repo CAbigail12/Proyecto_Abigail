@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Component, OnInit, AfterViewInit, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
@@ -11,6 +11,9 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
+import { MatTableModule, MatTableDataSource } from '@angular/material/table';
+import { MatSortModule, MatSort } from '@angular/material/sort';
 import { ActividadReligiosaService } from '../../services/actividad-religiosa.service';
 import {
   ActividadReligiosa,
@@ -29,6 +32,7 @@ import {
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     MatIconModule,
     MatButtonModule,
     MatFormFieldModule,
@@ -36,10 +40,16 @@ import {
     MatSelectModule,
     MatCardModule,
     MatProgressSpinnerModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatPaginatorModule,
+    MatTableModule,
+    MatSortModule
   ]
 })
-export class ActividadesReligiosasComponent implements OnInit {
+export class ActividadesReligiosasComponent implements OnInit, AfterViewInit {
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatSort) sort!: MatSort;
+
   // Propiedades para el template
   Math = Math;
   
@@ -50,7 +60,10 @@ export class ActividadesReligiosasComponent implements OnInit {
   guardando = false;
 
   // Datos
+  dataSource = new MatTableDataSource<ActividadReligiosa>();
   actividades: ActividadReligiosa[] = [];
+  actividadesPaginadas: ActividadReligiosa[] = [];
+  todosLosDatos: ActividadReligiosa[] = [];
   tiposActividad: TipoActividad[] = [];
   estadisticas: EstadisticasActividades | null = null;
   actividadSeleccionada: ActividadReligiosa | null = null;
@@ -61,20 +74,16 @@ export class ActividadesReligiosasComponent implements OnInit {
   formularioFiltros!: FormGroup;
 
   // Paginación
-  paginaActual = 1;
-  limitePorPagina = 10;
+  pageSize = 10;
   totalActividades = 0;
-  totalPaginas = 0;
 
   // Modales
   mostrarModalActividad = false;
   mostrarModalTipo = false;
   modoEdicion = false;
 
-  // Filtros
-  filtros: FiltrosActividad = {
-    pagina: 1,
-    limite: 10,
+  // Filtros (id_tipo_actividad puede ser number, string o undefined cuando viene del formulario)
+  filtros: FiltrosActividad & { id_tipo_actividad?: number | string | undefined } = {
     busqueda: '',
     fecha_desde: '',
     fecha_hasta: '',
@@ -86,13 +95,26 @@ export class ActividadesReligiosasComponent implements OnInit {
     private actividadService: ActividadReligiosaService,
     private fb: FormBuilder,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private cdr: ChangeDetectorRef
   ) {
     this.inicializarFormularios();
   }
 
   ngOnInit(): void {
     this.cargarDatos();
+  }
+
+  ngAfterViewInit(): void {
+    this.dataSource.sort = this.sort;
+    setTimeout(() => {
+      if (this.paginator) {
+        this.dataSource.paginator = this.paginator;
+        this.paginator.pageSize = this.pageSize;
+        this.paginator.length = this.totalActividades;
+        this.actualizarDatosPaginados();
+      }
+    }, 0);
   }
 
   // ========================================
@@ -135,13 +157,43 @@ export class ActividadesReligiosasComponent implements OnInit {
   cargarActividades(): void {
     this.cargandoActividades = true;
     
-    this.actividadService.obtenerActividades(this.filtros).subscribe({
+    // Obtener TODAS las actividades sin filtros del backend
+    this.actividadService.obtenerActividades().subscribe({
       next: (response) => {
         if (response.ok) {
-          this.actividades = response.datos.actividades;
-          this.totalActividades = response.datos.total;
-          this.totalPaginas = response.datos.totalPaginas;
-          this.paginaActual = response.datos.pagina;
+          // Obtener todos los datos
+          let todosLosDatos: ActividadReligiosa[] = [];
+          if (response.datos.actividades && Array.isArray(response.datos.actividades)) {
+            todosLosDatos = response.datos.actividades;
+          } else if (Array.isArray(response.datos)) {
+            todosLosDatos = response.datos;
+          }
+          
+          // Guardar todos los datos originales
+          this.todosLosDatos = todosLosDatos;
+          
+          // Aplicar filtros localmente en el frontend
+          let datosFiltrados = this.aplicarFiltrosLocales(todosLosDatos);
+          
+          // Asignar los datos filtrados al dataSource
+          this.dataSource.data = datosFiltrados;
+          this.actividades = datosFiltrados;
+          this.totalActividades = datosFiltrados.length;
+          
+          // Inicializar datos paginados directamente
+          this.actividadesPaginadas = datosFiltrados.slice(0, this.pageSize);
+          
+          // Asegurar que el paginator esté asignado después de cargar los datos
+          setTimeout(() => {
+            if (this.paginator && !this.dataSource.paginator) {
+              this.dataSource.paginator = this.paginator;
+            }
+            if (this.paginator) {
+              this.paginator.pageSize = this.pageSize;
+              this.paginator.length = this.totalActividades;
+            }
+            this.actualizarDatosPaginados();
+          }, 0);
         } else {
           this.mostrarError('Error al cargar actividades');
         }
@@ -199,45 +251,168 @@ export class ActividadesReligiosasComponent implements OnInit {
   // FILTROS Y BÚSQUEDA
   // ========================================
 
+  // Método para aplicar filtros localmente en el frontend
+  aplicarFiltrosLocales(datos: ActividadReligiosa[]): ActividadReligiosa[] {
+    let datosFiltrados = [...datos];
+
+    // Filtro de búsqueda (nombre, descripción)
+    if (this.filtros.busqueda && this.filtros.busqueda.trim() !== '') {
+      const busqueda = this.filtros.busqueda.toLowerCase().trim();
+      datosFiltrados = datosFiltrados.filter(actividad => {
+        const nombre = (actividad.nombre || '').toLowerCase();
+        const descripcion = (actividad.descripcion || '').toLowerCase();
+        const tipoNombre = (actividad.tipo_actividad_nombre || '').toLowerCase();
+        return nombre.includes(busqueda) || descripcion.includes(busqueda) || tipoNombre.includes(busqueda);
+      });
+    }
+
+    // Filtro por tipo de actividad
+    const idTipoActividadRaw = this.filtros.id_tipo_actividad;
+    if (idTipoActividadRaw !== undefined && idTipoActividadRaw !== null) {
+      let idTipo: number | null = null;
+      
+      if (typeof idTipoActividadRaw === 'string') {
+        const valorString = (idTipoActividadRaw as string).trim();
+        if (valorString !== '') {
+          idTipo = parseInt(valorString);
+        }
+      } else if (typeof idTipoActividadRaw === 'number') {
+        idTipo = idTipoActividadRaw;
+      }
+      
+      if (idTipo !== null && !isNaN(idTipo)) {
+        datosFiltrados = datosFiltrados.filter(actividad => actividad.id_tipo_actividad === idTipo);
+      }
+    }
+
+    // Filtro por fecha desde
+    if (this.filtros.fecha_desde && this.filtros.fecha_desde.trim() !== '') {
+      const fechaDesde = new Date(this.filtros.fecha_desde);
+      datosFiltrados = datosFiltrados.filter(actividad => {
+        const fechaActividad = new Date(actividad.fecha_actividad);
+        return fechaActividad >= fechaDesde;
+      });
+    }
+
+    // Filtro por fecha hasta
+    if (this.filtros.fecha_hasta && this.filtros.fecha_hasta.trim() !== '') {
+      const fechaHasta = new Date(this.filtros.fecha_hasta);
+      fechaHasta.setHours(23, 59, 59, 999);
+      datosFiltrados = datosFiltrados.filter(actividad => {
+        const fechaActividad = new Date(actividad.fecha_actividad);
+        return fechaActividad <= fechaHasta;
+      });
+    }
+
+    // Filtro por estado activo
+    if (this.filtros.activo !== undefined && this.filtros.activo !== null) {
+      datosFiltrados = datosFiltrados.filter(actividad => actividad.activo === this.filtros.activo);
+    }
+
+    return datosFiltrados;
+  }
+
+  actualizarDatosPaginados(): void {
+    if (!this.dataSource.paginator) {
+      this.actividadesPaginadas = this.actividades.slice(0, this.pageSize);
+      return;
+    }
+    // Asegurar que el pageIndex no sea mayor que el número de páginas
+    const maxPageIndex = Math.max(0, Math.ceil(this.totalActividades / this.dataSource.paginator.pageSize) - 1);
+    if (this.dataSource.paginator.pageIndex > maxPageIndex) {
+      this.dataSource.paginator.pageIndex = 0;
+    }
+    const startIndex = this.dataSource.paginator.pageIndex * this.dataSource.paginator.pageSize;
+    const endIndex = startIndex + this.dataSource.paginator.pageSize;
+    this.actividadesPaginadas = this.actividades.slice(startIndex, endIndex);
+  }
+
+  onPageChange(event: any): void {
+    this.pageSize = event.pageSize;
+    if (this.paginator) {
+      this.paginator.length = this.totalActividades;
+    }
+    this.actualizarDatosPaginados();
+    this.cdr.detectChanges();
+  }
+
   aplicarFiltros(): void {
+    // Obtener valores del formulario
     const filtrosForm = this.formularioFiltros.value;
     
+    // Actualizar los filtros
     this.filtros = {
-      ...this.filtros,
       busqueda: filtrosForm.busqueda || '',
       fecha_desde: filtrosForm.fecha_desde || '',
       fecha_hasta: filtrosForm.fecha_hasta || '',
       id_tipo_actividad: filtrosForm.id_tipo_actividad || undefined,
-      pagina: 1
+      activo: true
     };
     
-    this.paginaActual = 1;
-    this.cargarActividades();
+    // Resetear a la primera página cuando se aplican filtros
+    if (this.paginator) {
+      this.paginator.pageIndex = 0;
+    }
+    
+    // Si ya tenemos todos los datos cargados, aplicar filtros localmente
+    if (this.todosLosDatos.length > 0) {
+      // Aplicar filtros sobre todos los datos originales
+      let datosFiltrados = this.aplicarFiltrosLocales(this.todosLosDatos);
+      
+      // Actualizar el dataSource con los datos filtrados
+      this.dataSource.data = datosFiltrados;
+      this.actividades = datosFiltrados;
+      this.totalActividades = datosFiltrados.length;
+      
+      // Inicializar datos paginados directamente
+      this.actividadesPaginadas = datosFiltrados.slice(0, this.pageSize);
+      
+      // Actualizar paginador y datos paginados
+      setTimeout(() => {
+        if (this.paginator) {
+          this.paginator.length = this.totalActividades;
+        }
+        this.actualizarDatosPaginados();
+      }, 0);
+    } else {
+      // Si no hay datos cargados, cargar desde el backend
+      this.cargarActividades();
+    }
   }
 
   limpiarFiltros(): void {
     this.formularioFiltros.reset();
     this.filtros = {
-      pagina: 1,
-      limite: 10,
       busqueda: '',
       fecha_desde: '',
       fecha_hasta: '',
       id_tipo_actividad: undefined,
       activo: true
     };
-    this.paginaActual = 1;
-    this.cargarActividades();
-  }
-
-  // ========================================
-  // PAGINACIÓN
-  // ========================================
-
-  cambiarPagina(pagina: number): void {
-    if (pagina >= 1 && pagina <= this.totalPaginas) {
-      this.filtros.pagina = pagina;
-      this.paginaActual = pagina;
+    
+    // Resetear a la primera página
+    if (this.paginator) {
+      this.paginator.pageIndex = 0;
+    }
+    
+    // Si ya tenemos todos los datos cargados, aplicar filtros localmente (vacíos)
+    if (this.todosLosDatos.length > 0) {
+      let datosFiltrados = this.aplicarFiltrosLocales(this.todosLosDatos);
+      this.dataSource.data = datosFiltrados;
+      this.actividades = datosFiltrados;
+      this.totalActividades = datosFiltrados.length;
+      
+      // Inicializar datos paginados directamente
+      this.actividadesPaginadas = datosFiltrados.slice(0, this.pageSize);
+      
+      setTimeout(() => {
+        if (this.paginator) {
+          this.paginator.length = this.totalActividades;
+        }
+        this.actualizarDatosPaginados();
+      }, 0);
+    } else {
+      // Si no hay datos cargados, cargar desde el backend
       this.cargarActividades();
     }
   }
@@ -313,9 +488,9 @@ export class ActividadesReligiosasComponent implements OnInit {
       this.actividadService.eliminarActividad(actividad.id_actividad).subscribe({
         next: (response) => {
           if (response.ok) {
-            this.mostrarExito('Actividad eliminada correctamente');
-            this.cargarActividades();
-            this.cargarEstadisticas();
+          this.mostrarExito('Actividad eliminada correctamente');
+          this.cargarActividades();
+          this.cargarEstadisticas();
           } else {
             this.mostrarError('Error al eliminar actividad');
           }
@@ -401,6 +576,10 @@ export class ActividadesReligiosasComponent implements OnInit {
 
   esActividadFutura(fecha: string, hora?: string): boolean {
     return this.actividadService.esActividadFutura(fecha, hora);
+  }
+
+  trackByActividadId(index: number, actividad: ActividadReligiosa): number {
+    return actividad.id_actividad;
   }
 
   // ========================================

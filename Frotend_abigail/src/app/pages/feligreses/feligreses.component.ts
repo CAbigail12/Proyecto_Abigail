@@ -207,16 +207,18 @@ export class FeligresesComponent implements OnInit {
     }
 
     // Filtro de comunidad
-    if (this.filtros.id_comunidad !== undefined && this.filtros.id_comunidad !== null && this.filtros.id_comunidad !== '') {
+    if (this.filtros.id_comunidad !== undefined && this.filtros.id_comunidad !== null) {
       const idComunidad = typeof this.filtros.id_comunidad === 'string' 
         ? parseInt(this.filtros.id_comunidad) 
         : this.filtros.id_comunidad;
-      datosFiltrados = datosFiltrados.filter(feligres => {
-        const feligresComunidad = typeof feligres.id_comunidad === 'string' 
-          ? parseInt(feligres.id_comunidad) 
-          : feligres.id_comunidad;
-        return feligresComunidad === idComunidad;
-      });
+      if (!isNaN(idComunidad)) {
+        datosFiltrados = datosFiltrados.filter(feligres => {
+          const feligresComunidad = typeof feligres.id_comunidad === 'string' 
+            ? parseInt(feligres.id_comunidad) 
+            : feligres.id_comunidad;
+          return feligresComunidad === idComunidad;
+        });
+      }
     }
 
     // Filtro de sexo

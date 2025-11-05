@@ -102,48 +102,21 @@ class CajaController {
     }
   }
 
-  // Obtener todos los movimientos con paginación y filtros
+  // Obtener todos los movimientos (sin filtros ni paginación - se aplican en el frontend)
   static async obtenerTodos(req, res, next) {
     try {
-      const { 
-        pagina, 
-        limite, 
-        naturaleza, 
-        cuenta, 
-        concepto, 
-        fecha_desde, 
-        fecha_hasta, 
-        id_feligres 
-      } = req.query;
-      
-      // Validar parámetros de paginación
-      const paginacionValida = validarPaginacion(pagina, limite);
-      const paginacion = construirPaginacion(paginacionValida.pagina, paginacionValida.limite);
-      
-      // Construir filtros
-      const filtros = {};
-      if (naturaleza) filtros.naturaleza = naturaleza;
-      if (cuenta) filtros.cuenta = cuenta;
-      if (concepto) filtros.concepto = concepto;
-      if (fecha_desde) filtros.fecha_desde = fecha_desde;
-      if (fecha_hasta) filtros.fecha_hasta = fecha_hasta;
-      if (id_feligres) filtros.id_feligres = parseInt(id_feligres);
-      
-      // Obtener movimientos
-      const resultado = await CajaModel.obtenerTodos(filtros, paginacion);
-      
-      // Construir respuesta paginada
-      const respuesta = construirRespuestaPaginada(
-        resultado.movimientos,
-        resultado.total,
-        paginacionValida.pagina,
-        paginacionValida.limite
-      );
+      // El backend siempre devuelve TODOS los movimientos sin filtros ni paginación
+      const resultado = await CajaModel.obtenerTodos({}, {});
       
       res.json({
         ok: true,
         mensaje: 'Movimientos obtenidos correctamente',
-        datos: respuesta
+        datos: {
+          datos: resultado.movimientos,
+          paginacion: {
+            total_registros: resultado.total
+          }
+        }
       });
       
     } catch (error) {

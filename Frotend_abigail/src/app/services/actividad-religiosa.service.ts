@@ -27,19 +27,10 @@ export class ActividadReligiosaService {
   // ACTIVIDADES RELIGIOSAS
   // ========================================
 
-  // Obtener todas las actividades con filtros
-  obtenerActividades(filtros: FiltrosActividad = {}): Observable<ApiResponse<ActividadResponse>> {
-    let params = new HttpParams();
-    
-    if (filtros.pagina) params = params.set('pagina', filtros.pagina.toString());
-    if (filtros.limite) params = params.set('limite', filtros.limite.toString());
-    if (filtros.busqueda) params = params.set('busqueda', filtros.busqueda);
-    if (filtros.fecha_desde) params = params.set('fecha_desde', filtros.fecha_desde);
-    if (filtros.fecha_hasta) params = params.set('fecha_hasta', filtros.fecha_hasta);
-    if (filtros.id_tipo_actividad) params = params.set('id_tipo_actividad', filtros.id_tipo_actividad.toString());
-    if (filtros.activo !== undefined) params = params.set('activo', filtros.activo.toString());
-
-    return this.http.get<ApiResponse<ActividadResponse>>(this.apiUrl, { params });
+  // Obtener todas las actividades (sin filtros ni paginación - se aplican en el frontend)
+  obtenerActividades(): Observable<ApiResponse<ActividadResponse>> {
+    // El backend siempre devuelve todas las actividades
+    return this.http.get<ApiResponse<ActividadResponse>>(this.apiUrl);
   }
 
   // Obtener una actividad por ID

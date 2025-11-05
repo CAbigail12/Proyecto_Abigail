@@ -6,25 +6,22 @@ class ActividadReligiosaController {
   // ACTIVIDADES RELIGIOSAS
   // ========================================
 
-  // Obtener todas las actividades con filtros y paginación
+  // Obtener todas las actividades (sin filtros ni paginación - se aplican en el frontend)
   static async obtenerTodas(req, res, next) {
     try {
-      const filtros = {
-        pagina: parseInt(req.query.pagina) || 1,
-        limite: parseInt(req.query.limite) || 10,
-        busqueda: req.query.busqueda || '',
-        fecha_desde: req.query.fecha_desde || '',
-        fecha_hasta: req.query.fecha_hasta || '',
-        id_tipo_actividad: req.query.id_tipo_actividad || '',
-        activo: req.query.activo !== 'false'
-      };
-
-      const resultado = await ActividadReligiosaModel.obtenerTodas(filtros);
+      // El backend siempre devuelve TODAS las actividades sin filtros ni paginación
+      const resultado = await ActividadReligiosaModel.obtenerTodas({});
 
       res.json({
         ok: true,
         mensaje: 'Actividades religiosas obtenidas correctamente',
-        datos: resultado
+        datos: {
+          actividades: resultado.actividades,
+          total: resultado.total,
+          pagina: 1,
+          limite: resultado.total,
+          totalPaginas: 1
+        }
       });
     } catch (error) {
       next(crearError('Error al obtener actividades religiosas', 500, error));

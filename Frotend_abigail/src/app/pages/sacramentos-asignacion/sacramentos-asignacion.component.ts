@@ -28,7 +28,8 @@ import { FeligresService } from '../../services/feligres.service';
 import { environment } from '../../../environments/environment';
 import { 
   SacramentoAsignacion, 
-  SacramentoAsignacionCreate, 
+  SacramentoAsignacionCreate,
+  SacramentoAsignacionUpdate,
   SacramentoCatalogo, 
   RolParticipanteCatalogo,
   FiltrosAsignacion,
@@ -80,6 +81,8 @@ export class SacramentosAsignacionComponent implements OnInit {
   loading = false;
   loadingAsignaciones = false;
   tabSeleccionado = 0;
+  modoEdicion = false;
+  asignacionEditando: SacramentoAsignacion | null = null;
 
   // Datos de la tabla
   displayedColumns: string[] = ['id_asignacion', 'sacramento', 'participantes', 'fecha_celebracion', 'pagado', 'acciones'];
@@ -422,9 +425,14 @@ export class SacramentosAsignacionComponent implements OnInit {
     if (this.formularioBautizo.valid && this.feligresSeleccionadoBautizo) {
       const formData = this.formularioBautizo.value;
       
+      // Formatear fecha correctamente
+      const fechaFormateada = formData.fecha_celebracion instanceof Date 
+        ? formData.fecha_celebracion.toISOString().split('T')[0]
+        : formData.fecha_celebracion;
+      
       const asignacion: SacramentoAsignacionCreate = {
         id_sacramento: 1, // Bautizo
-        fecha_celebracion: formData.fecha_celebracion,
+        fecha_celebracion: fechaFormateada,
         pagado: formData.pagado,
         comentarios: formData.comentarios || null,
         participantes: [{
@@ -433,7 +441,11 @@ export class SacramentosAsignacionComponent implements OnInit {
         }]
       };
 
-      this.crearAsignacion(asignacion, 'Bautizo asignado correctamente');
+      if (this.modoEdicion && this.asignacionEditando) {
+        this.actualizarAsignacion(asignacion, 'Bautizo actualizado correctamente');
+      } else {
+        this.crearAsignacion(asignacion, 'Bautizo asignado correctamente');
+      }
     } else {
       this.snackBar.open('Por favor complete todos los campos requeridos', 'Cerrar', { duration: 3000 });
     }
@@ -446,9 +458,14 @@ export class SacramentosAsignacionComponent implements OnInit {
     if (this.formularioConfirmacion.valid && this.feligresSeleccionadoConfirmacion) {
       const formData = this.formularioConfirmacion.value;
       
+      // Formatear fecha correctamente
+      const fechaFormateada = formData.fecha_celebracion instanceof Date 
+        ? formData.fecha_celebracion.toISOString().split('T')[0]
+        : formData.fecha_celebracion;
+      
       const asignacion: SacramentoAsignacionCreate = {
         id_sacramento: 3, // Confirmación
-        fecha_celebracion: formData.fecha_celebracion,
+        fecha_celebracion: fechaFormateada,
         pagado: formData.pagado,
         comentarios: formData.comentarios || null,
         participantes: [{
@@ -457,7 +474,11 @@ export class SacramentosAsignacionComponent implements OnInit {
         }]
       };
 
-      this.crearAsignacion(asignacion, 'Confirmación asignada correctamente');
+      if (this.modoEdicion && this.asignacionEditando) {
+        this.actualizarAsignacion(asignacion, 'Confirmación actualizada correctamente');
+      } else {
+        this.crearAsignacion(asignacion, 'Confirmación asignada correctamente');
+      }
     } else {
       this.snackBar.open('Por favor complete todos los campos requeridos', 'Cerrar', { duration: 3000 });
     }
@@ -470,9 +491,14 @@ export class SacramentosAsignacionComponent implements OnInit {
     if (this.formularioMatrimonio.valid && this.feligresSeleccionadoNovio && this.feligresSeleccionadoNovia) {
       const formData = this.formularioMatrimonio.value;
       
+      // Formatear fecha correctamente
+      const fechaFormateada = formData.fecha_celebracion instanceof Date 
+        ? formData.fecha_celebracion.toISOString().split('T')[0]
+        : formData.fecha_celebracion;
+      
       const asignacion: SacramentoAsignacionCreate = {
         id_sacramento: 4, // Matrimonio
-        fecha_celebracion: formData.fecha_celebracion,
+        fecha_celebracion: fechaFormateada,
         pagado: formData.pagado,
         comentarios: formData.comentarios || null,
         participantes: [
@@ -487,7 +513,11 @@ export class SacramentosAsignacionComponent implements OnInit {
         ]
       };
 
-      this.crearAsignacion(asignacion, 'Matrimonio asignado correctamente');
+      if (this.modoEdicion && this.asignacionEditando) {
+        this.actualizarAsignacion(asignacion, 'Matrimonio actualizado correctamente');
+      } else {
+        this.crearAsignacion(asignacion, 'Matrimonio asignado correctamente');
+      }
     } else {
       this.snackBar.open('Por favor complete todos los campos requeridos', 'Cerrar', { duration: 3000 });
     }
@@ -499,7 +529,22 @@ export class SacramentosAsignacionComponent implements OnInit {
   private crearAsignacion(asignacion: SacramentoAsignacionCreate, mensajeExito: string): void {
     this.loading = true;
     
-    this.sacramentoAsignacionService.crearAsignacion(asignacion).subscribe({
+    // La fecha ya viene formateada como string desde los métodos asignarBautizo/Confirmacion/Matrimonio
+    // Nos aseguramos de que siempre sea string
+    let fechaFormateada: string;
+    if (typeof asignacion.fecha_celebracion === 'string') {
+      fechaFormateada = asignacion.fecha_celebracion;
+    } else {
+      // Si por alguna razón no es string, convertir a string
+      fechaFormateada = String(asignacion.fecha_celebracion);
+    }
+    
+    const asignacionEnviar: SacramentoAsignacionCreate = {
+      ...asignacion,
+      fecha_celebracion: fechaFormateada
+    };
+    
+    this.sacramentoAsignacionService.crearAsignacion(asignacionEnviar).subscribe({
       next: (response) => {
         if (response.ok) {
           this.snackBar.open(mensajeExito, 'Cerrar', { duration: 3000 });
@@ -512,6 +557,45 @@ export class SacramentosAsignacionComponent implements OnInit {
       error: (error) => {
         console.error('Error al crear asignación:', error);
         this.snackBar.open(error.error?.mensaje || 'Error al crear asignación', 'Cerrar', { duration: 3000 });
+        this.loading = false;
+      }
+    });
+  }
+
+  /**
+   * Actualizar asignación en el backend
+   */
+  private actualizarAsignacion(asignacion: SacramentoAsignacionCreate, mensajeExito: string): void {
+    if (!this.asignacionEditando) {
+      return;
+    }
+    
+    this.loading = true;
+    
+    // Convertir SacramentoAsignacionCreate a SacramentoAsignacionUpdate
+    const asignacionUpdate = {
+      id_sacramento: asignacion.id_sacramento,
+      fecha_celebracion: asignacion.fecha_celebracion,
+      pagado: asignacion.pagado,
+      comentarios: asignacion.comentarios,
+      participantes: asignacion.participantes
+    };
+    
+    this.sacramentoAsignacionService.actualizarAsignacion(this.asignacionEditando.id_asignacion, asignacionUpdate).subscribe({
+      next: (response) => {
+        if (response.ok) {
+          this.snackBar.open(mensajeExito, 'Cerrar', { duration: 3000 });
+          this.limpiarFormularios();
+          this.cargarAsignaciones();
+          this.cargarEstadisticas();
+          // Cambiar al tab de lista después de actualizar
+          this.tabSeleccionado = 3;
+        }
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error al actualizar asignación:', error);
+        this.snackBar.open(error.error?.mensaje || 'Error al actualizar asignación', 'Cerrar', { duration: 3000 });
         this.loading = false;
       }
     });
@@ -534,6 +618,120 @@ export class SacramentosAsignacionComponent implements OnInit {
     this.controladorFeligresConfirmacion.setValue('');
     this.controladorFeligresNovio.setValue('');
     this.controladorFeligresNovia.setValue('');
+    
+    this.modoEdicion = false;
+    this.asignacionEditando = null;
+  }
+
+  /**
+   * Editar asignación
+   */
+  editarAsignacion(asignacion: SacramentoAsignacion): void {
+    this.loading = true;
+    // Obtener la asignación completa con todos los detalles
+    this.sacramentoAsignacionService.obtenerAsignacionPorId(asignacion.id_asignacion).subscribe({
+      next: (response) => {
+        if (response.ok) {
+          this.asignacionEditando = response.datos;
+          this.modoEdicion = true;
+          
+          // Determinar qué tab abrir según el tipo de sacramento
+          if (asignacion.id_sacramento === 1) {
+            // Bautizo
+            this.tabSeleccionado = 0;
+            this.cargarDatosEnFormularioBautizo(response.datos);
+          } else if (asignacion.id_sacramento === 3) {
+            // Confirmación
+            this.tabSeleccionado = 1;
+            this.cargarDatosEnFormularioConfirmacion(response.datos);
+          } else if (asignacion.id_sacramento === 4) {
+            // Matrimonio
+            this.tabSeleccionado = 2;
+            this.cargarDatosEnFormularioMatrimonio(response.datos);
+          }
+          
+          this.loading = false;
+        }
+      },
+      error: (error) => {
+        console.error('Error al cargar asignación:', error);
+        this.snackBar.open(error.error?.mensaje || 'Error al cargar asignación', 'Cerrar', { duration: 3000 });
+        this.loading = false;
+      }
+    });
+  }
+
+  /**
+   * Cargar datos en formulario de bautizo para edición
+   */
+  private cargarDatosEnFormularioBautizo(asignacion: SacramentoAsignacion): void {
+    if (asignacion.participantes && asignacion.participantes.length > 0) {
+      const participante = asignacion.participantes[0];
+      const feligres = this.feligreses.find(f => f.id_feligres === participante.id_feligres);
+      
+      if (feligres) {
+        this.feligresSeleccionadoBautizo = feligres;
+        this.controladorFeligresBautizo.setValue(`${feligres.primer_nombre} ${feligres.primer_apellido}`);
+      }
+    }
+    
+    this.formularioBautizo.patchValue({
+      fecha_celebracion: new Date(asignacion.fecha_celebracion),
+      pagado: asignacion.pagado,
+      comentarios: asignacion.comentarios || ''
+    });
+  }
+
+  /**
+   * Cargar datos en formulario de confirmación para edición
+   */
+  private cargarDatosEnFormularioConfirmacion(asignacion: SacramentoAsignacion): void {
+    if (asignacion.participantes && asignacion.participantes.length > 0) {
+      const participante = asignacion.participantes[0];
+      const feligres = this.feligreses.find(f => f.id_feligres === participante.id_feligres);
+      
+      if (feligres) {
+        this.feligresSeleccionadoConfirmacion = feligres;
+        this.controladorFeligresConfirmacion.setValue(`${feligres.primer_nombre} ${feligres.primer_apellido}`);
+      }
+    }
+    
+    this.formularioConfirmacion.patchValue({
+      fecha_celebracion: new Date(asignacion.fecha_celebracion),
+      pagado: asignacion.pagado,
+      comentarios: asignacion.comentarios || ''
+    });
+  }
+
+  /**
+   * Cargar datos en formulario de matrimonio para edición
+   */
+  private cargarDatosEnFormularioMatrimonio(asignacion: SacramentoAsignacion): void {
+    if (asignacion.participantes && asignacion.participantes.length >= 2) {
+      // Novio (primer participante)
+      const participanteNovio = asignacion.participantes[0];
+      const feligresNovio = this.feligreses.find(f => f.id_feligres === participanteNovio.id_feligres);
+      
+      if (feligresNovio) {
+        this.feligresSeleccionadoNovio = feligresNovio;
+        this.controladorFeligresNovio.setValue(`${feligresNovio.primer_nombre} ${feligresNovio.primer_apellido}`);
+      }
+      
+      // Novia (segundo participante)
+      const participanteNovia = asignacion.participantes[1];
+      const feligresNovia = this.feligreses.find(f => f.id_feligres === participanteNovia.id_feligres);
+      
+      if (feligresNovia) {
+        this.feligresSeleccionadoNovia = feligresNovia;
+        this.controladorFeligresNovia.setValue(`${feligresNovia.primer_nombre} ${feligresNovia.primer_apellido}`);
+      }
+    }
+    
+    this.formularioMatrimonio.patchValue({
+      fecha_celebracion: new Date(asignacion.fecha_celebracion),
+      pagado: asignacion.pagado,
+      comentarios: asignacion.comentarios || ''
+    });
   }
 
   /**
