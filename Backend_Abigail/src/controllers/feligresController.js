@@ -8,6 +8,7 @@ class FeligresController {
         busqueda: req.query.busqueda || '',
         activo: req.query.activo || '',
         id_comunidad: req.query.id_comunidad || '',
+        sexo: req.query.sexo || '',
         pagina: parseInt(req.query.pagina) || 1,
         limite: parseInt(req.query.limite) || 10
       };

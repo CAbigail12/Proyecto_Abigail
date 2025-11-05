@@ -31,7 +31,7 @@
           <!-- Botones de acción -->
           <button (click)="exportarAPDF()"
             class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg"
-            matTooltip="Exportar usuarios filtrados a PDF" [disabled]="dataSource.data.length === 0">
+            matTooltip="Exportar usuarios filtrados a PDF" [disabled]="datosPaginados.length === 0">
             <mat-icon class="text-white">picture_as_pdf</mat-icon>
             Exportar PDF
           </button>
@@ -59,7 +59,7 @@
           <h3 class="text-xl font-bold text-gray-900">Filtros Inteligentes</h3>
         </div>
         <div class="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-          {{dataSource.data.length}} de {{totalUsuarios}} usuarios
+          {{datosPaginados.length}} de {{totalUsuarios}} usuarios
         </div>
       </div>
 
@@ -180,7 +180,7 @@
 
       <!-- Filas de datos -->
       <div class="divide-y divide-gray-100">
-        <div *ngFor="let usuario of dataSource.data; trackBy: trackByUserId; let i = index"
+        <div *ngFor="let usuario of datosPaginados; trackBy: trackByUserId; let i = index"
           class="group hover:bg-gray-50 transition-colors duration-200"
           [class]="i % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
 
@@ -327,13 +327,13 @@
 
     <!-- Paginación simple -->
     <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-4">
-      <mat-paginator [length]="totalUsuarios" [pageSize]="pageSize" [pageSizeOptions]="[5, 10, 25, 50]"
+      <mat-paginator [pageSize]="pageSize" [pageSizeOptions]="[5, 10, 25, 50]"
         (page)="onPageChange($event)" showFirstLastButtons class="bg-transparent"></mat-paginator>
     </div>
   </div>
 
   <!-- Mensaje cuando no hay datos -->
-  <div *ngIf="dataSource.data.length === 0" class="flex flex-col items-center justify-center py-12">
+  <div *ngIf="datosPaginados.length === 0 && !loading && totalUsuarios === 0" class="flex flex-col items-center justify-center py-12">
     <div class="text-center">
       <div class="mb-6">
         <mat-icon class="text-gray-400 text-6xl">search_off</mat-icon>

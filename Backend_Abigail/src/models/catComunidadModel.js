@@ -1,10 +1,11 @@
 const { pool } = require('../config/db');
 
 class CatComunidadModel {
-  // Obtener todas las comunidades con paginación
+  // Obtener todas las comunidades (sin filtros ni paginación - se aplican en el frontend)
   static async obtenerTodos(pagina = 1, limite = 10, filtros = {}) {
-    const offset = (pagina - 1) * limite;
-    let query = `
+    // El backend siempre devuelve TODAS las comunidades
+    // Los filtros y paginación se aplican en el frontend
+    const query = `
       SELECT 
         id_comunidad,
         nombre,
@@ -13,60 +14,17 @@ class CatComunidadModel {
         created_at,
         updated_at
       FROM cat_comunidad
-      WHERE 1=1
+      ORDER BY nombre ASC
     `;
-    
-    const params = [];
-    let paramCount = 0;
 
-    // Aplicar filtros
-    if (filtros.busqueda) {
-      paramCount++;
-      query += ` AND (nombre ILIKE $${paramCount} OR descripcion ILIKE $${paramCount})`;
-      params.push(`%${filtros.busqueda}%`);
-    }
-
-    if (filtros.activo !== undefined && filtros.activo !== '') {
-      paramCount++;
-      query += ` AND activo = $${paramCount}`;
-      params.push(filtros.activo === 'true');
-    }
-
-    // Ordenar por nombre
-    query += ` ORDER BY nombre ASC`;
-
-    // Agregar paginación
-    paramCount++;
-    query += ` LIMIT $${paramCount}`;
-    params.push(limite);
-    
-    paramCount++;
-    query += ` OFFSET $${paramCount}`;
-    params.push(offset);
-
-    const result = await pool.query(query, params);
+    const result = await pool.query(query);
     return result.rows;
   }
 
-  // Contar total de registros
+  // Contar total de registros (ya no se usa, pero se mantiene por compatibilidad)
   static async contar(filtros = {}) {
-    let query = 'SELECT COUNT(*) as total FROM cat_comunidad WHERE 1=1';
-    const params = [];
-    let paramCount = 0;
-
-    if (filtros.busqueda) {
-      paramCount++;
-      query += ` AND (nombre ILIKE $${paramCount} OR descripcion ILIKE $${paramCount})`;
-      params.push(`%${filtros.busqueda}%`);
-    }
-
-    if (filtros.activo !== undefined && filtros.activo !== '') {
-      paramCount++;
-      query += ` AND activo = $${paramCount}`;
-      params.push(filtros.activo === 'true');
-    }
-
-    const result = await pool.query(query, params);
+    const query = 'SELECT COUNT(*) as total FROM cat_comunidad';
+    const result = await pool.query(query);
     return parseInt(result.rows[0].total);
   }
 

@@ -416,7 +416,7 @@ Para usar estos archivos:
 # Para Docker
 cp env.docker .env
 
-# Para PostgreSQL local
+# Para PostgreSQL local (si tienes env.local como plantilla)
 cp env.local .env
 ```
 

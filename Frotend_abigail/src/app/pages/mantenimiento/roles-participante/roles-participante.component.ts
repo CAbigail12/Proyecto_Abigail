@@ -85,8 +85,16 @@ export class RolesParticipanteComponent implements OnInit {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
+    // NO asignar paginator al dataSource cuando usamos paginación del servidor
+    // this.dataSource.paginator = this.paginator; // ❌ REMOVIDO - causa conflictos
     this.dataSource.sort = this.sort;
+    
+    // Configurar paginator manualmente para paginación del servidor
+    if (this.paginator) {
+      this.paginator.pageIndex = this.currentPage - 1;
+      this.paginator.pageSize = this.pageSize;
+      this.paginator.length = this.totalRolesParticipante;
+    }
   }
 
   cargarRolesParticipante(): void {
@@ -98,6 +106,14 @@ export class RolesParticipanteComponent implements OnInit {
           if (response.ok) {
             this.dataSource.data = response.datos.datos;
             this.totalRolesParticipante = response.datos.paginacion.total;
+            
+            // Actualizar paginator después de cargar datos
+            if (this.paginator) {
+              this.paginator.length = this.totalRolesParticipante;
+              this.paginator.pageIndex = this.currentPage - 1;
+              this.paginator.pageSize = this.pageSize;
+            }
+            
             this.loading = false;
           }
         },
@@ -113,6 +129,9 @@ export class RolesParticipanteComponent implements OnInit {
   aplicarFiltros(): void {
     this.currentPage = 1;
     this.filtros.pagina = this.currentPage;
+    if (this.paginator) {
+      this.paginator.pageIndex = 0;
+    }
     this.cargarRolesParticipante();
   }
 

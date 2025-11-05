@@ -115,33 +115,18 @@ class UsuarioController {
   // Obtener todos los usuarios con paginación y filtros
   static async obtenerTodos(req, res, next) {
     try {
-      const { pagina, limite, rol_id, estado, busqueda } = req.query;
-      
-      // Validar parámetros de paginación
-      const paginacionValida = validarPaginacion(pagina, limite);
-      const paginacion = construirPaginacion(paginacionValida.pagina, paginacionValida.limite);
-      
-      // Construir filtros
-      const filtros = {};
-      if (rol_id) filtros.rol_id = parseInt(rol_id);
-      if (estado) filtros.estado = estado;
-      if (busqueda) filtros.busqueda = busqueda;
-      
-      // Obtener usuarios
-      const resultado = await UsuarioModel.obtenerTodos(filtros, paginacion);
-      
-      // Construir respuesta paginada
-      const respuesta = construirRespuestaPaginada(
-        resultado.usuarios,
-        resultado.total,
-        paginacionValida.pagina,
-        paginacionValida.limite
-      );
+      // El backend siempre devuelve TODOS los usuarios sin filtros ni paginación
+      const resultado = await UsuarioModel.obtenerTodos({}, {});
       
       res.json({
         ok: true,
         mensaje: 'Usuarios obtenidos correctamente',
-        datos: respuesta
+        datos: {
+          datos: resultado.usuarios,
+          paginacion: {
+            total_registros: resultado.total
+          }
+        }
       });
       
     } catch (error) {

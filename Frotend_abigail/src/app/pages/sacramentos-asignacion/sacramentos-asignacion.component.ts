@@ -162,8 +162,16 @@ export class SacramentosAsignacionComponent implements OnInit {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
+    // NO asignar paginator al dataSource cuando usamos paginación del servidor
+    // this.dataSource.paginator = this.paginator; // ❌ REMOVIDO - causa conflictos
     this.dataSource.sort = this.sort;
+    
+    // Configurar paginator manualmente para paginación del servidor
+    if (this.paginator) {
+      this.paginator.pageIndex = this.currentPage - 1;
+      this.paginator.pageSize = this.pageSize;
+      this.paginator.length = this.totalAsignaciones;
+    }
   }
 
   /**
@@ -282,8 +290,17 @@ export class SacramentosAsignacionComponent implements OnInit {
     this.sacramentoAsignacionService.obtenerAsignaciones(this.filtros).subscribe({
       next: (response) => {
         if (response.ok) {
+          // AsignacionResponse tiene la estructura: { asignaciones, total, pagina, limite, totalPaginas }
           this.dataSource.data = response.datos.asignaciones;
           this.totalAsignaciones = response.datos.total;
+          
+          // Actualizar paginator después de cargar datos
+          if (this.paginator) {
+            this.paginator.length = this.totalAsignaciones;
+            this.paginator.pageIndex = this.currentPage - 1;
+            this.paginator.pageSize = this.pageSize;
+          }
+          
           this.loadingAsignaciones = false;
         }
       },
@@ -557,6 +574,9 @@ export class SacramentosAsignacionComponent implements OnInit {
   aplicarFiltros(): void {
     this.currentPage = 1;
     this.filtros.pagina = this.currentPage;
+    if (this.paginator) {
+      this.paginator.pageIndex = 0;
+    }
     this.cargarAsignaciones();
   }
 

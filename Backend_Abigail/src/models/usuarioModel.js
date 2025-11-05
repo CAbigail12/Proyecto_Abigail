@@ -84,63 +84,25 @@ class UsuarioModel {
     }
   }
 
-  // Obtener usuarios con paginación y filtros
+  // Obtener todos los usuarios (sin filtros ni paginación - se aplican en el frontend)
   static async obtenerTodos(filtros = {}, paginacion = {}) {
     const cliente = await pool.connect();
     try {
-      let consulta = `
+      // El backend siempre devuelve TODOS los usuarios
+      // Los filtros y paginación se aplican en el frontend
+      const consulta = `
         SELECT u.id_usuario, u.nombre, u.apellido, u.correo, u.telefono, u.fotografia, u.rol_id, u.estado, u.fecha_registro,
                r.nombre as rol_nombre
         FROM usuarios u
         JOIN roles r ON u.rol_id = r.id_rol
-        WHERE 1=1
+        ORDER BY u.fecha_registro DESC
       `;
       
-      const parametros = [];
-      let contadorParametros = 1;
-      
-      // Aplicar filtros
-      if (filtros.rol_id) {
-        consulta += ` AND u.rol_id = $${contadorParametros}`;
-        parametros.push(filtros.rol_id);
-        contadorParametros++;
-      }
-      
-      if (filtros.estado) {
-        consulta += ` AND u.estado = $${contadorParametros}`;
-        parametros.push(filtros.estado);
-        contadorParametros++;
-      }
-      
-      if (filtros.busqueda) {
-        consulta += ` AND (LOWER(u.nombre) LIKE $${contadorParametros} OR LOWER(u.apellido) LIKE $${contadorParametros} OR LOWER(u.correo) LIKE $${contadorParametros})`;
-        parametros.push(`%${filtros.busqueda.toLowerCase()}%`);
-        contadorParametros++;
-      }
-      
-      // Contar total de registros
-      const consultaCount = consulta.replace(/SELECT.*FROM/, 'SELECT COUNT(*) FROM');
-      const resultadoCount = await cliente.query(consultaCount, parametros);
-      const total = parseInt(resultadoCount.rows[0].count);
-      
-      // Aplicar paginación
-      consulta += ` ORDER BY u.fecha_registro DESC`;
-      if (paginacion.limite) {
-        consulta += ` LIMIT $${contadorParametros}`;
-        parametros.push(paginacion.limite);
-        contadorParametros++;
-      }
-      
-      if (paginacion.offset) {
-        consulta += ` OFFSET $${contadorParametros}`;
-        parametros.push(paginacion.offset);
-      }
-      
-      const resultado = await cliente.query(consulta, parametros);
+      const resultado = await cliente.query(consulta);
       
       return {
         usuarios: resultado.rows,
-        total
+        total: resultado.rows.length
       };
     } finally {
       cliente.release();

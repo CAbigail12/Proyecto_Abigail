@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
@@ -56,6 +56,10 @@ export class FeligresesComponent implements OnInit {
   totalFeligreses = 0;
   currentPage = 1;
   pageSize = 10;
+  datosPaginados: Feligres[] = [];
+  
+  // Almacenar todos los datos originales del backend (sin filtros)
+  todosLosDatos: Feligres[] = [];
   
   // Filtros
   filtros: FiltrosFeligres = {
@@ -84,7 +88,8 @@ export class FeligresesComponent implements OnInit {
     private feligresService: FeligresService,
     private fb: FormBuilder,
     private snackBar: MatSnackBar,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {
     this.feligresForm = this.fb.group({
       primer_nombre: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
@@ -114,29 +119,112 @@ export class FeligresesComponent implements OnInit {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
+    // Asignar sort al dataSource
     this.dataSource.sort = this.sort;
+    
+    // Asignar paginator después de que la vista esté inicializada
+    // Usar setTimeout para asegurar que el paginator esté completamente renderizado
+    setTimeout(() => {
+      if (this.paginator) {
+        this.dataSource.paginator = this.paginator;
+        this.paginator.pageSize = this.pageSize;
+        // Actualizar datos paginados iniciales
+        this.actualizarDatosPaginados();
+      }
+    }, 0);
   }
 
   cargarFeligreses(): void {
     this.loading = true;
     
-    this.feligresService.obtenerFeligreses(this.filtros)
+    // Obtener TODOS los feligreses sin filtros del backend
+    this.feligresService.obtenerFeligreses({})
       .subscribe({
         next: (response) => {
           if (response.ok) {
-            this.dataSource.data = response.datos.datos;
-            this.totalFeligreses = response.datos.paginacion.total;
+            // Obtener todos los datos (puede venir en diferentes formatos)
+            let todosLosDatos: any[] = [];
+            if (response.datos.datos && Array.isArray(response.datos.datos)) {
+              todosLosDatos = response.datos.datos;
+            } else if (Array.isArray(response.datos)) {
+              todosLosDatos = response.datos;
+            }
+            
+            // Guardar todos los datos originales
+            this.todosLosDatos = todosLosDatos;
+            
+            // Aplicar filtros localmente en el frontend
+            let datosFiltrados = this.aplicarFiltrosLocales(todosLosDatos);
+            
+            // Asignar los datos filtrados al dataSource
+            this.dataSource.data = datosFiltrados;
+            this.totalFeligreses = datosFiltrados.length;
+            
+            // Asegurar que el paginator esté asignado después de cargar los datos
+            setTimeout(() => {
+              if (this.paginator && !this.dataSource.paginator) {
+                this.dataSource.paginator = this.paginator;
+              }
+              // Asegurar que el pageSize esté correcto
+              if (this.paginator) {
+                this.paginator.pageSize = this.pageSize;
+              }
+              // Actualizar datos paginados
+              this.actualizarDatosPaginados();
+            }, 0);
+            
             this.loading = false;
           }
         },
         error: (error) => {
+          console.error('Error al cargar feligreses:', error);
           this.loading = false;
           this.snackBar.open('Error al cargar feligreses', 'Cerrar', {
             duration: 3000
           });
         }
       });
+  }
+
+  // Método para aplicar filtros localmente en el frontend
+  aplicarFiltrosLocales(datos: Feligres[]): Feligres[] {
+    let datosFiltrados = [...datos];
+
+    // Filtro de búsqueda (nombre, apellido, correo)
+    if (this.filtros.busqueda && this.filtros.busqueda.trim() !== '') {
+      const busqueda = this.filtros.busqueda.toLowerCase().trim();
+      datosFiltrados = datosFiltrados.filter(feligres => {
+        const nombreCompleto = this.getNombreCompleto(feligres).toLowerCase();
+        const correo = (feligres.correo || '').toLowerCase();
+        return nombreCompleto.includes(busqueda) || correo.includes(busqueda);
+      });
+    }
+
+    // Filtro de estado (activo/inactivo)
+    if (this.filtros.activo !== '' && this.filtros.activo !== undefined && this.filtros.activo !== null) {
+      const activo = this.filtros.activo === 'true';
+      datosFiltrados = datosFiltrados.filter(feligres => feligres.activo === activo);
+    }
+
+    // Filtro de comunidad
+    if (this.filtros.id_comunidad !== undefined && this.filtros.id_comunidad !== null && this.filtros.id_comunidad !== '') {
+      const idComunidad = typeof this.filtros.id_comunidad === 'string' 
+        ? parseInt(this.filtros.id_comunidad) 
+        : this.filtros.id_comunidad;
+      datosFiltrados = datosFiltrados.filter(feligres => {
+        const feligresComunidad = typeof feligres.id_comunidad === 'string' 
+          ? parseInt(feligres.id_comunidad) 
+          : feligres.id_comunidad;
+        return feligresComunidad === idComunidad;
+      });
+    }
+
+    // Filtro de sexo
+    if (this.filtros.sexo && this.filtros.sexo.trim() !== '') {
+      datosFiltrados = datosFiltrados.filter(feligres => feligres.sexo === this.filtros.sexo);
+    }
+
+    return datosFiltrados;
   }
 
   cargarComunidades(): void {
@@ -154,9 +242,29 @@ export class FeligresesComponent implements OnInit {
   }
 
   aplicarFiltros(): void {
+    // Resetear a la primera página cuando se aplican filtros
+    if (this.paginator) {
+      this.paginator.pageIndex = 0;
+    }
     this.currentPage = 1;
-    this.filtros.pagina = this.currentPage;
-    this.cargarFeligreses();
+    
+    // Si ya tenemos todos los datos cargados, aplicar filtros localmente
+    if (this.todosLosDatos.length > 0) {
+      // Aplicar filtros sobre todos los datos originales
+      let datosFiltrados = this.aplicarFiltrosLocales(this.todosLosDatos);
+      
+      // Actualizar el dataSource con los datos filtrados
+      this.dataSource.data = datosFiltrados;
+      this.totalFeligreses = datosFiltrados.length;
+      
+      // Actualizar datos paginados
+      setTimeout(() => {
+        this.actualizarDatosPaginados();
+      }, 0);
+    } else {
+      // Si no hay datos cargados, cargar desde el backend
+      this.cargarFeligreses();
+    }
   }
 
   limpiarFiltros(): void {
@@ -171,12 +279,26 @@ export class FeligresesComponent implements OnInit {
     this.aplicarFiltros();
   }
 
+  // Método para actualizar los datos paginados
+  actualizarDatosPaginados(): void {
+    if (!this.dataSource.paginator) {
+      this.datosPaginados = this.dataSource.data;
+      return;
+    }
+    
+    const startIndex = this.dataSource.paginator.pageIndex * this.dataSource.paginator.pageSize;
+    const endIndex = startIndex + this.dataSource.paginator.pageSize;
+    this.datosPaginados = this.dataSource.data.slice(startIndex, endIndex);
+  }
+
   onPageChange(event: any): void {
+    // Con paginación del lado del cliente, el paginator del dataSource maneja todo automáticamente
+    // Actualizar las variables para referencia
     this.currentPage = event.pageIndex + 1;
     this.pageSize = event.pageSize;
-    this.filtros.pagina = this.currentPage;
-    this.filtros.limite = this.pageSize;
-    this.cargarFeligreses();
+    
+    // Actualizar los datos paginados
+    this.actualizarDatosPaginados();
   }
 
   abrirDialogoFeligres(feligres?: Feligres): void {

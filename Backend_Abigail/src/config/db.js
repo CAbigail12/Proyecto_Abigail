@@ -10,6 +10,9 @@ const pool = new Pool({
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
+  ssl: {
+    rejectUnauthorized: false // Necesario para AWS RDS
+  }
 });
 
 // Evento para manejar errores de conexión

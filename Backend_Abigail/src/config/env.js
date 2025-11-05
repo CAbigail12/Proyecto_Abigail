@@ -1,4 +1,6 @@
-require('dotenv').config({ path: './env.local' });
+const path = require('path');
+const envPath = path.resolve(__dirname, '../../.env');
+require('dotenv').config({ path: envPath });
 
 const config = {
   puerto: process.env.PORT || 3000,

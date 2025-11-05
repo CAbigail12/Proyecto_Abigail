@@ -10,23 +10,16 @@ const CatTipoEspacioModel = require('../models/catTipoEspacioModel');
 
 const obtenerRequisitos = async (req, res) => {
   try {
-    const { pagina = 1, limite = 10, busqueda = '', activo = '' } = req.query;
-    const filtros = { busqueda, activo };
-    
-    const [datos, total] = await Promise.all([
-      CatRequisitoModel.obtenerTodos(parseInt(pagina), parseInt(limite), filtros),
-      CatRequisitoModel.contar(filtros)
-    ]);
+    // El backend siempre devuelve TODOS los requisitos sin filtros ni paginación
+    const datos = await CatRequisitoModel.obtenerTodos();
+    const total = datos.length;
 
     res.json({
       ok: true,
       datos: {
         datos,
         paginacion: {
-          pagina: parseInt(pagina),
-          limite: parseInt(limite),
-          total,
-          totalPaginas: Math.ceil(total / parseInt(limite))
+          total_registros: total
         }
       }
     });

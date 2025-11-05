@@ -12,23 +12,16 @@ const CatTipoEspacioModel = require('../models/catTipoEspacioModel');
 
 const obtenerSacramentos = async (req, res) => {
   try {
-    const { pagina = 1, limite = 10, busqueda = '', activo = '' } = req.query;
-    const filtros = { busqueda, activo };
-    
-    const [datos, total] = await Promise.all([
-      CatSacramentoModel.obtenerTodos(parseInt(pagina), parseInt(limite), filtros),
-      CatSacramentoModel.contar(filtros)
-    ]);
+    // El backend siempre devuelve TODOS los sacramentos sin filtros ni paginación
+    const datos = await CatSacramentoModel.obtenerTodos();
+    const total = datos.length;
 
     res.json({
       ok: true,
       datos: {
         datos,
         paginacion: {
-          pagina: parseInt(pagina),
-          limite: parseInt(limite),
-          total,
-          totalPaginas: Math.ceil(total / parseInt(limite))
+          total_registros: total
         }
       }
     });
@@ -214,23 +207,16 @@ const obtenerSacramentosActivos = async (req, res) => {
 
 const obtenerTiposDocumento = async (req, res) => {
   try {
-    const { pagina = 1, limite = 10, busqueda = '', activo = '' } = req.query;
-    const filtros = { busqueda, activo };
-    
-    const [datos, total] = await Promise.all([
-      CatTipoDocumentoModel.obtenerTodos(parseInt(pagina), parseInt(limite), filtros),
-      CatTipoDocumentoModel.contar(filtros)
-    ]);
+    // El backend siempre devuelve TODOS los tipos de documento sin filtros ni paginación
+    const datos = await CatTipoDocumentoModel.obtenerTodos();
+    const total = datos.length;
 
     res.json({
       ok: true,
       datos: {
         datos,
         paginacion: {
-          pagina: parseInt(pagina),
-          limite: parseInt(limite),
-          total,
-          totalPaginas: Math.ceil(total / parseInt(limite))
+          total_registros: total
         }
       }
     });

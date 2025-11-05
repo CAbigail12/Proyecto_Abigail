@@ -24,17 +24,17 @@ export class FeligresService {
   obtenerFeligreses(filtros: FiltrosFeligres = {}): Observable<ApiResponse<PaginatedResponse<Feligres>>> {
     let params = new HttpParams();
     
-    if (filtros.busqueda) {
-      params = params.set('busqueda', filtros.busqueda);
+    if (filtros.busqueda && filtros.busqueda.trim() !== '') {
+      params = params.set('busqueda', filtros.busqueda.trim());
     }
-    if (filtros.activo !== undefined && filtros.activo !== '') {
-      params = params.set('activo', filtros.activo);
+    if (filtros.activo !== undefined && filtros.activo !== null && filtros.activo !== '') {
+      params = params.set('activo', filtros.activo.toString());
     }
-    if (filtros.id_comunidad) {
+    if (filtros.id_comunidad !== undefined && filtros.id_comunidad !== null && filtros.id_comunidad !== '') {
       params = params.set('id_comunidad', filtros.id_comunidad.toString());
     }
-    if (filtros.sexo) {
-      params = params.set('sexo', filtros.sexo);
+    if (filtros.sexo && filtros.sexo.trim() !== '') {
+      params = params.set('sexo', filtros.sexo.trim());
     }
     if (filtros.pagina) {
       params = params.set('pagina', filtros.pagina.toString());

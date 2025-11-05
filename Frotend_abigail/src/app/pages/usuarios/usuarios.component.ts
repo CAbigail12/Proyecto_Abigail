@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
@@ -62,6 +62,10 @@ export class UsuariosComponent implements OnInit {
   totalUsuarios = 0;
   currentPage = 1;
   pageSize = 10;
+  datosPaginados: Usuario[] = [];
+  
+  // Almacenar todos los datos originales del backend (sin filtros)
+  todosLosDatos: Usuario[] = [];
   
   // Vista de tabla
   vistaActual: 'tabla' | 'tarjetas' = 'tabla';
@@ -95,7 +99,8 @@ export class UsuariosComponent implements OnInit {
     private usuarioService: UsuarioService,
     private fb: FormBuilder,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private cdr: ChangeDetectorRef
   ) {
     this.usuarioForm = this.fb.group({
       nombre: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
@@ -113,19 +118,53 @@ export class UsuariosComponent implements OnInit {
   }
 
   ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
+    setTimeout(() => {
+      if (this.paginator) {
+        this.dataSource.paginator = this.paginator;
+        this.paginator.pageSize = this.pageSize;
+        this.actualizarDatosPaginados();
+      }
+    }, 0);
   }
 
   cargarUsuarios(): void {
     this.loading = true;
     
-    this.usuarioService.obtenerUsuarios(this.currentPage, this.pageSize, this.filtros)
+    // Obtener TODOS los usuarios sin filtros del backend
+    this.usuarioService.obtenerUsuarios()
       .subscribe({
         next: (response) => {
           if (response.ok) {
-            this.dataSource.data = response.datos.datos;
-            this.totalUsuarios = response.datos.paginacion.total;
+            // Obtener todos los datos
+            let todosLosDatos: any[] = [];
+            if (response.datos.datos && Array.isArray(response.datos.datos)) {
+              todosLosDatos = response.datos.datos;
+            } else if (Array.isArray(response.datos)) {
+              todosLosDatos = response.datos;
+            }
+            
+            // Guardar todos los datos originales
+            this.todosLosDatos = todosLosDatos;
+            
+            // Aplicar filtros localmente en el frontend
+            let datosFiltrados = this.aplicarFiltrosLocales(todosLosDatos);
+            
+            // Asignar los datos filtrados al dataSource
+            this.dataSource.data = datosFiltrados;
+            this.totalUsuarios = datosFiltrados.length;
+            
+            // Asegurar que el paginator esté asignado después de cargar los datos
+            setTimeout(() => {
+              if (this.paginator && !this.dataSource.paginator) {
+                this.dataSource.paginator = this.paginator;
+              }
+              if (this.paginator) {
+                this.paginator.pageSize = this.pageSize;
+              }
+              this.actualizarDatosPaginados();
+            }, 0);
+            
             this.loading = false;
           }
         },
@@ -138,9 +177,76 @@ export class UsuariosComponent implements OnInit {
       });
   }
 
+  // Método para aplicar filtros localmente en el frontend
+  aplicarFiltrosLocales(datos: Usuario[]): Usuario[] {
+    let datosFiltrados = [...datos];
+
+    // Filtro de búsqueda (nombre, apellido, correo)
+    if (this.filtros.busqueda && this.filtros.busqueda.trim() !== '') {
+      const busqueda = this.filtros.busqueda.toLowerCase().trim();
+      datosFiltrados = datosFiltrados.filter(usuario => {
+        const nombre = (usuario.nombre || '').toLowerCase();
+        const apellido = (usuario.apellido || '').toLowerCase();
+        const correo = (usuario.correo || '').toLowerCase();
+        return nombre.includes(busqueda) || apellido.includes(busqueda) || correo.includes(busqueda);
+      });
+    }
+
+    // Filtro de rol
+    if (this.filtros.rol_id && this.filtros.rol_id !== '') {
+      const rolId = typeof this.filtros.rol_id === 'string' ? parseInt(this.filtros.rol_id) : this.filtros.rol_id;
+      datosFiltrados = datosFiltrados.filter(usuario => usuario.rol_id === rolId);
+    }
+
+    // Filtro de estado
+    if (this.filtros.estado && this.filtros.estado !== '') {
+      datosFiltrados = datosFiltrados.filter(usuario => usuario.estado === this.filtros.estado);
+    }
+
+    return datosFiltrados;
+  }
+
   aplicarFiltros(): void {
+    // Resetear a la primera página cuando se aplican filtros
+    if (this.paginator) {
+      this.paginator.pageIndex = 0;
+    }
     this.currentPage = 1;
-    this.cargarUsuarios();
+    
+    // Si ya tenemos todos los datos cargados, aplicar filtros localmente
+    if (this.todosLosDatos.length > 0) {
+      // Aplicar filtros sobre todos los datos originales
+      let datosFiltrados = this.aplicarFiltrosLocales(this.todosLosDatos);
+      
+      // Actualizar el dataSource con los datos filtrados
+      this.dataSource.data = datosFiltrados;
+      this.totalUsuarios = datosFiltrados.length;
+      
+      // Actualizar datos paginados
+      setTimeout(() => {
+        this.actualizarDatosPaginados();
+      }, 0);
+    } else {
+      // Si no hay datos cargados, cargar desde el backend
+      this.cargarUsuarios();
+    }
+  }
+
+  actualizarDatosPaginados(): void {
+    if (!this.dataSource.paginator) {
+      this.datosPaginados = this.dataSource.data;
+      return;
+    }
+    const startIndex = this.dataSource.paginator.pageIndex * this.dataSource.paginator.pageSize;
+    const endIndex = startIndex + this.dataSource.paginator.pageSize;
+    this.datosPaginados = this.dataSource.data.slice(startIndex, endIndex);
+  }
+
+  onPageChange(event: any): void {
+    this.currentPage = event.pageIndex + 1;
+    this.pageSize = event.pageSize;
+    this.actualizarDatosPaginados();
+    this.cdr.detectChanges();
   }
 
   limpiarFiltros(): void {

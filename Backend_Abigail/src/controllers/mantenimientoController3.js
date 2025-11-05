@@ -8,23 +8,16 @@ const CatTipoEspacioModel = require('../models/catTipoEspacioModel');
 
 const obtenerRolesParticipante = async (req, res) => {
   try {
-    const { pagina = 1, limite = 10, busqueda = '', activo = '' } = req.query;
-    const filtros = { busqueda, activo };
-    
-    const [datos, total] = await Promise.all([
-      CatRolParticipanteModel.obtenerTodos(parseInt(pagina), parseInt(limite), filtros),
-      CatRolParticipanteModel.contar(filtros)
-    ]);
+    // El backend siempre devuelve TODOS los roles de participante sin filtros ni paginación
+    const datos = await CatRolParticipanteModel.obtenerTodos();
+    const total = datos.length;
 
     res.json({
       ok: true,
       datos: {
         datos,
         paginacion: {
-          pagina: parseInt(pagina),
-          limite: parseInt(limite),
-          total,
-          totalPaginas: Math.ceil(total / parseInt(limite))
+          total_registros: total
         }
       }
     });
@@ -204,23 +197,16 @@ const obtenerRolesParticipanteActivos = async (req, res) => {
 
 const obtenerComunidades = async (req, res) => {
   try {
-    const { pagina = 1, limite = 10, busqueda = '', activo = '' } = req.query;
-    const filtros = { busqueda, activo };
-    
-    const [datos, total] = await Promise.all([
-      CatComunidadModel.obtenerTodos(parseInt(pagina), parseInt(limite), filtros),
-      CatComunidadModel.contar(filtros)
-    ]);
+    // El backend siempre devuelve TODAS las comunidades sin filtros ni paginación
+    const datos = await CatComunidadModel.obtenerTodos();
+    const total = datos.length;
 
     res.json({
       ok: true,
       datos: {
         datos,
         paginacion: {
-          pagina: parseInt(pagina),
-          limite: parseInt(limite),
-          total,
-          totalPaginas: Math.ceil(total / parseInt(limite))
+          total_registros: total
         }
       }
     });
@@ -400,23 +386,16 @@ const obtenerComunidadesActivas = async (req, res) => {
 
 const obtenerTiposEspacio = async (req, res) => {
   try {
-    const { pagina = 1, limite = 10, busqueda = '', activo = '' } = req.query;
-    const filtros = { busqueda, activo };
-    
-    const [datos, total] = await Promise.all([
-      CatTipoEspacioModel.obtenerTodos(parseInt(pagina), parseInt(limite), filtros),
-      CatTipoEspacioModel.contar(filtros)
-    ]);
+    // El backend siempre devuelve TODOS los tipos de espacio sin filtros ni paginación
+    const datos = await CatTipoEspacioModel.obtenerTodos();
+    const total = datos.length;
 
     res.json({
       ok: true,
       datos: {
         datos,
         paginacion: {
-          pagina: parseInt(pagina),
-          limite: parseInt(limite),
-          total,
-          totalPaginas: Math.ceil(total / parseInt(limite))
+          total_registros: total
         }
       }
     });
