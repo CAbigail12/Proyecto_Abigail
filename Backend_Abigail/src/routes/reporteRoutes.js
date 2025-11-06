@@ -1,12 +1,14 @@
 const express = require('express');
 const ReporteController = require('../controllers/reporteController');
-const { verificarAutenticacion, requiereRol } = require('../middlewares/authMiddleware');
+const { verificarAutenticacion, requierePermisoMenu } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
-// Aplicar autenticación y autorización de ADMINISTRADOR a todas las rutas
+// Aplicar autenticación a todas las rutas
 router.use(verificarAutenticacion);
-router.use(requiereRol('ADMINISTRADOR'));
+
+// Middleware para verificar permiso de reportes (se aplica a todas las rutas)
+router.use(requierePermisoMenu('reportes'));
 
 // ========================================
 // REPORTES DE CAJA PARROQUIAL

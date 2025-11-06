@@ -39,77 +39,19 @@ export class MainLayoutComponent implements OnInit {
   currentUser: any = null;
   menuAbierto = false;
   
-  menuItems: MenuItem[] = [
-    {
-      title: 'Feligreses',
-      description: 'Gestión de feligreses de la parroquia',
-      icon: 'people_alt',
-      route: '/feligreses',
-      disponible: true,
-      expanded: false
-    },
-    {
-      title: 'Asignación de Sacramentos',
-      description: 'Gestión de sacramentos (Bautizo, Confirmación, Matrimonio)',
-      icon: 'auto_stories',
-      route: '/sacramentos-asignacion',
-      disponible: true,
-      expanded: false
-    },
-    {
-      title: 'Calendario de Sacramentos',
-      description: 'Visualización de sacramentos en calendario',
-      icon: 'calendar_month',
-      route: '/calendario-sacramentos',
-      disponible: true,
-      expanded: false
-    },
-    {
-      title: 'Actividades Religiosas',
-      description: 'Gestión de actividades religiosas',
-      icon: 'event_note',
-      route: '/actividades-religiosas',
-      disponible: true,
-      expanded: false
-    },
-    {
-      title: 'Caja Parroquial',
-      description: 'Gestión de ingresos, egresos y balance de caja',
-      icon: 'account_balance',
-      route: '/caja',
-      disponible: true,
-      expanded: false,
-      subItems: [
-        { title: 'Agregar Ingresos', route: '/ingresos', disponible: false, icon: 'add_circle' },
-        { title: 'Agregar Egresos', route: '/egresos', disponible: false, icon: 'remove_circle' },
-        { title: 'Balance de Caja', route: '/balance', disponible: false, icon: 'account_balance' }
-      ]
-    },
-    {
-      title: 'Reportes',
-      description: 'Reportes y estadísticas de la parroquia',
-      icon: 'analytics',
-      route: '/reportes',
-      disponible: true,
-      expanded: false
-    },
-    {
-      title: 'Usuario',
-      description: 'Gestión completa de usuarios del sistema',
-      icon: 'manage_accounts',
-      route: '/usuarios',
-      disponible: true,
-      expanded: false
-    },
-    {
-      title: 'Mantenimiento',
-      description: 'Mantenimiento del sistema',
-      icon: 'engineering',
-      route: '/mantenimiento',
-      disponible: true,
-      expanded: false
-    }
-  ];
+  menuItems: MenuItem[] = [];
+
+  // Mapeo de rutas a claves de permisos
+  private permisosMap: { [key: string]: string } = {
+    '/feligreses': 'feligreses',
+    '/sacramentos-asignacion': 'sacramentos_asignacion',
+    '/calendario-sacramentos': 'calendario_sacramentos',
+    '/actividades-religiosas': 'actividades_religiosas',
+    '/caja': 'caja_parroquial',
+    '/reportes': 'reportes',
+    '/usuarios': 'usuarios',
+    '/mantenimiento': 'mantenimiento'
+  };
 
   constructor(
     private authService: AuthService,
@@ -119,6 +61,121 @@ export class MainLayoutComponent implements OnInit {
 
   ngOnInit(): void {
     this.currentUser = this.authService.getCurrentUser();
+    this.construirMenu();
+    
+    // Suscribirse a cambios en el usuario para reconstruir el menú
+    this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+      this.construirMenu();
+    });
+  }
+
+  construirMenu(): void {
+    const permisos = this.authService.getPermisosMenu();
+    const esAdmin = this.authService.isAdmin();
+    
+    // Verificar si hay permisos configurados
+    const tienePermisosConfigurados = permisos && Object.keys(permisos).length > 0;
+    
+    // Si no es admin y no tiene permisos configurados, solo mostrar dashboard
+    // El dashboard siempre está disponible (se muestra fuera de este array)
+    if (!esAdmin && !tienePermisosConfigurados) {
+      this.menuItems = [];
+      return;
+    }
+    
+    // Definir todos los items del menú
+    // IMPORTANTE: Si hay permisos configurados, respetarlos incluso para administradores
+    const todosLosItems: MenuItem[] = [
+      {
+        title: 'Feligreses',
+        description: 'Gestión de feligreses de la parroquia',
+        icon: 'people_alt',
+        route: '/feligreses',
+        disponible: tienePermisosConfigurados 
+          ? permisos['feligreses'] === true 
+          : esAdmin, // Solo si no hay permisos configurados, usar esAdmin
+        expanded: false
+      },
+      {
+        title: 'Asignación de Sacramentos',
+        description: 'Gestión de sacramentos (Bautizo, Confirmación, Matrimonio)',
+        icon: 'auto_stories',
+        route: '/sacramentos-asignacion',
+        disponible: tienePermisosConfigurados 
+          ? permisos['sacramentos_asignacion'] === true 
+          : esAdmin,
+        expanded: false
+      },
+      {
+        title: 'Calendario de Sacramentos',
+        description: 'Visualización de sacramentos en calendario',
+        icon: 'calendar_month',
+        route: '/calendario-sacramentos',
+        disponible: tienePermisosConfigurados 
+          ? permisos['calendario_sacramentos'] === true 
+          : esAdmin,
+        expanded: false
+      },
+      {
+        title: 'Actividades Religiosas',
+        description: 'Gestión de actividades religiosas',
+        icon: 'event_note',
+        route: '/actividades-religiosas',
+        disponible: tienePermisosConfigurados 
+          ? permisos['actividades_religiosas'] === true 
+          : esAdmin,
+        expanded: false
+      },
+      {
+        title: 'Caja Parroquial',
+        description: 'Gestión de ingresos, egresos y balance de caja',
+        icon: 'account_balance',
+        route: '/caja',
+        disponible: tienePermisosConfigurados 
+          ? permisos['caja_parroquial'] === true 
+          : esAdmin,
+        expanded: false,
+        subItems: [
+          { title: 'Agregar Ingresos', route: '/ingresos', disponible: false, icon: 'add_circle' },
+          { title: 'Agregar Egresos', route: '/egresos', disponible: false, icon: 'remove_circle' },
+          { title: 'Balance de Caja', route: '/balance', disponible: false, icon: 'account_balance' }
+        ]
+      },
+      {
+        title: 'Reportes',
+        description: 'Reportes y estadísticas de la parroquia',
+        icon: 'analytics',
+        route: '/reportes',
+        disponible: tienePermisosConfigurados 
+          ? permisos['reportes'] === true 
+          : esAdmin,
+        expanded: false
+      },
+      {
+        title: 'Usuario',
+        description: 'Gestión completa de usuarios del sistema',
+        icon: 'manage_accounts',
+        route: '/usuarios',
+        disponible: tienePermisosConfigurados 
+          ? permisos['usuarios'] === true 
+          : esAdmin,
+        expanded: false
+      },
+      {
+        title: 'Mantenimiento',
+        description: 'Mantenimiento del sistema',
+        icon: 'engineering',
+        route: '/mantenimiento',
+        disponible: tienePermisosConfigurados 
+          ? permisos['mantenimiento'] === true 
+          : esAdmin,
+        expanded: false
+      }
+    ];
+    
+    // Filtrar solo los items disponibles
+    this.menuItems = todosLosItems.filter(item => item.disponible);
   }
 
   toggleMenu(): void {

@@ -66,6 +66,82 @@ class RolModel {
       cliente.release();
     }
   }
+
+  // Crear nuevo rol
+  static async crear(nombre, descripcion = null) {
+    const cliente = await pool.connect();
+    try {
+      const resultado = await cliente.query(
+        `INSERT INTO roles (nombre, descripcion, activo)
+         VALUES ($1, $2, true)
+         RETURNING id_rol, nombre, descripcion, activo, fecha_creacion`,
+        [nombre.trim().toUpperCase(), descripcion || null]
+      );
+      return resultado.rows[0];
+    } finally {
+      cliente.release();
+    }
+  }
+
+  // Actualizar rol
+  static async actualizar(idRol, datos) {
+    const cliente = await pool.connect();
+    try {
+      const campos = [];
+      const valores = [];
+      let contador = 1;
+      
+      if (datos.nombre !== undefined) {
+        campos.push(`nombre = $${contador}`);
+        valores.push(datos.nombre.trim().toUpperCase());
+        contador++;
+      }
+      
+      if (datos.descripcion !== undefined) {
+        campos.push(`descripcion = $${contador}`);
+        valores.push(datos.descripcion || null);
+        contador++;
+      }
+      
+      if (datos.activo !== undefined) {
+        campos.push(`activo = $${contador}`);
+        valores.push(datos.activo);
+        contador++;
+      }
+      
+      if (campos.length === 0) {
+        throw crearError('No hay campos para actualizar', 400);
+      }
+      
+      valores.push(idRol);
+      
+      const resultado = await cliente.query(
+        `UPDATE roles 
+         SET ${campos.join(', ')}
+         WHERE id_rol = $${contador}
+         RETURNING id_rol, nombre, descripcion, activo, fecha_creacion`,
+        valores
+      );
+      
+      return resultado.rows[0];
+    } finally {
+      cliente.release();
+    }
+  }
+
+  // Eliminar rol (soft delete)
+  static async eliminar(idRol) {
+    const cliente = await pool.connect();
+    try {
+      await cliente.query(
+        'UPDATE roles SET activo = false WHERE id_rol = $1',
+        [idRol]
+      );
+      return true;
+    } finally {
+      cliente.release();
+    }
+  }
 }
 
 module.exports = RolModel;

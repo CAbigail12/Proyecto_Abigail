@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const UsuarioModel = require('../models/usuarioModel');
+const RolPermisosModel = require('../models/rolPermisosModel');
 const { generarToken } = require('../utils/jwt');
 const { crearError } = require('../utils/errorHandler');
 
@@ -27,14 +28,33 @@ class AuthController {
       
       // Verificar si el usuario está activo
       if (usuario.estado !== 'ACTIVO') {
+        console.log('❌ Login failed - User inactive:', usuario.estado);
         throw crearError('Usuario inactivo', 401);
       }
       
       // Verificar contraseña
+      console.log('🔐 Verificando contraseña para usuario:', usuario.correo);
+      console.log('🔐 Hash almacenado (primeros 20 chars):', usuario.contrasena_hash?.substring(0, 20));
       const contrasenaValida = await bcrypt.compare(contrasena, usuario.contrasena_hash);
+      console.log('🔐 Contraseña válida:', contrasenaValida);
       
       if (!contrasenaValida) {
+        console.log('❌ Login failed - Invalid password for user:', usuario.correo);
         throw crearError('Credenciales inválidas', 401);
+      }
+      
+      // Obtener permisos del rol
+      let permisosMenu = {};
+      try {
+        const permisos = await RolPermisosModel.obtenerPorRolId(usuario.rol_id);
+        if (permisos && permisos.permisos_menu) {
+          permisosMenu = typeof permisos.permisos_menu === 'string' 
+            ? JSON.parse(permisos.permisos_menu) 
+            : permisos.permisos_menu;
+        }
+      } catch (error) {
+        console.error('Error al obtener permisos del rol:', error);
+        // Si no hay permisos configurados, se usa un objeto vacío
       }
       
       // Generar token JWT
@@ -58,8 +78,10 @@ class AuthController {
             correo: usuario.correo,
             telefono: usuario.telefono,
             fotografia: usuario.fotografia,
-            rol: usuario.rol_nombre
-          }
+            rol: usuario.rol_nombre,
+            rol_id: usuario.rol_id
+          },
+          permisos_menu: permisosMenu
         }
       });
       
@@ -73,6 +95,19 @@ class AuthController {
     try {
       const usuario = await UsuarioModel.obtenerPorId(req.usuario.id_usuario);
       
+      // Obtener permisos del rol
+      let permisosMenu = {};
+      try {
+        const permisos = await RolPermisosModel.obtenerPorRolId(usuario.rol_id);
+        if (permisos && permisos.permisos_menu) {
+          permisosMenu = typeof permisos.permisos_menu === 'string' 
+            ? JSON.parse(permisos.permisos_menu) 
+            : permisos.permisos_menu;
+        }
+      } catch (error) {
+        console.error('Error al obtener permisos del rol:', error);
+      }
+      
       res.json({
         ok: true,
         mensaje: 'Perfil obtenido correctamente',
@@ -84,8 +119,10 @@ class AuthController {
           telefono: usuario.telefono,
           fotografia: usuario.fotografia,
           rol: usuario.rol_nombre,
+          rol_id: usuario.rol_id,
           estado: usuario.estado,
-          fecha_registro: usuario.fecha_registro
+          fecha_registro: usuario.fecha_registro,
+          permisos_menu: permisosMenu
         }
       });
       

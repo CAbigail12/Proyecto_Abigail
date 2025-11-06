@@ -52,7 +52,10 @@ export interface LoginResponse {
       telefono?: string;
       fotografia?: string;
       rol: string;
+      rol_id?: number;
+      permisos_menu?: any;
     };
+    permisos_menu?: any;
   };
 }
 

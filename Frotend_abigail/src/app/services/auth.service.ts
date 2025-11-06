@@ -50,10 +50,14 @@ export class AuthService {
   private loadStoredUser(): void {
     const token = this.getLocalStorageItem('token');
     const user = this.getLocalStorageItem('user');
+    const permisos = this.getLocalStorageItem('permisos_menu');
     
     if (token && user) {
       try {
         const userData = JSON.parse(user);
+        if (permisos) {
+          userData.permisos_menu = JSON.parse(permisos);
+        }
         this.currentUserSubject.next(userData);
         this.isAuthenticatedSubject.next(true);
       } catch (error) {
@@ -69,6 +73,13 @@ export class AuthService {
           if (response.ok) {
             this.setLocalStorageItem('token', response.datos.token);
             this.setLocalStorageItem('user', JSON.stringify(response.datos.usuario));
+            
+            // Guardar permisos del menú
+            if (response.datos.permisos_menu) {
+              this.setLocalStorageItem('permisos_menu', JSON.stringify(response.datos.permisos_menu));
+              response.datos.usuario.permisos_menu = response.datos.permisos_menu;
+            }
+            
             this.currentUserSubject.next(response.datos.usuario);
             this.isAuthenticatedSubject.next(true);
           }
@@ -79,6 +90,7 @@ export class AuthService {
   logout(): void {
     this.removeLocalStorageItem('token');
     this.removeLocalStorageItem('user');
+    this.removeLocalStorageItem('permisos_menu');
     this.currentUserSubject.next(null);
     this.isAuthenticatedSubject.next(false);
     
@@ -140,5 +152,48 @@ export class AuthService {
   isInvitado(): boolean {
     const user = this.getCurrentUser();
     return user?.rol === 'INVITADO';
+  }
+
+  // Obtener permisos del menú
+  getPermisosMenu(): any {
+    const user = this.getCurrentUser();
+    return user?.permisos_menu || {};
+  }
+
+  // Verificar si el usuario tiene permiso para una opción del menú
+  tienePermiso(opcion: string): boolean {
+    const permisos = this.getPermisosMenu();
+    // Si es admin, siempre tiene todos los permisos
+    if (this.isAdmin()) {
+      return true;
+    }
+    // Si no hay permisos configurados, no tiene acceso (excepto dashboard)
+    if (!permisos || Object.keys(permisos).length === 0) {
+      return opcion === 'dashboard'; // Solo dashboard está disponible
+    }
+    // Verificar permiso específico
+    return permisos[opcion] === true;
+  }
+
+  // Recargar permisos del usuario actual desde el backend
+  recargarPermisos(): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}/auth/perfil`).pipe(
+      tap(response => {
+        if (response.ok && response.datos) {
+          const usuario = response.datos;
+          // Actualizar permisos en localStorage
+          if (usuario.permisos_menu) {
+            this.setLocalStorageItem('permisos_menu', JSON.stringify(usuario.permisos_menu));
+          }
+          // Actualizar usuario en el subject
+          const currentUser = this.getCurrentUser();
+          if (currentUser) {
+            currentUser.permisos_menu = usuario.permisos_menu;
+            this.setLocalStorageItem('user', JSON.stringify(currentUser));
+            this.currentUserSubject.next(currentUser);
+          }
+        }
+      })
+    );
   }
 }

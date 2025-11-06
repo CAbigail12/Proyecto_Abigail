@@ -41,6 +41,12 @@
             <mat-icon class="text-white">add</mat-icon>
             Nuevo Usuario
           </button>
+          <button (click)="abrirModalGenerarRol()"
+            class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg"
+            matTooltip="Configurar permisos de roles">
+            <mat-icon class="text-white">admin_panel_settings</mat-icon>
+            Generar Rol
+          </button>
         </div>
       </div>
     </div>
@@ -87,7 +93,7 @@
           <select [(ngModel)]="filtros.rol_id"
             class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-yellow-500 focus:bg-white transition-all duration-200 text-gray-900">
             <option value="">Todos los roles</option>
-            <option *ngFor="let rol of roles" [value]="rol.id">{{rol.nombre}}</option>
+            <option *ngFor="let rol of roles" [value]="rol.id_rol">{{rol.nombre}}</option>
           </select>
         </div>
 
@@ -245,7 +251,7 @@
                                usuario.rol_id === 2 ? 'bg-blue-50 text-blue-700 border-blue-200' : 
                                'bg-gray-50 text-gray-700 border-gray-200'">
                   <mat-icon class="text-sm mr-1">{{getRolIcon(usuario.rol_id)}}</mat-icon>
-                  {{getRolNombre(usuario.rol_id)}}
+                  {{usuario.rol_nombre || getRolNombre(usuario.rol_id)}}
                 </div>
               </div>
             </div>
@@ -417,9 +423,13 @@
                 <!-- Contraseña y Fotografía -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div class="space-y-2">
-                    <label class="block text-sm font-medium text-gray-700">Contraseña *</label>
+                    <label class="block text-sm font-medium text-gray-700">
+                      Contraseña <span *ngIf="!editMode">*</span>
+                      <span *ngIf="editMode" class="text-gray-500 text-xs">(dejar vacío para mantener la actual)</span>
+                    </label>
                     <mat-form-field appearance="outline" class="w-full">
-                      <input matInput formControlName="contrasena" type="password" placeholder="Mínimo 8 caracteres">
+                      <input matInput formControlName="contrasena" type="password" 
+                        [placeholder]="editMode ? 'Dejar vacío para mantener la actual' : 'Mínimo 8 caracteres, mayúscula, minúscula, número y símbolo'">
                       <mat-error *ngIf="usuarioForm.get('contrasena')?.hasError('required')">
                         La contraseña es requerida
                       </mat-error>
@@ -446,9 +456,15 @@
                   <div class="space-y-2">
                     <label class="block text-sm font-medium text-gray-700">Rol *</label>
                     <mat-form-field appearance="outline" class="w-full">
-                      <mat-select formControlName="rol_id" placeholder="Seleccionar rol">
-                        <mat-option *ngFor="let rol of roles" [value]="rol.id">
+                      <mat-select formControlName="rol_id" placeholder="Seleccionar rol" [compareWith]="compareRoles">
+                        <mat-option *ngIf="roles.length === 0" disabled>
+                          Cargando roles...
+                        </mat-option>
+                        <mat-option *ngFor="let rol of roles" [value]="rol.id_rol">
                           {{rol.nombre}}
+                        </mat-option>
+                        <mat-option *ngIf="roles.length > 0 && !usuarioForm.get('rol_id')?.value && editMode" disabled>
+                          Seleccione un rol
                         </mat-option>
                       </mat-select>
                       <mat-error *ngIf="usuarioForm.get('rol_id')?.hasError('required')">
@@ -516,7 +532,7 @@
                     </span>
                     <span class="bg-gray-700 px-2 py-1 rounded text-sm font-medium flex items-center gap-1">
                       <mat-icon class="text-sm">{{getRolIcon(usuarioDetalle?.rol_id || 0)}}</mat-icon>
-                      {{getRolNombre(usuarioDetalle?.rol_id || 0)}}
+                      {{usuarioDetalle?.rol_nombre || getRolNombre(usuarioDetalle?.rol_id || 0)}}
                     </span>
                   </div>
                 </div>
@@ -617,4 +633,165 @@
               </div>
             </div>
           </div>
+</div>
+
+<!-- Modal de Selección de Rol - Fuera del contenedor principal -->
+<div *ngIf="mostrarModalSeleccionRol && !mostrarModalCrearRol" 
+     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" 
+     style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; z-index: 99998 !important;"
+     (click)="mostrarModalSeleccionRol = false">
+  <div class="bg-white rounded-lg shadow-xl max-w-md w-full relative" (click)="$event.stopPropagation()">
+    <div class="p-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Seleccionar Rol</h2>
+      <p class="text-gray-600 mb-4">Selecciona el rol para configurar sus permisos:</p>
+        <div class="space-y-2">
+          <button
+            (click)="cerrarModalYabrirCrearRol()"
+            class="w-full text-left p-4 border-2 border-dashed border-purple-300 rounded-lg hover:bg-purple-50 transition-colors duration-200 bg-purple-50">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <mat-icon class="text-purple-600">add_circle</mat-icon>
+                <span class="font-semibold text-purple-700">Crear Nuevo Rol</span>
+              </div>
+              <mat-icon class="text-purple-400">chevron_right</mat-icon>
+            </div>
+          </button>
+          <div class="border-t border-gray-200 my-2"></div>
+          <button
+            *ngFor="let rol of roles"
+            (click)="seleccionarRolParaPermisos(rol)"
+            class="w-full text-left p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-gray-800">{{ rol.nombre }}</span>
+              <mat-icon class="text-gray-400">chevron_right</mat-icon>
+            </div>
+          </button>
+        </div>
+        <div class="mt-6 flex justify-end">
+          <button
+            (click)="mostrarModalSeleccionRol = false"
+            class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded font-medium transition-colors duration-200">
+            Cancelar
+          </button>
+        </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Permisos - Fuera del contenedor principal -->
+<div *ngIf="mostrarModalPermisos && !mostrarModalCrearRol" 
+     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" 
+     style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; z-index: 99998 !important;"
+     (click)="cerrarModalPermisos()">
+  <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative" (click)="$event.stopPropagation()">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">
+          Configurar Permisos - {{ rolSeleccionadoParaPermisos?.nombre }}
+        </h2>
+        <button
+          (click)="cerrarModalPermisos()"
+          class="text-gray-400 hover:text-gray-600">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="mb-4 flex gap-2">
+        <button
+          (click)="seleccionarTodosPermisos()"
+          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium transition-colors duration-200">
+          Seleccionar Todos
+        </button>
+        <button
+          (click)="deseleccionarTodosPermisos()"
+          class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded font-medium transition-colors duration-200">
+          Deseleccionar Todos
+        </button>
+      </div>
+
+      <form [formGroup]="permisosForm" class="space-y-3">
+        <div
+          *ngFor="let opcion of opcionesMenu"
+          class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+          <div class="flex-1">
+            <div class="font-semibold text-gray-800">{{ opcion.nombre }}</div>
+            <div class="text-sm text-gray-600">{{ opcion.descripcion }}</div>
+          </div>
+          <mat-checkbox [formControlName]="opcion.clave" color="primary"></mat-checkbox>
+        </div>
+      </form>
+
+      <div class="mt-6 flex justify-end gap-3">
+        <button
+          (click)="cerrarModalPermisos()"
+          class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded font-medium transition-colors duration-200">
+          Cancelar
+        </button>
+        <button
+          (click)="guardarPermisos()"
+          [disabled]="loading"
+          class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded font-medium transition-colors duration-200 disabled:opacity-50">
+          <span *ngIf="!loading">Guardar Permisos</span>
+          <span *ngIf="loading">Guardando...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+<!-- Modal de Crear Nuevo Rol -->
+<div *ngIf="mostrarModalCrearRol" 
+     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" 
+     style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; z-index: 99999 !important;"
+     (click)="cerrarModalCrearRol()">
+  <div class="bg-white rounded-lg shadow-xl max-w-md w-full relative" (click)="$event.stopPropagation()">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Crear Nuevo Rol</h2>
+        <button
+          (click)="cerrarModalCrearRol()"
+          class="text-gray-400 hover:text-gray-600">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <form [formGroup]="rolForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del Rol *</label>
+          <input
+            type="text"
+            formControlName="nombre"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            placeholder="Ej: SECRETARIO, COORDINADOR">
+          <div *ngIf="rolForm.get('nombre')?.invalid && rolForm.get('nombre')?.touched" class="text-red-600 text-sm mt-1">
+            El nombre del rol es requerido (mínimo 2 caracteres)
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+          <textarea
+            formControlName="descripcion"
+            rows="3"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            placeholder="Descripción opcional del rol"></textarea>
+        </div>
+      </form>
+
+      <div class="mt-6 flex justify-end gap-3">
+        <button
+          (click)="cerrarModalCrearRol()"
+          class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded font-medium transition-colors duration-200">
+          Cancelar
+        </button>
+        <button
+          (click)="crearRol()"
+          [disabled]="rolForm.invalid || loading"
+          class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded font-medium transition-colors duration-200 disabled:opacity-50">
+          <span *ngIf="!loading">Crear Rol</span>
+          <span *ngIf="loading">Creando...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 </div>

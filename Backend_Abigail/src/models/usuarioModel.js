@@ -135,8 +135,23 @@ class UsuarioModel {
         }
       }
       
+      // Si se proporciona una contraseña (no vacía), hashearla
+      if (datosActualizacion.contrasena && datosActualizacion.contrasena.trim().length > 0) {
+        console.log('🔐 Contraseña proporcionada, generando hash...');
+        const contrasenaLimpia = datosActualizacion.contrasena.trim();
+        const contrasenaHash = await bcrypt.hash(contrasenaLimpia, 10);
+        datosActualizacion.contrasena_hash = contrasenaHash;
+        console.log('✅ Hash generado (primeros 30 chars):', contrasenaHash.substring(0, 30));
+        // Eliminar la contraseña en texto plano del objeto
+        delete datosActualizacion.contrasena;
+      } else {
+        // Si la contraseña está vacía o es solo espacios, eliminarla del objeto
+        delete datosActualizacion.contrasena;
+        console.log('ℹ️  No se proporcionó contraseña, se mantendrá la actual');
+      }
+      
       // Construir consulta de actualización
-      const camposActualizables = ['nombre', 'apellido', 'correo', 'telefono', 'fotografia', 'rol_id', 'estado'];
+      const camposActualizables = ['nombre', 'apellido', 'correo', 'contrasena_hash', 'telefono', 'fotografia', 'rol_id', 'estado'];
       const camposParaActualizar = [];
       const valores = [];
       let contadorParametros = 1;
@@ -162,7 +177,30 @@ class UsuarioModel {
         RETURNING id_usuario, nombre, apellido, correo, telefono, fotografia, rol_id, estado, fecha_registro
       `;
       
+      console.log('📝 Ejecutando actualización con campos:', camposParaActualizar.map(c => c.split('=')[0].trim()));
       const resultado = await cliente.query(consulta, valores);
+      
+      // Si se actualizó la contraseña, verificar que se guardó correctamente
+      if (datosActualizacion.contrasena_hash) {
+        const verificacion = await cliente.query(
+          'SELECT contrasena_hash FROM usuarios WHERE id_usuario = $1',
+          [idUsuario]
+        );
+        const hashGuardado = verificacion.rows[0].contrasena_hash;
+        const hashGenerado = datosActualizacion.contrasena_hash;
+        
+        // Verificar que el hash se guardó correctamente
+        if (hashGuardado && hashGuardado === hashGenerado) {
+          console.log('✅ Contraseña actualizada y verificada correctamente');
+          // Verificar que el hash funciona con una contraseña de prueba (si tenemos la original)
+          // Nota: No podemos verificar aquí porque ya no tenemos la contraseña en texto plano
+        } else {
+          console.log('⚠️  Advertencia: El hash guardado no coincide con el generado');
+          console.log('   Hash generado (primeros 30):', hashGenerado?.substring(0, 30));
+          console.log('   Hash guardado (primeros 30):', hashGuardado?.substring(0, 30));
+        }
+      }
+      
       return resultado.rows[0];
     } finally {
       cliente.release();

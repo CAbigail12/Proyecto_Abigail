@@ -38,11 +38,9 @@ export class LoginComponent implements OnInit {
     private router: Router,
     private snackBar: MatSnackBar
   ) {
-    // TODO: TEMPORAL - Credenciales hardcodeadas para desarrollo
-    // REMOVER ANTES DE PRODUCCIÓN
     this.loginForm = this.fb.group({
-      email: ['admin@parroquia.com', [Validators.required, Validators.email]],
-      password: ['Admin123!', [Validators.required, Validators.minLength(6)]],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
       rememberMe: [false]
     });
   }

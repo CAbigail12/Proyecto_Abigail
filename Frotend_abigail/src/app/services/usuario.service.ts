@@ -61,6 +61,11 @@ export class UsuarioService {
     if (usuario.rol_id) formData.append('rol_id', usuario.rol_id.toString());
     if (usuario.estado) formData.append('estado', usuario.estado);
     
+    // IMPORTANTE: Agregar contraseña si se proporciona (para actualización)
+    if (usuario.contrasena) {
+      formData.append('contrasena', usuario.contrasena);
+    }
+    
     // Agregar fotografía si existe
     if (fotografia) {
       formData.append('fotografia', fotografia);

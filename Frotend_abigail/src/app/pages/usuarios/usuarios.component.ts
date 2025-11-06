@@ -19,7 +19,11 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { UsuarioService } from '../../services/usuario.service';
+import { RolPermisosService, PermisosMenu } from '../../services/rol-permisos.service';
+import { RolService, Rol, RolCreate } from '../../services/rol.service';
+import { AuthService } from '../../services/auth.service';
 import { Usuario, UsuarioCreate, UsuarioUpdate } from '../../models/usuario.model';
+import { environment } from '../../../environments/environment';
 import { ConfirmacionEliminarComponent } from './confirmacion-eliminar.component';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -88,15 +92,34 @@ export class UsuariosComponent implements OnInit {
   mostrarDialogo = false;
   selectedFile: File | null = null;
 
-  // Roles disponibles (simulado - en un caso real vendría de la API)
-  roles = [
-    { id: 1, nombre: 'ADMINISTRADOR' },
-    { id: 2, nombre: 'PERSONAL' },
-    { id: 3, nombre: 'INVITADO' }
+  // Roles disponibles (se cargan desde el backend)
+  roles: Rol[] = [];
+
+  // Modal de permisos
+  mostrarModalPermisos = false;
+  rolSeleccionadoParaPermisos: any = null;
+  permisosForm: FormGroup;
+  opcionesMenu = [
+    { clave: 'dashboard', nombre: 'Dashboard', descripcion: 'Panel principal' },
+    { clave: 'feligreses', nombre: 'Feligreses', descripcion: 'Gestión de feligreses' },
+    { clave: 'sacramentos_asignacion', nombre: 'Asignación de Sacramentos', descripcion: 'Gestión de sacramentos' },
+    { clave: 'calendario_sacramentos', nombre: 'Calendario de Sacramentos', descripcion: 'Calendario de eventos' },
+    { clave: 'actividades_religiosas', nombre: 'Actividades Religiosas', descripcion: 'Gestión de actividades' },
+    { clave: 'caja_parroquial', nombre: 'Caja Parroquial', descripcion: 'Gestión financiera' },
+    { clave: 'reportes', nombre: 'Reportes', descripcion: 'Reportes y estadísticas' },
+    { clave: 'usuarios', nombre: 'Usuarios', descripcion: 'Gestión de usuarios' },
+    { clave: 'mantenimiento', nombre: 'Mantenimiento', descripcion: 'Mantenimiento del sistema' }
   ];
+
+  // Modal de crear nuevo rol
+  mostrarModalCrearRol = false;
+  rolForm: FormGroup;
 
   constructor(
     private usuarioService: UsuarioService,
+    private rolPermisosService: RolPermisosService,
+    private rolService: RolService,
+    private authService: AuthService,
     private fb: FormBuilder,
     private snackBar: MatSnackBar,
     private dialog: MatDialog,
@@ -107,14 +130,76 @@ export class UsuariosComponent implements OnInit {
       apellido: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
       correo: ['', [Validators.required, Validators.email, Validators.maxLength(120)]],
       telefono: ['', [Validators.maxLength(20)]],
-      contrasena: ['', [Validators.required, Validators.minLength(8)]],
+      contrasena: [''], // Opcional - se validará condicionalmente
       rol_id: ['', Validators.required],
       estado: ['ACTIVO']
+    });
+
+    // Formulario de permisos
+    const permisosControls: any = {};
+    this.opcionesMenu.forEach(opcion => {
+      permisosControls[opcion.clave] = [false];
+    });
+    this.permisosForm = this.fb.group(permisosControls);
+
+    // Formulario de crear rol
+    this.rolForm = this.fb.group({
+      nombre: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
+      descripcion: ['']
     });
   }
 
   ngOnInit(): void {
     this.cargarUsuarios();
+    this.cargarRoles();
+  }
+
+  cargarRoles(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      console.log('🔄 Cargando roles desde:', `${environment.apiUrl}/roles`);
+      this.rolService.obtenerTodos().subscribe({
+        next: (response) => {
+          console.log('✅ Respuesta completa de roles:', JSON.stringify(response, null, 2));
+          if (response && response.ok) {
+            if (response.datos) {
+              this.roles = Array.isArray(response.datos) ? response.datos : [];
+              console.log('📋 Roles cargados exitosamente:', this.roles.length, 'roles');
+              console.log('📋 Detalle de roles:', this.roles);
+            } else {
+              console.warn('⚠️ Respuesta OK pero sin datos:', response);
+              this.roles = [];
+            }
+          } else {
+            console.warn('⚠️ Respuesta no OK:', response);
+            this.roles = [];
+          }
+          resolve();
+        },
+        error: (error) => {
+          console.error('❌ Error completo al cargar roles:', error);
+          console.error('❌ Status:', error.status);
+          console.error('❌ Error message:', error.message);
+          console.error('❌ Error body:', error.error);
+          
+          // Mostrar error si no es un error de red común o 404
+          if (error.status === 403) {
+            console.error('❌ Error 403: No tienes permisos para ver roles');
+            this.snackBar.open('No tienes permisos para ver los roles', 'Cerrar', {
+              duration: 3000,
+              panelClass: ['error-snackbar']
+            });
+          } else if (error.status !== 0 && error.status !== 404) {
+            const mensaje = error.error?.mensaje || error.message || 'Error al cargar los roles';
+            this.snackBar.open(mensaje, 'Cerrar', {
+              duration: 3000,
+              panelClass: ['error-snackbar']
+            });
+          }
+          this.roles = [];
+          resolve(); // Resolver incluso en error para no bloquear
+        }
+      });
+    });
   }
 
   ngAfterViewInit() {
@@ -258,32 +343,81 @@ export class UsuariosComponent implements OnInit {
     this.aplicarFiltros();
   }
 
-  abrirDialogoUsuario(usuario?: Usuario): void {
+  async abrirDialogoUsuario(usuario?: Usuario): Promise<void> {
+    console.log('🔧 Abriendo diálogo de usuario:', usuario);
     this.editMode = !!usuario;
     this.selectedUsuario = usuario || null;
+    
+    // SIEMPRE recargar roles para asegurar que estén actualizados
+    console.log('📊 Roles actuales antes de cargar:', this.roles.length);
+    await this.cargarRoles();
+    console.log('📊 Roles después de cargar:', this.roles.length);
+    
+    // Abrir el diálogo después de asegurar que los roles están cargados
+    this.abrirDialogoConDatos(usuario);
+  }
+
+  private abrirDialogoConDatos(usuario?: Usuario): void {
     this.mostrarDialogo = true;
     
     if (usuario) {
-      // Modo edición
-      this.usuarioForm.patchValue({
-        nombre: usuario.nombre,
-        apellido: usuario.apellido,
-        correo: usuario.correo,
-        telefono: usuario.telefono,
-        rol_id: usuario.rol_id,
-        estado: usuario.estado,
-        contrasena: '' // No mostrar contraseña actual
-      });
-      this.usuarioForm.get('contrasena')?.clearValidators();
+      console.log('✏️ Modo edición - Usuario:', usuario);
+      console.log('📋 Rol ID del usuario:', usuario.rol_id);
+      console.log('📋 Roles disponibles:', this.roles);
+      
+      // Modo edición - usar setTimeout para asegurar que el formulario se actualice después de que Angular renderice
+      setTimeout(() => {
+        const rolId = usuario.rol_id ? Number(usuario.rol_id) : null;
+        console.log('🔢 Rol ID convertido a número:', rolId);
+        
+        // Verificar que el rol existe en la lista de roles disponibles
+        const rolExiste = this.roles.some(r => r.id_rol === rolId);
+        console.log('✅ Rol existe en la lista:', rolExiste);
+        
+        if (rolExiste) {
+          const rolEncontrado = this.roles.find(r => r.id_rol === rolId);
+          console.log('🎯 Rol encontrado:', rolEncontrado);
+        }
+        
+        this.usuarioForm.patchValue({
+          nombre: usuario.nombre,
+          apellido: usuario.apellido,
+          correo: usuario.correo,
+          telefono: usuario.telefono || '',
+          rol_id: rolExiste ? rolId : null,
+          estado: usuario.estado,
+          contrasena: '' // No mostrar contraseña actual
+        });
+        
+        console.log('📝 Valor establecido en formulario:', this.usuarioForm.get('rol_id')?.value);
+        
+        this.usuarioForm.get('contrasena')?.clearValidators();
+        this.usuarioForm.get('contrasena')?.updateValueAndValidity();
+        
+        // Forzar detección de cambios
+        this.cdr.detectChanges();
+        
+        // Segundo setTimeout para asegurar que el mat-select se actualice
+        setTimeout(() => {
+          if (rolExiste && rolId !== null) {
+            console.log('🔄 Estableciendo valor del rol nuevamente:', rolId);
+            this.usuarioForm.get('rol_id')?.setValue(rolId, { emitEvent: false });
+            this.cdr.detectChanges();
+            console.log('✅ Valor final del rol:', this.usuarioForm.get('rol_id')?.value);
+          } else {
+            console.warn('⚠️ No se pudo establecer el rol - Rol no existe o es null');
+          }
+        }, 200);
+      }, 150);
     } else {
       // Modo creación
       this.usuarioForm.reset({
-        estado: 'ACTIVO'
+        estado: 'ACTIVO',
+        rol_id: ''
       });
       this.usuarioForm.get('contrasena')?.setValidators([Validators.required, Validators.minLength(8)]);
+      this.usuarioForm.get('contrasena')?.updateValueAndValidity();
     }
-    
-    this.usuarioForm.get('contrasena')?.updateValueAndValidity();
   }
 
   guardarUsuario(): void {
@@ -301,9 +435,9 @@ export class UsuariosComponent implements OnInit {
           estado: formData.estado
         };
         
-        // Solo incluir contraseña si se proporcionó una nueva
-        if (formData.contrasena) {
-          updateData.contrasena = formData.contrasena;
+        // Solo incluir contraseña si se proporcionó una nueva (no vacía ni solo espacios)
+        if (formData.contrasena && formData.contrasena.trim().length > 0) {
+          updateData.contrasena = formData.contrasena.trim();
         }
         
         this.usuarioService.actualizarUsuario(this.selectedUsuario.id_usuario, updateData, this.selectedFile || undefined)
@@ -420,8 +554,12 @@ export class UsuariosComponent implements OnInit {
     }
   }
 
+  compareRoles(rol1: number, rol2: number): boolean {
+    return rol1 === rol2;
+  }
+
   getRolNombre(rolId: number): string {
-    const rol = this.roles.find(r => r.id === rolId);
+    const rol = this.roles.find(r => r.id_rol === rolId);
     if (!rol) return 'N/A';
     
     // Mapear los roles para mostrar nombres más amigables
@@ -466,7 +604,7 @@ export class UsuariosComponent implements OnInit {
         `${usuario.nombre} ${usuario.apellido}`,
         usuario.correo,
         usuario.telefono || 'N/A',
-        this.getRolNombre(usuario.rol_id),
+        usuario.rol_nombre || this.getRolNombre(usuario.rol_id),
         usuario.estado,
         new Date(usuario.fecha_registro).toLocaleDateString('es-GT')
       ]);
@@ -524,10 +662,11 @@ export class UsuariosComponent implements OnInit {
         duration: 3000
       });
       
-    } catch (error) {
-      console.error('Error al exportar a PDF:', error);
-      this.snackBar.open('Error al exportar a PDF', 'Cerrar', {
-        duration: 3000
+    } catch (error: any) {
+      const mensaje = error?.message || 'Error al exportar a PDF';
+      this.snackBar.open(mensaje, 'Cerrar', {
+        duration: 3000,
+        panelClass: ['error-snackbar']
       });
     }
   }
@@ -586,5 +725,287 @@ export class UsuariosComponent implements OnInit {
 
   cambiarVista(vista: 'tabla' | 'tarjetas'): void {
     this.vistaActual = vista;
+  }
+
+  // Métodos para gestión de permisos
+  abrirModalGenerarRol(): void {
+    // Cargar roles antes de abrir el modal
+    this.cargarRoles();
+    // Abrir modal para seleccionar rol
+    this.mostrarModalSeleccionRol = true;
+    // Forzar detección de cambios
+    this.cdr.detectChanges();
+  }
+
+  mostrarModalSeleccionRol = false;
+
+  seleccionarRolParaPermisos(rol: any): void {
+    this.mostrarModalSeleccionRol = false;
+    this.abrirModalPermisos(rol);
+  }
+
+  cerrarModalYabrirCrearRol(): void {
+    this.mostrarModalSeleccionRol = false;
+    setTimeout(() => {
+      this.abrirModalCrearRol();
+    }, 100);
+  }
+
+  abrirModalCrearRol(): void {
+    console.log('🔧 Abriendo modal crear rol');
+    this.rolForm.reset({
+      nombre: '',
+      descripcion: ''
+    });
+    this.mostrarModalCrearRol = true;
+    console.log('✅ mostrarModalCrearRol establecido a:', this.mostrarModalCrearRol);
+    // Forzar detección de cambios
+    this.cdr.detectChanges();
+    // Segundo setTimeout para asegurar que el modal se renderice
+    setTimeout(() => {
+      this.cdr.detectChanges();
+      console.log('✅ Detección de cambios forzada nuevamente');
+    }, 50);
+  }
+
+  cerrarModalCrearRol(): void {
+    this.mostrarModalCrearRol = false;
+    this.rolForm.reset();
+  }
+
+  crearRol(): void {
+    if (this.rolForm.invalid) {
+      this.snackBar.open('Por favor completa todos los campos requeridos', 'Cerrar', {
+        duration: 3000,
+        panelClass: ['error-snackbar']
+      });
+      return;
+    }
+
+    const nuevoRol: RolCreate = {
+      nombre: this.rolForm.get('nombre')?.value?.trim() || '',
+      descripcion: this.rolForm.get('descripcion')?.value?.trim() || undefined
+    };
+
+    if (!nuevoRol.nombre) {
+      this.snackBar.open('El nombre del rol es requerido', 'Cerrar', {
+        duration: 3000,
+        panelClass: ['error-snackbar']
+      });
+      return;
+    }
+
+    this.loading = true;
+    this.rolService.crear(nuevoRol).subscribe({
+      next: (response) => {
+        this.loading = false;
+        if (response && response.ok) {
+          this.snackBar.open('Rol creado correctamente. Ahora configura sus permisos.', 'Cerrar', {
+            duration: 3000,
+            panelClass: ['success-snackbar']
+          });
+          this.cerrarModalCrearRol();
+          this.cargarRoles(); // Recargar lista de roles
+          
+          // Abrir modal de permisos para el nuevo rol
+          setTimeout(() => {
+            const rolCreado = response.datos;
+            if (rolCreado) {
+              this.abrirModalPermisos(rolCreado);
+            }
+          }, 500);
+        } else {
+          this.snackBar.open('Error al crear el rol', 'Cerrar', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
+        }
+      },
+      error: (error) => {
+        this.loading = false;
+        const mensaje = error?.error?.mensaje || error?.message || 'Error al crear el rol';
+        this.snackBar.open(mensaje, 'Cerrar', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
+      }
+    });
+  }
+
+  abrirModalPermisos(rol: any): void {
+    if (!rol) {
+      this.snackBar.open('Rol inválido', 'Cerrar', {
+        duration: 3000,
+        panelClass: ['error-snackbar']
+      });
+      return;
+    }
+
+    this.rolSeleccionadoParaPermisos = rol;
+    this.mostrarModalPermisos = true;
+    
+    // Resetear formulario primero
+    this.opcionesMenu.forEach(opcion => {
+      this.permisosForm.get(opcion.clave)?.setValue(false);
+    });
+    
+    // Obtener el ID del rol (puede venir como id_rol o id)
+    const rolId = rol.id_rol || rol.id;
+    
+    if (!rolId) {
+      this.snackBar.open('ID de rol inválido', 'Cerrar', {
+        duration: 3000,
+        panelClass: ['error-snackbar']
+      });
+      return;
+    }
+    
+    // Cargar permisos existentes si existen
+    this.rolPermisosService.obtenerPorRolId(rolId).subscribe({
+      next: (response) => {
+        if (response && response.ok && response.datos) {
+          let permisos: PermisosMenu = {};
+          
+          // Manejar diferentes formatos de respuesta
+          if (response.datos.permisos_menu) {
+            if (typeof response.datos.permisos_menu === 'string') {
+              try {
+                permisos = JSON.parse(response.datos.permisos_menu) as PermisosMenu;
+              } catch (e) {
+                console.error('Error al parsear permisos_menu:', e);
+                permisos = {};
+              }
+            } else {
+              permisos = response.datos.permisos_menu as PermisosMenu;
+            }
+          }
+          
+          // Actualizar formulario con permisos existentes
+          this.opcionesMenu.forEach(opcion => {
+            const tienePermiso = permisos[opcion.clave as keyof PermisosMenu] === true;
+            this.permisosForm.get(opcion.clave)?.setValue(tienePermiso);
+          });
+          
+          // Forzar detección de cambios
+          this.cdr.detectChanges();
+        } else {
+          // Si no hay respuesta válida, dejar todos en false
+          this.opcionesMenu.forEach(opcion => {
+            this.permisosForm.get(opcion.clave)?.setValue(false);
+          });
+        }
+      },
+      error: (error) => {
+        // Solo loguear errores que no sean 404 (permisos no encontrados es válido)
+        if (error.status !== 404) {
+          console.error('Error al cargar permisos:', error);
+        }
+        // Si no hay permisos, se dejan todos en false (comportamiento esperado)
+        this.opcionesMenu.forEach(opcion => {
+          this.permisosForm.get(opcion.clave)?.setValue(false);
+        });
+      }
+    });
+  }
+
+  cerrarModalPermisos(): void {
+    this.mostrarModalPermisos = false;
+    this.rolSeleccionadoParaPermisos = null;
+    // Resetear formulario
+    this.opcionesMenu.forEach(opcion => {
+      this.permisosForm.get(opcion.clave)?.setValue(false);
+    });
+  }
+
+  guardarPermisos(): void {
+    if (!this.rolSeleccionadoParaPermisos) {
+      this.snackBar.open('No hay rol seleccionado', 'Cerrar', {
+        duration: 3000,
+        panelClass: ['error-snackbar']
+      });
+      return;
+    }
+
+    const permisosMenu: PermisosMenu = {};
+    this.opcionesMenu.forEach(opcion => {
+      permisosMenu[opcion.clave as keyof PermisosMenu] = this.permisosForm.get(opcion.clave)?.value || false;
+    });
+
+    const rolId = this.rolSeleccionadoParaPermisos.id_rol || this.rolSeleccionadoParaPermisos.id;
+    
+    if (!rolId) {
+      this.snackBar.open('ID de rol inválido', 'Cerrar', {
+        duration: 3000,
+        panelClass: ['error-snackbar']
+      });
+      return;
+    }
+
+    this.loading = true;
+    this.rolPermisosService.crearOActualizar(rolId, permisosMenu).subscribe({
+      next: (response) => {
+        if (response && response.ok) {
+          // Verificar si el usuario actual tiene este rol
+          const usuarioActual = this.authService.getCurrentUser();
+          const rolIdUsuarioActual = usuarioActual?.rol_id;
+          
+          // Si el usuario actual tiene el rol que se está actualizando, recargar sus permisos
+          if (usuarioActual && rolIdUsuarioActual === rolId) {
+            this.authService.recargarPermisos().subscribe({
+              next: () => {
+                this.loading = false;
+                this.snackBar.open('Permisos guardados correctamente. El menú se ha actualizado.', 'Cerrar', {
+                  duration: 4000,
+                  panelClass: ['success-snackbar']
+                });
+                this.cerrarModalPermisos();
+              },
+              error: (error) => {
+                console.error('Error al recargar permisos:', error);
+                this.loading = false;
+                this.snackBar.open('Permisos guardados correctamente. Por favor, recarga la página para ver los cambios.', 'Cerrar', {
+                  duration: 4000,
+                  panelClass: ['success-snackbar']
+                });
+                this.cerrarModalPermisos();
+              }
+            });
+          } else {
+            this.loading = false;
+            this.snackBar.open('Permisos guardados correctamente', 'Cerrar', {
+              duration: 3000,
+              panelClass: ['success-snackbar']
+            });
+            this.cerrarModalPermisos();
+          }
+        } else {
+          this.loading = false;
+          this.snackBar.open('Error al guardar permisos', 'Cerrar', {
+            duration: 3000,
+            panelClass: ['error-snackbar']
+          });
+        }
+      },
+      error: (error) => {
+        this.loading = false;
+        const mensaje = error?.error?.mensaje || error?.message || 'Error al guardar permisos';
+        this.snackBar.open(mensaje, 'Cerrar', {
+          duration: 3000,
+          panelClass: ['error-snackbar']
+        });
+      }
+    });
+  }
+
+  seleccionarTodosPermisos(): void {
+    this.opcionesMenu.forEach(opcion => {
+      this.permisosForm.get(opcion.clave)?.setValue(true);
+    });
+  }
+
+  deseleccionarTodosPermisos(): void {
+    this.opcionesMenu.forEach(opcion => {
+      this.permisosForm.get(opcion.clave)?.setValue(false);
+    });
   }
 }

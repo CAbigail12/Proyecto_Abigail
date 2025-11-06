@@ -10,7 +10,13 @@ class ErrorAplicacion extends Error {
 
 // Middleware para manejar errores
 const manejadorErrores = (error, req, res, next) => {
-  console.error('Error:', error);
+  console.error('❌ Error capturado en manejadorErrores:');
+  console.error('   Tipo:', error.constructor.name);
+  console.error('   Mensaje:', error.message);
+  console.error('   esErrorOperacional:', error.esErrorOperacional);
+  console.error('   codigoEstado:', error.codigoEstado);
+  console.error('   errores:', error.errores);
+  console.error('   Stack:', error.stack);
 
   // Si es un error de validación de Joi
   if (error.isJoi) {
@@ -41,17 +47,22 @@ const manejadorErrores = (error, req, res, next) => {
 
   // Si es un error de la aplicación
   if (error.esErrorOperacional) {
-    return res.status(error.codigoEstado).json({
+    const mensaje = error.message || error.mensaje || 'Error en la operación';
+    const codigoEstado = error.codigoEstado || 500;
+    console.log(`📤 Enviando respuesta de error: ${codigoEstado} - ${mensaje}`);
+    return res.status(codigoEstado).json({
       ok: false,
-      mensaje: error.mensaje,
-      errores: error.errores
+      mensaje: mensaje,
+      errores: error.errores || null
     });
   }
 
   // Error interno del servidor
+  console.log('📤 Enviando respuesta de error interno del servidor');
   res.status(500).json({
     ok: false,
-    mensaje: 'Error interno del servidor'
+    mensaje: error.message || 'Error interno del servidor',
+    error: process.env.NODE_ENV === 'development' ? error.stack : undefined
   });
 };
 

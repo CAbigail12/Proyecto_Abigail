@@ -71,109 +71,16 @@
             </button>
           </div>
 
-          <!-- Feligreses -->
-          <div class="w-full">
+          <!-- Items del menú generados dinámicamente -->
+          <div *ngFor="let item of menuItems" class="w-full">
             <button 
               class="w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 bg-yellow-500 text-gray-900 hover:bg-yellow-400"
-              [class.opacity-50]="!menuItems[0].disponible"
-              [class.cursor-not-allowed]="!menuItems[0].disponible"
-              (click)="onMenuClick(menuItems[0])"
+              [class.opacity-50]="!item.disponible"
+              [class.cursor-not-allowed]="!item.disponible"
+              (click)="onMenuClick(item)"
             >
-              <mat-icon class="mr-3 text-gray-900">{{ menuItems[0].icon }}</mat-icon>
-              <span class="font-medium">Feligreses</span>
-            </button>
-          </div>
-
-          <!-- Módulo Sacramentos -->
-          <div class="w-full">
-            <button 
-              class="w-full flex items-center justify-between px-4 py-3 text-left rounded-lg transition-all duration-200 bg-yellow-500 text-gray-900 hover:bg-yellow-400"
-              [class.opacity-50]="!menuItems[1].disponible"
-              [class.cursor-not-allowed]="!menuItems[1].disponible"
-              (click)="onMenuClick(menuItems[1])"
-            >
-              <div class="flex items-center">
-                <mat-icon class="mr-3 text-gray-900">{{ menuItems[1].icon }}</mat-icon>
-                <span class="font-medium">{{ menuItems[1].title }}</span>
-              </div>
-            </button>
-          </div>
-
-          <!-- Calendario de Sacramentos -->
-          <div class="w-full">
-            <button 
-              class="w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 bg-yellow-500 text-gray-900 hover:bg-yellow-400"
-              [class.opacity-50]="!menuItems[2].disponible"
-              [class.cursor-not-allowed]="!menuItems[2].disponible"
-              (click)="onMenuClick(menuItems[2])"
-            >
-              <mat-icon class="mr-3 text-gray-900">{{ menuItems[2].icon }}</mat-icon>
-              <span class="font-medium">{{ menuItems[2].title }}</span>
-            </button>
-          </div>
-
-          <!-- Actividades Religiosas -->
-          <div class="w-full">
-            <button 
-              class="w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 bg-yellow-500 text-gray-900 hover:bg-yellow-400"
-              [class.opacity-50]="!menuItems[3].disponible"
-              [class.cursor-not-allowed]="!menuItems[3].disponible"
-              (click)="onMenuClick(menuItems[3])"
-            >
-              <mat-icon class="mr-3 text-gray-900">{{ menuItems[3].icon }}</mat-icon>
-              <span class="font-medium">Actividades Religiosas</span>
-            </button>
-          </div>
-
-          <!-- Caja Parroquial -->
-          <div class="w-full">
-            <button 
-              class="w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 bg-yellow-500 text-gray-900 hover:bg-yellow-400"
-              [class.opacity-50]="!menuItems[4].disponible"
-              [class.cursor-not-allowed]="!menuItems[4].disponible"
-              (click)="onMenuClick(menuItems[4])"
-            >
-              <mat-icon class="mr-3 text-gray-900">{{ menuItems[4].icon }}</mat-icon>
-              <span class="font-medium">Caja Parroquial</span>
-            </button>
-          </div>
-
-          <!-- Reportes -->
-          <div class="w-full">
-            <button 
-              class="w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 bg-yellow-500 text-gray-900 hover:bg-yellow-400"
-              [class.opacity-50]="!menuItems[5].disponible"
-              [class.cursor-not-allowed]="!menuItems[5].disponible"
-              (click)="onMenuClick(menuItems[5])"
-            >
-              <mat-icon class="mr-3 text-gray-900">{{ menuItems[5].icon }}</mat-icon>
-              <span class="font-medium">Reportes</span>
-            </button>
-          </div>
-
-          <!-- Usuario -->
-          <div class="w-full">
-            <button 
-              class="w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 bg-yellow-500 text-gray-900 hover:bg-yellow-400"
-              [class.opacity-50]="!menuItems[6].disponible"
-              [class.cursor-not-allowed]="!menuItems[6].disponible"
-              (click)="onMenuClick(menuItems[6])"
-            >
-              <mat-icon class="mr-3 text-gray-900">{{ menuItems[6].icon }}</mat-icon>
-              <span class="font-medium">Usuario</span>
-            </button>
-          </div>
-
-          <!-- Mantenimiento -->
-          <div class="w-full">
-            <button 
-              class="w-full flex items-center px-4 py-3 text-left rounded-lg transition-all duration-200 bg-yellow-500 text-gray-900 hover:bg-yellow-400"
-              [class.opacity-50]="!menuItems[7].disponible"
-              [class.cursor-not-allowed]="!menuItems[7].disponible"
-              (click)="onMenuClick(menuItems[7])"
-            >
-              <mat-icon class="mr-3 text-gray-900">{{ menuItems[7].icon }}</mat-icon>
-              <span class="font-medium">Mantenimiento</span>
+              <mat-icon class="mr-3 text-gray-900">{{ item.icon }}</mat-icon>
+              <span class="font-medium">{{ item.title }}</span>
             </button>
           </div>
 

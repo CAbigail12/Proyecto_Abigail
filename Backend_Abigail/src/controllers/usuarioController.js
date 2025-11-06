@@ -56,6 +56,23 @@ const esquemaActualizarUsuario = Joi.object({
     'string.email': 'El correo debe tener un formato válido',
     'string.max': 'El correo no puede exceder 120 caracteres'
   }),
+  contrasena: Joi.string()
+    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)
+    .allow('', null)
+    .optional()
+    .custom((value, helpers) => {
+      // Si se proporciona una contraseña, debe cumplir con el patrón
+      if (value && value.trim().length > 0) {
+        const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!pattern.test(value)) {
+          return helpers.error('string.pattern.base');
+        }
+      }
+      return value;
+    })
+    .messages({
+      'string.pattern.base': 'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo'
+    }),
   telefono: Joi.string().max(20).optional().messages({
     'string.max': 'El teléfono no puede exceder 20 caracteres'
   }),
@@ -176,6 +193,10 @@ class UsuarioController {
       const { id_usuario } = req.params;
       const datosActualizacion = req.body;
       
+      console.log('📝 Actualizar usuario - ID:', id_usuario);
+      console.log('📝 Datos recibidos:', JSON.stringify(datosActualizacion, null, 2));
+      console.log('📝 Contraseña recibida:', datosActualizacion.contrasena ? 'SÍ (longitud: ' + datosActualizacion.contrasena.length + ')' : 'NO');
+      
       // Validar que el ID sea un número
       const id = parseInt(id_usuario);
       if (isNaN(id)) {
@@ -185,8 +206,11 @@ class UsuarioController {
       // Validar datos de entrada
       const { error, value } = esquemaActualizarUsuario.validate(datosActualizacion);
       if (error) {
+        console.log('❌ Error de validación:', error.details);
         throw crearError('Datos de entrada inválidos', 400, error.details);
       }
+      
+      console.log('✅ Datos validados correctamente');
       
       // Verificar que el rol existe si se está actualizando
       if (value.rol_id) {
@@ -252,37 +276,70 @@ class UsuarioController {
   // Cambiar contraseña de un usuario específico (solo ADMIN)
   static async cambiarContrasenaUsuario(req, res, next) {
     try {
+      console.log('🔐 Cambiar contraseña - Request body:', req.body);
+      console.log('🔐 Cambiar contraseña - Params:', req.params);
+      
       const { id_usuario } = req.params;
       const { contrasena_nueva } = req.body;
       
       // Validar que el ID sea un número
       const id = parseInt(id_usuario);
       if (isNaN(id)) {
+        console.log('❌ ID de usuario inválido:', id_usuario);
         throw crearError('ID de usuario inválido', 400);
       }
       
       // Validar que se proporcione la nueva contraseña
       if (!contrasena_nueva) {
+        console.log('❌ Nueva contraseña no proporcionada');
         throw crearError('La nueva contraseña es requerida', 400);
       }
       
       // Validar formato de la nueva contraseña
       const regexContrasena = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
       if (!regexContrasena.test(contrasena_nueva)) {
+        console.log('❌ Formato de contraseña inválido');
         throw crearError('La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo', 400);
       }
       
-      // Cambiar contraseña (sin verificar contraseña actual para admin)
-      const bcrypt = require('bcrypt');
-      const contrasenaHash = await bcrypt.hash(contrasena_nueva, 10);
-      
+      // Verificar que el usuario existe
       const { pool } = require('../config/db');
       const cliente = await pool.connect();
       try {
-        await cliente.query(
-          'UPDATE usuarios SET contrasena_hash = $1 WHERE id_usuario = $2',
+        const usuarioExiste = await cliente.query(
+          'SELECT id_usuario, correo FROM usuarios WHERE id_usuario = $1',
+          [id]
+        );
+        
+        if (usuarioExiste.rows.length === 0) {
+          console.log('❌ Usuario no encontrado con ID:', id);
+          throw crearError('Usuario no encontrado', 404);
+        }
+        
+        console.log('✅ Usuario encontrado:', usuarioExiste.rows[0].correo);
+        
+        // Cambiar contraseña (sin verificar contraseña actual para admin)
+        const bcrypt = require('bcrypt');
+        console.log('🔐 Generando hash para nueva contraseña...');
+        const contrasenaHash = await bcrypt.hash(contrasena_nueva, 10);
+        console.log('✅ Hash generado (primeros 30 chars):', contrasenaHash.substring(0, 30));
+        
+        const resultado = await cliente.query(
+          'UPDATE usuarios SET contrasena_hash = $1 WHERE id_usuario = $2 RETURNING id_usuario, correo',
           [contrasenaHash, id]
         );
+        
+        if (resultado.rows.length === 0) {
+          console.log('❌ No se pudo actualizar la contraseña');
+          throw crearError('No se pudo actualizar la contraseña', 500);
+        }
+        
+        console.log('✅ Contraseña actualizada para usuario:', resultado.rows[0].correo);
+        
+        // Verificar que el hash funciona
+        const verificado = await bcrypt.compare(contrasena_nueva, contrasenaHash);
+        console.log('🔐 Verificación del hash:', verificado ? '✅ OK' : '❌ ERROR');
+        
       } finally {
         cliente.release();
       }
@@ -293,6 +350,9 @@ class UsuarioController {
       });
       
     } catch (error) {
+      console.error('❌ Error en cambiarContrasenaUsuario:', error);
+      console.error('   Mensaje:', error.message);
+      console.error('   Stack:', error.stack);
       next(error);
     }
   }

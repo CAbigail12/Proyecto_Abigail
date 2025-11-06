@@ -48,13 +48,20 @@ const validarSubida = (req, res, next) => {
       return next(err);
     }
     
-    // Si no se subió ningún archivo, continuar
-    if (!req.file) {
-      return next();
+    // Si se subió un archivo, agregar la ruta al body
+    if (req.file) {
+      req.body.fotografia = `/uploads/usuarios/${req.file.filename}`;
     }
     
-    // Agregar la ruta del archivo al body
-    req.body.fotografia = `/uploads/usuarios/${req.file.filename}`;
+    // Los campos de texto del FormData ya están en req.body gracias a multer
+    // Convertir rol_id a número si existe
+    if (req.body.rol_id && typeof req.body.rol_id === 'string') {
+      req.body.rol_id = parseInt(req.body.rol_id);
+    }
+    
+    console.log('📦 FormData procesado - Campos recibidos:', Object.keys(req.body));
+    console.log('📦 Contraseña en body:', req.body.contrasena ? 'SÍ (longitud: ' + req.body.contrasena.length + ')' : 'NO');
+    
     next();
   });
 };
