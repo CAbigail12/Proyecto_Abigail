@@ -67,6 +67,10 @@ export class TiposEspacioComponent implements OnInit {
   selectedTipoEspacio: TipoEspacio | null = null;
   mostrarDialogo = false;
 
+  // Modal de confirmación de eliminación
+  mostrarModalEliminar = false;
+  tipoEspacioAEliminar: TipoEspacio | null = null;
+
   constructor(
     private mantenimientoService: MantenimientoService,
     private fb: FormBuilder,
@@ -232,24 +236,40 @@ export class TiposEspacioComponent implements OnInit {
   }
 
   eliminarTipoEspacio(tipoEspacio: TipoEspacio): void {
-    if (confirm(`¿Estás seguro de que deseas eliminar el tipo de espacio "${tipoEspacio.nombre}"?`)) {
-      this.mantenimientoService.eliminarTipoEspacio(tipoEspacio.id_tipo_espacio)
-        .subscribe({
-          next: (response) => {
-            if (response.ok) {
-              this.snackBar.open('Tipo de espacio eliminado correctamente', 'Cerrar', {
-                duration: 3000
-              });
-              this.cargarTiposEspacio();
-            }
-          },
-          error: (error) => {
-            this.snackBar.open(error.error?.mensaje || 'Error al eliminar tipo de espacio', 'Cerrar', {
+    this.tipoEspacioAEliminar = tipoEspacio;
+    this.mostrarModalEliminar = true;
+  }
+
+  cerrarModalEliminar(): void {
+    this.mostrarModalEliminar = false;
+    this.tipoEspacioAEliminar = null;
+  }
+
+  confirmarEliminacion(): void {
+    if (!this.tipoEspacioAEliminar) {
+      return;
+    }
+
+    this.loading = true;
+    this.mantenimientoService.eliminarTipoEspacio(this.tipoEspacioAEliminar.id_tipo_espacio)
+      .subscribe({
+        next: (response) => {
+          if (response.ok) {
+            this.snackBar.open('Tipo de espacio eliminado correctamente', 'Cerrar', {
               duration: 3000
             });
+            this.cargarTiposEspacio();
+            this.cerrarModalEliminar();
           }
-        });
-    }
+          this.loading = false;
+        },
+        error: (error) => {
+          this.snackBar.open(error.error?.mensaje || 'Error al eliminar tipo de espacio', 'Cerrar', {
+            duration: 3000
+          });
+          this.loading = false;
+        }
+      });
   }
 
   cerrarDialogo(): void {

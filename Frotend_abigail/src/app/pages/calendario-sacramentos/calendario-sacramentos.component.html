@@ -1,0 +1,226 @@
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
+  <div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-4xl font-bold text-gray-900 mb-2">Calendario de Sacramentos</h1>
+      <p class="text-gray-600 text-lg">Visualización de todos los sacramentos programados</p>
+    </div>
+
+    <!-- Controles del calendario -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <button 
+            (click)="mesAnterior()"
+            class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
+            matTooltip="Mes anterior">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+          
+          <h2 class="text-2xl font-bold text-gray-900 min-w-[250px] text-center">
+            {{ nombresMeses[mesActual] }} {{ anioActual }}
+          </h2>
+          
+          <button 
+            (click)="mesSiguiente()"
+            class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
+            matTooltip="Mes siguiente">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+        
+        <button 
+          (click)="irAHoy()"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2">
+          <mat-icon>today</mat-icon>
+          <span>Hoy</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Calendario -->
+    <div class="bg-white rounded-lg shadow-lg p-6" *ngIf="!loading">
+      <!-- Días de la semana -->
+      <div class="grid grid-cols-7 gap-2 mb-4">
+        <div *ngFor="let dia of diasSemana" 
+             class="text-center font-semibold text-gray-700 py-2">
+          {{ dia }}
+        </div>
+      </div>
+
+      <!-- Días del calendario -->
+      <div class="grid grid-cols-7 gap-2">
+        <div 
+          *ngFor="let dia of diasCalendario; let i = index"
+          class="min-h-[120px] border border-gray-200 rounded-lg p-2 cursor-pointer transition-all duration-200 hover:shadow-md"
+          [class.bg-gray-50]="!dia.esMesActual"
+          [class.bg-white]="dia.esMesActual"
+          [class.bg-blue-100]="dia.esHoy"
+          [class.border-blue-500]="dia.esHoy"
+          [class.border-2]="dia.esHoy"
+          (click)="seleccionarFecha(dia)"
+        >
+          <!-- Número del día -->
+          <div class="flex items-center justify-between mb-1">
+            <span 
+              class="text-sm font-medium"
+              [class.text-gray-400]="!dia.esMesActual"
+              [class.text-gray-900]="dia.esMesActual && !dia.esHoy"
+              [class.text-blue-600]="dia.esHoy"
+              [class.font-bold]="dia.esHoy">
+              {{ dia.numero }}
+            </span>
+            <span *ngIf="dia.esHoy" class="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">
+              Hoy
+            </span>
+          </div>
+
+          <!-- Sacramentos del día -->
+          <div class="space-y-1">
+            <div 
+              *ngFor="let sacramento of dia.sacramentos.slice(0, 3)"
+              class="text-xs px-2 py-1 rounded truncate"
+              [class]="esPasado(dia.fecha) ? 'bg-gray-400 text-white' : obtenerColorSacramento(sacramento.id_sacramento) + ' text-white'"
+              [matTooltip]="obtenerNombreSacramento(sacramento.id_sacramento) + ' - ' + obtenerNombresParticipantes(sacramento)">
+              {{ obtenerNombreSacramento(sacramento.id_sacramento) }}
+            </div>
+            <div 
+              *ngIf="dia.sacramentos.length > 3"
+              class="text-xs text-gray-600 font-medium">
+              +{{ dia.sacramentos.length - 3 }} más
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="flex justify-center items-center py-20">
+      <mat-spinner diameter="60"></mat-spinner>
+    </div>
+
+    <!-- Leyenda -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mt-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">Leyenda</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 rounded bg-blue-500"></div>
+          <span class="text-sm text-gray-700">Bautizo</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 rounded bg-green-500"></div>
+          <span class="text-sm text-gray-700">Primera Comunión</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 rounded bg-purple-500"></div>
+          <span class="text-sm text-gray-700">Confirmación</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 rounded bg-pink-500"></div>
+          <span class="text-sm text-gray-700">Matrimonio</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 rounded bg-gray-400"></div>
+          <span class="text-sm text-gray-700">Sacramentos pasados</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de detalles -->
+  <div 
+    *ngIf="mostrarDetalles && fechaSeleccionada"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4"
+    (click)="cerrarDetalles()">
+    <div 
+      class="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative"
+      (click)="$event.stopPropagation()">
+      <!-- Header del modal -->
+      <div class="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-lg">
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-2xl font-bold">Sacramentos del {{ formatearFecha(fechaSeleccionada) }}</h2>
+            <p class="text-blue-100 mt-1">{{ sacramentosFechaSeleccionada.length }} sacramento(s) programado(s)</p>
+          </div>
+          <button 
+            (click)="cerrarDetalles()"
+            class="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors duration-200">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- Contenido del modal -->
+      <div class="p-6">
+        <div class="space-y-4">
+          <div 
+            *ngFor="let asignacion of sacramentosFechaSeleccionada"
+            class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200"
+            [class.bg-gray-50]="esPasado(fechaSeleccionada!)"
+            [class.bg-white]="!esPasado(fechaSeleccionada!)">
+            <!-- Header del sacramento -->
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <div 
+                  class="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold"
+                  [class]="esPasado(fechaSeleccionada!) ? 'bg-gray-400' : obtenerColorSacramento(asignacion.id_sacramento)">
+                  <mat-icon>{{ asignacion.id_sacramento === 4 ? 'favorite' : 'church' }}</mat-icon>
+                </div>
+                <div>
+                  <h3 class="text-lg font-semibold text-gray-900">
+                    {{ obtenerNombreSacramento(asignacion.id_sacramento) }}
+                  </h3>
+                  <p class="text-sm text-gray-600">
+                    {{ asignacion.sacramento_descripcion || 'Sin descripción' }}
+                  </p>
+                </div>
+              </div>
+              <div 
+                class="px-3 py-1 rounded-full text-xs font-medium"
+                [class.bg-green-100]="asignacion.pagado && !esPasado(fechaSeleccionada!)"
+                [class.text-green-700]="asignacion.pagado && !esPasado(fechaSeleccionada!)"
+                [class.bg-gray-200]="!asignacion.pagado || esPasado(fechaSeleccionada!)"
+                [class.text-gray-600]="!asignacion.pagado || esPasado(fechaSeleccionada!)">
+                {{ asignacion.pagado ? 'Pagado' : 'Pendiente' }}
+              </div>
+            </div>
+
+            <!-- Participantes -->
+            <div class="mb-3">
+              <p class="text-sm font-medium text-gray-700 mb-1">Participante(s):</p>
+              <p class="text-sm text-gray-900">{{ obtenerNombresParticipantes(asignacion) }}</p>
+            </div>
+
+            <!-- Información adicional -->
+            <div class="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p class="text-gray-600">Hora:</p>
+                <p class="text-gray-900 font-medium">No especificada</p>
+              </div>
+              <div *ngIf="asignacion.monto_pagado">
+                <p class="text-gray-600">Monto pagado:</p>
+                <p class="text-gray-900 font-medium">Q {{ asignacion.monto_pagado.toFixed(2) }}</p>
+              </div>
+            </div>
+
+            <!-- Comentarios -->
+            <div *ngIf="asignacion.comentarios" class="mt-3 pt-3 border-t border-gray-200">
+              <p class="text-sm font-medium text-gray-700 mb-1">Comentarios:</p>
+              <p class="text-sm text-gray-600">{{ asignacion.comentarios }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer del modal -->
+      <div class="sticky bottom-0 bg-gray-50 p-4 border-t border-gray-200 rounded-b-lg">
+        <button 
+          (click)="cerrarDetalles()"
+          class="w-full px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+

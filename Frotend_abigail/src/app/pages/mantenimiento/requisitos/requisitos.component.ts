@@ -67,6 +67,10 @@ export class RequisitosComponent implements OnInit {
   selectedRequisito: Requisito | null = null;
   mostrarDialogo = false;
 
+  // Modal de confirmación de eliminación
+  mostrarModalEliminar = false;
+  requisitoAEliminar: Requisito | null = null;
+
   constructor(
     private mantenimientoService: MantenimientoService,
     private fb: FormBuilder,
@@ -232,24 +236,40 @@ export class RequisitosComponent implements OnInit {
   }
 
   eliminarRequisito(requisito: Requisito): void {
-    if (confirm(`¿Estás seguro de que deseas eliminar el requisito "${requisito.nombre}"?`)) {
-      this.mantenimientoService.eliminarRequisito(requisito.id_requisito)
-        .subscribe({
-          next: (response) => {
-            if (response.ok) {
-              this.snackBar.open('Requisito eliminado correctamente', 'Cerrar', {
-                duration: 3000
-              });
-              this.cargarRequisitos();
-            }
-          },
-          error: (error) => {
-            this.snackBar.open(error.error?.mensaje || 'Error al eliminar requisito', 'Cerrar', {
+    this.requisitoAEliminar = requisito;
+    this.mostrarModalEliminar = true;
+  }
+
+  cerrarModalEliminar(): void {
+    this.mostrarModalEliminar = false;
+    this.requisitoAEliminar = null;
+  }
+
+  confirmarEliminacion(): void {
+    if (!this.requisitoAEliminar) {
+      return;
+    }
+
+    this.loading = true;
+    this.mantenimientoService.eliminarRequisito(this.requisitoAEliminar.id_requisito)
+      .subscribe({
+        next: (response) => {
+          if (response.ok) {
+            this.snackBar.open('Requisito eliminado correctamente', 'Cerrar', {
               duration: 3000
             });
+            this.cargarRequisitos();
+            this.cerrarModalEliminar();
           }
-        });
-    }
+          this.loading = false;
+        },
+        error: (error) => {
+          this.snackBar.open(error.error?.mensaje || 'Error al eliminar requisito', 'Cerrar', {
+            duration: 3000
+          });
+          this.loading = false;
+        }
+      });
   }
 
   cerrarDialogo(): void {

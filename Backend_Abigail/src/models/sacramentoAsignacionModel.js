@@ -49,12 +49,12 @@ class SacramentoAsignacionModel {
     }
   }
 
-  // Obtener todas las asignaciones con filtros
+  // Obtener todas las asignaciones con filtros (sin paginación - se aplica en el frontend)
   static async obtenerTodos(filtros = {}, paginacion = {}) {
     const cliente = await pool.connect();
     try {
-      const { pagina = 1, limite = 10 } = paginacion;
-      const offset = (pagina - 1) * limite;
+      // El backend siempre devuelve TODOS los datos
+      // La paginación se aplica en el frontend
       
       let consulta = `
         SELECT 
@@ -69,15 +69,18 @@ class SacramentoAsignacionModel {
           sa.updated_at,
           cs.nombre as sacramento_nombre,
           cs.descripcion as sacramento_descripcion,
-          array_agg(
-            json_build_object(
-              'id_feligres', f.id_feligres,
-              'nombre_completo', CONCAT(f.primer_nombre, ' ', f.primer_apellido),
-              'primer_nombre', f.primer_nombre,
-              'primer_apellido', f.primer_apellido,
-              'id_rol_participante', sp.id_rol_participante,
-              'rol_nombre', crp.nombre
-            )
+          COALESCE(
+            array_agg(
+              json_build_object(
+                'id_feligres', f.id_feligres,
+                'nombre_completo', CONCAT(f.primer_nombre, ' ', f.primer_apellido),
+                'primer_nombre', f.primer_nombre,
+                'primer_apellido', f.primer_apellido,
+                'id_rol_participante', sp.id_rol_participante,
+                'rol_nombre', crp.nombre
+              )
+            ) FILTER (WHERE f.id_feligres IS NOT NULL),
+            ARRAY[]::json[]
           ) as participantes
         FROM sacramento_asignacion sa
         INNER JOIN cat_sacramento cs ON sa.id_sacramento = cs.id_sacramento
@@ -116,83 +119,41 @@ class SacramentoAsignacionModel {
       }
       
       if (filtros.busqueda) {
+        const busquedaParam = `%${filtros.busqueda}%`;
         consulta += ` AND (
           cs.nombre ILIKE $${contadorParametros} OR
-          f.primer_nombre ILIKE $${contadorParametros} OR
-          f.primer_apellido ILIKE $${contadorParametros} OR
-          sa.comentarios ILIKE $${contadorParametros}
+          f.primer_nombre ILIKE $${contadorParametros + 1} OR
+          f.primer_apellido ILIKE $${contadorParametros + 2} OR
+          sa.comentarios ILIKE $${contadorParametros + 3}
         )`;
-        parametros.push(`%${filtros.busqueda}%`);
-        contadorParametros++;
+        parametros.push(busquedaParam, busquedaParam, busquedaParam, busquedaParam);
+        contadorParametros += 4;
       }
       
       consulta += `
-        GROUP BY sa.id_asignacion, cs.nombre, cs.descripcion
-        ORDER BY sa.fecha_celebracion DESC, sa.created_at DESC
-        LIMIT $${contadorParametros} OFFSET $${contadorParametros + 1}
+        GROUP BY sa.id_asignacion, sa.id_sacramento, sa.fecha_celebracion, sa.pagado, sa.monto_pagado, 
+                 sa.comentarios, sa.activo, sa.created_at, sa.updated_at, cs.nombre, cs.descripcion
+        ORDER BY sa.fecha_celebracion ASC, sa.created_at DESC
       `;
-      parametros.push(limite, offset);
+      
+      console.log('🔍 Consulta SQL:', consulta);
+      console.log('📋 Parámetros:', parametros);
       
       const resultado = await cliente.query(consulta, parametros);
       
-      // Contar total para paginación
-      let consultaCount = `
-        SELECT COUNT(DISTINCT sa.id_asignacion) as total
-        FROM sacramento_asignacion sa
-        INNER JOIN cat_sacramento cs ON sa.id_sacramento = cs.id_sacramento
-        LEFT JOIN sacramento_participante sp ON sa.id_asignacion = sp.id_asignacion
-        LEFT JOIN feligres f ON sp.id_feligres = f.id_feligres
-        WHERE sa.activo = true
-      `;
-      
-      const parametrosCount = [];
-      let contadorCount = 1;
-      
-      if (filtros.id_sacramento) {
-        consultaCount += ` AND sa.id_sacramento = $${contadorCount}`;
-        parametrosCount.push(filtros.id_sacramento);
-        contadorCount++;
-      }
-      
-      if (filtros.fecha_desde) {
-        consultaCount += ` AND sa.fecha_celebracion >= $${contadorCount}`;
-        parametrosCount.push(filtros.fecha_desde);
-        contadorCount++;
-      }
-      
-      if (filtros.fecha_hasta) {
-        consultaCount += ` AND sa.fecha_celebracion <= $${contadorCount}`;
-        parametrosCount.push(filtros.fecha_hasta);
-        contadorCount++;
-      }
-      
-      if (filtros.pagado !== undefined && filtros.pagado !== '') {
-        consultaCount += ` AND sa.pagado = $${contadorCount}`;
-        parametrosCount.push(filtros.pagado === 'true');
-        contadorCount++;
-      }
-      
-      if (filtros.busqueda) {
-        consultaCount += ` AND (
-          cs.nombre ILIKE $${contadorCount} OR
-          f.primer_nombre ILIKE $${contadorCount} OR
-          f.primer_apellido ILIKE $${contadorCount} OR
-          sa.comentarios ILIKE $${contadorCount}
-        )`;
-        parametrosCount.push(`%${filtros.busqueda}%`);
-        contadorCount++;
-      }
-      
-      const resultadoCount = await cliente.query(consultaCount, parametrosCount);
-      const total = parseInt(resultadoCount.rows[0].total);
+      console.log('✅ Resultado obtenido:', resultado.rows.length, 'asignaciones');
       
       return {
         asignaciones: resultado.rows,
-        total: total,
-        pagina: pagina,
-        limite: limite,
-        totalPaginas: Math.ceil(total / limite)
+        total: resultado.rows.length,
+        pagina: 1,
+        limite: resultado.rows.length,
+        totalPaginas: 1
       };
+    } catch (error) {
+      console.error('❌ Error en obtenerTodos:', error);
+      console.error('Stack:', error.stack);
+      throw error;
     } finally {
       cliente.release();
     }
@@ -215,15 +176,18 @@ class SacramentoAsignacionModel {
           sa.updated_at,
           cs.nombre as sacramento_nombre,
           cs.descripcion as sacramento_descripcion,
-          array_agg(
-            json_build_object(
-              'id_feligres', f.id_feligres,
-              'nombre_completo', CONCAT(f.primer_nombre, ' ', f.primer_apellido),
-              'primer_nombre', f.primer_nombre,
-              'primer_apellido', f.primer_apellido,
-              'id_rol_participante', sp.id_rol_participante,
-              'rol_nombre', crp.nombre
-            )
+          COALESCE(
+            array_agg(
+              json_build_object(
+                'id_feligres', f.id_feligres,
+                'nombre_completo', CONCAT(f.primer_nombre, ' ', f.primer_apellido),
+                'primer_nombre', f.primer_nombre,
+                'primer_apellido', f.primer_apellido,
+                'id_rol_participante', sp.id_rol_participante,
+                'rol_nombre', crp.nombre
+              )
+            ) FILTER (WHERE f.id_feligres IS NOT NULL),
+            ARRAY[]::json[]
           ) as participantes
         FROM sacramento_asignacion sa
         INNER JOIN cat_sacramento cs ON sa.id_sacramento = cs.id_sacramento
@@ -231,7 +195,8 @@ class SacramentoAsignacionModel {
         LEFT JOIN feligres f ON sp.id_feligres = f.id_feligres
         LEFT JOIN cat_rol_participante crp ON sp.id_rol_participante = crp.id_rol_participante
         WHERE sa.id_asignacion = $1 AND sa.activo = true
-        GROUP BY sa.id_asignacion, cs.nombre, cs.descripcion
+        GROUP BY sa.id_asignacion, sa.id_sacramento, sa.fecha_celebracion, sa.pagado, sa.monto_pagado, 
+                 sa.comentarios, sa.activo, sa.created_at, sa.updated_at, cs.nombre, cs.descripcion
       `;
       
       const resultado = await cliente.query(consulta, [idAsignacion]);

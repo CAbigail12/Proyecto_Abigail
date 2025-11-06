@@ -67,6 +67,10 @@ export class SacramentosComponent implements OnInit {
   selectedSacramento: Sacramento | null = null;
   mostrarDialogo = false;
 
+  // Modal de confirmación de eliminación
+  mostrarModalEliminar = false;
+  sacramentoAEliminar: Sacramento | null = null;
+
   constructor(
     private mantenimientoService: MantenimientoService,
     private fb: FormBuilder,
@@ -232,24 +236,40 @@ export class SacramentosComponent implements OnInit {
   }
 
   eliminarSacramento(sacramento: Sacramento): void {
-    if (confirm(`¿Estás seguro de que deseas eliminar el sacramento "${sacramento.nombre}"?`)) {
-      this.mantenimientoService.eliminarSacramento(sacramento.id_sacramento)
-        .subscribe({
-          next: (response) => {
-            if (response.ok) {
-              this.snackBar.open('Sacramento eliminado correctamente', 'Cerrar', {
-                duration: 3000
-              });
-              this.cargarSacramentos();
-            }
-          },
-          error: (error) => {
-            this.snackBar.open(error.error?.mensaje || 'Error al eliminar sacramento', 'Cerrar', {
+    this.sacramentoAEliminar = sacramento;
+    this.mostrarModalEliminar = true;
+  }
+
+  cerrarModalEliminar(): void {
+    this.mostrarModalEliminar = false;
+    this.sacramentoAEliminar = null;
+  }
+
+  confirmarEliminacion(): void {
+    if (!this.sacramentoAEliminar) {
+      return;
+    }
+
+    this.loading = true;
+    this.mantenimientoService.eliminarSacramento(this.sacramentoAEliminar.id_sacramento)
+      .subscribe({
+        next: (response) => {
+          if (response.ok) {
+            this.snackBar.open('Sacramento eliminado correctamente', 'Cerrar', {
               duration: 3000
             });
+            this.cargarSacramentos();
+            this.cerrarModalEliminar();
           }
-        });
-    }
+          this.loading = false;
+        },
+        error: (error) => {
+          this.snackBar.open(error.error?.mensaje || 'Error al eliminar sacramento', 'Cerrar', {
+            duration: 3000
+          });
+          this.loading = false;
+        }
+      });
   }
 
   cerrarDialogo(): void {

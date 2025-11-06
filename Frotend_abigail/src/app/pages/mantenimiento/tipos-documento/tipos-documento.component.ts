@@ -67,6 +67,10 @@ export class TiposDocumentoComponent implements OnInit {
   selectedTipoDocumento: TipoDocumento | null = null;
   mostrarDialogo = false;
 
+  // Modal de confirmación de eliminación
+  mostrarModalEliminar = false;
+  tipoDocumentoAEliminar: TipoDocumento | null = null;
+
   constructor(
     private mantenimientoService: MantenimientoService,
     private fb: FormBuilder,
@@ -232,24 +236,40 @@ export class TiposDocumentoComponent implements OnInit {
   }
 
   eliminarTipoDocumento(tipoDocumento: TipoDocumento): void {
-    if (confirm(`¿Estás seguro de que deseas eliminar el tipo de documento "${tipoDocumento.nombre}"?`)) {
-      this.mantenimientoService.eliminarTipoDocumento(tipoDocumento.id_tipo_documento)
-        .subscribe({
-          next: (response) => {
-            if (response.ok) {
-              this.snackBar.open('Tipo de documento eliminado correctamente', 'Cerrar', {
-                duration: 3000
-              });
-              this.cargarTiposDocumento();
-            }
-          },
-          error: (error) => {
-            this.snackBar.open(error.error?.mensaje || 'Error al eliminar tipo de documento', 'Cerrar', {
+    this.tipoDocumentoAEliminar = tipoDocumento;
+    this.mostrarModalEliminar = true;
+  }
+
+  cerrarModalEliminar(): void {
+    this.mostrarModalEliminar = false;
+    this.tipoDocumentoAEliminar = null;
+  }
+
+  confirmarEliminacion(): void {
+    if (!this.tipoDocumentoAEliminar) {
+      return;
+    }
+
+    this.loading = true;
+    this.mantenimientoService.eliminarTipoDocumento(this.tipoDocumentoAEliminar.id_tipo_documento)
+      .subscribe({
+        next: (response) => {
+          if (response.ok) {
+            this.snackBar.open('Tipo de documento eliminado correctamente', 'Cerrar', {
               duration: 3000
             });
+            this.cargarTiposDocumento();
+            this.cerrarModalEliminar();
           }
-        });
-    }
+          this.loading = false;
+        },
+        error: (error) => {
+          this.snackBar.open(error.error?.mensaje || 'Error al eliminar tipo de documento', 'Cerrar', {
+            duration: 3000
+          });
+          this.loading = false;
+        }
+      });
   }
 
   cerrarDialogo(): void {

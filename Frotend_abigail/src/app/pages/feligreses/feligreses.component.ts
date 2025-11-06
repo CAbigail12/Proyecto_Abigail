@@ -78,6 +78,10 @@ export class FeligresesComponent implements OnInit {
   selectedFeligres: Feligres | null = null;
   mostrarDialogo = false;
 
+  // Modal de confirmación de eliminación
+  mostrarModalEliminar = false;
+  feligresAEliminar: Feligres | null = null;
+
   // Opciones para selects
   comunidades: ComunidadSelect[] = [];
   opcionesSexo = [
@@ -428,25 +432,40 @@ export class FeligresesComponent implements OnInit {
   }
 
   eliminarFeligres(feligres: Feligres): void {
-    const nombreCompleto = `${feligres.primer_nombre} ${feligres.primer_apellido}`;
-    if (confirm(`¿Estás seguro de que deseas eliminar al feligrés "${nombreCompleto}"?`)) {
-      this.feligresService.eliminarFeligres(feligres.id_feligres)
-        .subscribe({
-          next: (response) => {
-            if (response.ok) {
-              this.snackBar.open('Feligrés eliminado correctamente', 'Cerrar', {
-                duration: 3000
-              });
-              this.cargarFeligreses();
-            }
-          },
-          error: (error) => {
-            this.snackBar.open(error.error?.mensaje || 'Error al eliminar feligrés', 'Cerrar', {
+    this.feligresAEliminar = feligres;
+    this.mostrarModalEliminar = true;
+  }
+
+  cerrarModalEliminar(): void {
+    this.mostrarModalEliminar = false;
+    this.feligresAEliminar = null;
+  }
+
+  confirmarEliminacion(): void {
+    if (!this.feligresAEliminar) {
+      return;
+    }
+
+    this.loading = true;
+    this.feligresService.eliminarFeligres(this.feligresAEliminar.id_feligres)
+      .subscribe({
+        next: (response) => {
+          if (response.ok) {
+            this.snackBar.open('Feligrés eliminado correctamente', 'Cerrar', {
               duration: 3000
             });
+            this.cargarFeligreses();
+            this.cerrarModalEliminar();
           }
-        });
-    }
+          this.loading = false;
+        },
+        error: (error) => {
+          this.snackBar.open(error.error?.mensaje || 'Error al eliminar feligrés', 'Cerrar', {
+            duration: 3000
+          });
+          this.loading = false;
+        }
+      });
   }
 
   cerrarDialogo(): void {

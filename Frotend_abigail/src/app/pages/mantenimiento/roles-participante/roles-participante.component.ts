@@ -67,6 +67,10 @@ export class RolesParticipanteComponent implements OnInit {
   selectedRolParticipante: RolParticipante | null = null;
   mostrarDialogo = false;
 
+  // Modal de confirmación de eliminación
+  mostrarModalEliminar = false;
+  rolParticipanteAEliminar: RolParticipante | null = null;
+
   constructor(
     private mantenimientoService: MantenimientoService,
     private fb: FormBuilder,
@@ -232,24 +236,40 @@ export class RolesParticipanteComponent implements OnInit {
   }
 
   eliminarRolParticipante(rolParticipante: RolParticipante): void {
-    if (confirm(`¿Estás seguro de que deseas eliminar el rol de participante "${rolParticipante.nombre}"?`)) {
-      this.mantenimientoService.eliminarRolParticipante(rolParticipante.id_rol_participante)
-        .subscribe({
-          next: (response) => {
-            if (response.ok) {
-              this.snackBar.open('Rol de participante eliminado correctamente', 'Cerrar', {
-                duration: 3000
-              });
-              this.cargarRolesParticipante();
-            }
-          },
-          error: (error) => {
-            this.snackBar.open(error.error?.mensaje || 'Error al eliminar rol de participante', 'Cerrar', {
+    this.rolParticipanteAEliminar = rolParticipante;
+    this.mostrarModalEliminar = true;
+  }
+
+  cerrarModalEliminar(): void {
+    this.mostrarModalEliminar = false;
+    this.rolParticipanteAEliminar = null;
+  }
+
+  confirmarEliminacion(): void {
+    if (!this.rolParticipanteAEliminar) {
+      return;
+    }
+
+    this.loading = true;
+    this.mantenimientoService.eliminarRolParticipante(this.rolParticipanteAEliminar.id_rol_participante)
+      .subscribe({
+        next: (response) => {
+          if (response.ok) {
+            this.snackBar.open('Rol de participante eliminado correctamente', 'Cerrar', {
               duration: 3000
             });
+            this.cargarRolesParticipante();
+            this.cerrarModalEliminar();
           }
-        });
-    }
+          this.loading = false;
+        },
+        error: (error) => {
+          this.snackBar.open(error.error?.mensaje || 'Error al eliminar rol de participante', 'Cerrar', {
+            duration: 3000
+          });
+          this.loading = false;
+        }
+      });
   }
 
   cerrarDialogo(): void {

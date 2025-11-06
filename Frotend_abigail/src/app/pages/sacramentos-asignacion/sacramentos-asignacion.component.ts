@@ -1493,11 +1493,4 @@ export class SacramentosAsignacionComponent implements OnInit {
     return asignacion.id_asignacion;
   }
 
-  /**
-   * Método de prueba para verificar funcionalidad
-   */
-  testClick(): void {
-    console.log('🎉 ¡Botón de prueba funcionando!');
-    alert('¡El componente está funcionando correctamente!');
-  }
 }

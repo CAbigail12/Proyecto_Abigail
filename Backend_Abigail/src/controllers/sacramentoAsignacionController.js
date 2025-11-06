@@ -254,6 +254,8 @@ class SacramentoAsignacionController {
   // Obtener todas las asignaciones
   static async obtenerTodos(req, res) {
     try {
+      console.log('📥 GET /api/sacramentos/asignaciones - Query params:', req.query);
+      
       const filtros = {
         id_sacramento: req.query.id_sacramento,
         fecha_desde: req.query.fecha_desde,
@@ -267,7 +269,12 @@ class SacramentoAsignacionController {
         limite: parseInt(req.query.limite) || 10
       };
 
+      console.log('🔍 Filtros aplicados:', filtros);
+      console.log('📄 Paginación:', paginacion);
+
       const resultado = await SacramentoAsignacionModel.obtenerTodos(filtros, paginacion);
+      
+      console.log('✅ Asignaciones obtenidas:', resultado.asignaciones.length);
       
       res.json({
         ok: true,
@@ -275,11 +282,13 @@ class SacramentoAsignacionController {
         datos: resultado
       });
     } catch (error) {
-      console.error('Error en obtener asignaciones:', error);
+      console.error('❌ Error en obtener asignaciones:', error);
+      console.error('Stack completo:', error.stack);
       res.status(500).json({
         ok: false,
         mensaje: 'Error interno del servidor',
-        error: error.message
+        error: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
     }
   }

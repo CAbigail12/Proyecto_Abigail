@@ -67,6 +67,10 @@ export class ComunidadesComponent implements OnInit {
   selectedComunidad: Comunidad | null = null;
   mostrarDialogo = false;
 
+  // Modal de confirmación de eliminación
+  mostrarModalEliminar = false;
+  comunidadAEliminar: Comunidad | null = null;
+
   constructor(
     private mantenimientoService: MantenimientoService,
     private fb: FormBuilder,
@@ -232,24 +236,40 @@ export class ComunidadesComponent implements OnInit {
   }
 
   eliminarComunidad(comunidad: Comunidad): void {
-    if (confirm(`¿Estás seguro de que deseas eliminar la comunidad "${comunidad.nombre}"?`)) {
-      this.mantenimientoService.eliminarComunidad(comunidad.id_comunidad)
-        .subscribe({
-          next: (response) => {
-            if (response.ok) {
-              this.snackBar.open('Comunidad eliminada correctamente', 'Cerrar', {
-                duration: 3000
-              });
-              this.cargarComunidades();
-            }
-          },
-          error: (error) => {
-            this.snackBar.open(error.error?.mensaje || 'Error al eliminar comunidad', 'Cerrar', {
+    this.comunidadAEliminar = comunidad;
+    this.mostrarModalEliminar = true;
+  }
+
+  cerrarModalEliminar(): void {
+    this.mostrarModalEliminar = false;
+    this.comunidadAEliminar = null;
+  }
+
+  confirmarEliminacion(): void {
+    if (!this.comunidadAEliminar) {
+      return;
+    }
+
+    this.loading = true;
+    this.mantenimientoService.eliminarComunidad(this.comunidadAEliminar.id_comunidad)
+      .subscribe({
+        next: (response) => {
+          if (response.ok) {
+            this.snackBar.open('Comunidad eliminada correctamente', 'Cerrar', {
               duration: 3000
             });
+            this.cargarComunidades();
+            this.cerrarModalEliminar();
           }
-        });
-    }
+          this.loading = false;
+        },
+        error: (error) => {
+          this.snackBar.open(error.error?.mensaje || 'Error al eliminar comunidad', 'Cerrar', {
+            duration: 3000
+          });
+          this.loading = false;
+        }
+      });
   }
 
   cerrarDialogo(): void {

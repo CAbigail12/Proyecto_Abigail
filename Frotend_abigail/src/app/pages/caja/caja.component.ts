@@ -251,22 +251,16 @@ export class CajaComponent implements OnInit, AfterViewInit, OnDestroy {
     // Filtrar movimientos recientes (todos)
     this.movimientosRecientes = this.aplicarFiltrosLocales(this.todosLosMovimientos, this.filtrosBalance);
     this.totalMovimientos = this.movimientosRecientes.length;
-    // Inicializar datos paginados directamente
-    this.movimientosRecientesPaginados = this.movimientosRecientes.slice(0, this.pageSizeBalance);
     
     // Filtrar ingresos
     const ingresosFiltrados = this.todosLosMovimientos.filter(m => m.naturaleza === 'ingreso');
     this.ingresos = this.aplicarFiltrosLocales(ingresosFiltrados, this.filtrosIngresos);
     this.totalIngresos = this.ingresos.length;
-    // Inicializar datos paginados directamente
-    this.ingresosPaginados = this.ingresos.slice(0, this.pageSizeIngresos);
     
     // Filtrar egresos
     const egresosFiltrados = this.todosLosMovimientos.filter(m => m.naturaleza === 'egreso');
     this.egresos = this.aplicarFiltrosLocales(egresosFiltrados, this.filtrosEgresos);
     this.totalEgresos = this.egresos.length;
-    // Inicializar datos paginados directamente
-    this.egresosPaginados = this.egresos.slice(0, this.pageSizeEgresos);
     
     // Actualizar paginadores y datos paginados
     setTimeout(() => {
@@ -278,44 +272,69 @@ export class CajaComponent implements OnInit, AfterViewInit, OnDestroy {
   aplicarFiltrosLocales(movimientos: MovimientoCaja[], filtros: any): MovimientoCaja[] {
     let resultado = [...movimientos];
 
+    // Filtro por concepto
     if (filtros.concepto && filtros.concepto.trim() !== '') {
       const concepto = filtros.concepto.toLowerCase().trim();
-      resultado = resultado.filter(m => m.concepto.toLowerCase().includes(concepto));
+      resultado = resultado.filter(m => 
+        m.concepto && m.concepto.toLowerCase().includes(concepto)
+      );
     }
 
+    // Filtro por cuenta
     if (filtros.cuenta && filtros.cuenta !== '') {
       resultado = resultado.filter(m => m.cuenta === filtros.cuenta);
     }
 
+    // Filtro por medio de pago
     if (filtros.medio_pago && filtros.medio_pago !== '') {
       resultado = resultado.filter(m => m.medio_pago === filtros.medio_pago);
     }
 
+    // Filtro por fecha desde
     if (filtros.fecha_desde) {
       const fechaDesde = new Date(filtros.fecha_desde);
-      resultado = resultado.filter(m => new Date(m.fecha_hora) >= fechaDesde);
+      fechaDesde.setHours(0, 0, 0, 0); // Inicio del día
+      resultado = resultado.filter(m => {
+        if (!m.fecha_hora) return false;
+        const fechaMovimiento = new Date(m.fecha_hora);
+        fechaMovimiento.setHours(0, 0, 0, 0);
+        return fechaMovimiento >= fechaDesde;
+      });
     }
 
+    // Filtro por fecha hasta
     if (filtros.fecha_hasta) {
       const fechaHasta = new Date(filtros.fecha_hasta);
-      fechaHasta.setHours(23, 59, 59, 999);
-      resultado = resultado.filter(m => new Date(m.fecha_hora) <= fechaHasta);
+      fechaHasta.setHours(23, 59, 59, 999); // Fin del día
+      resultado = resultado.filter(m => {
+        if (!m.fecha_hora) return false;
+        const fechaMovimiento = new Date(m.fecha_hora);
+        return fechaMovimiento <= fechaHasta;
+      });
     }
 
+    // Filtro por naturaleza
     if (filtros.naturaleza && filtros.naturaleza !== '') {
       resultado = resultado.filter(m => m.naturaleza === filtros.naturaleza);
     }
 
-    if (filtros.feligres && filtros.feligres !== '') {
+    // Filtro por feligrés (búsqueda por nombre)
+    if (filtros.feligres && filtros.feligres.trim() !== '') {
       const feligresBusqueda = filtros.feligres.toLowerCase().trim();
       resultado = resultado.filter(m => 
-        m.feligres_nombre?.toLowerCase().includes(feligresBusqueda)
+        m.feligres_nombre && m.feligres_nombre.toLowerCase().includes(feligresBusqueda)
       );
     }
 
-    if (filtros.id_feligres) {
-      resultado = resultado.filter(m => m.id_feligres === parseInt(filtros.id_feligres));
-        }
+    // Filtro por ID de feligrés
+    if (filtros.id_feligres && filtros.id_feligres !== '') {
+      const idFeligres = typeof filtros.id_feligres === 'string' 
+        ? parseInt(filtros.id_feligres) 
+        : filtros.id_feligres;
+      if (!isNaN(idFeligres)) {
+        resultado = resultado.filter(m => m.id_feligres === idFeligres);
+      }
+    }
 
     return resultado;
   }

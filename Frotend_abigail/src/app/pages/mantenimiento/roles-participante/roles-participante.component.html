@@ -348,3 +348,50 @@
     </div>
   </div>
 </div>
+
+<!-- Modal de Confirmación de Eliminación -->
+<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4"
+     *ngIf="mostrarModalEliminar" (click)="cerrarModalEliminar()">
+  <div class="bg-white rounded-lg shadow-2xl w-full max-w-md relative" (click)="$event.stopPropagation()">
+    <div class="flex justify-between items-center p-6 border-b border-gray-200">
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-red-100 rounded-full"><mat-icon class="text-red-600">warning</mat-icon></div>
+        <h2 class="text-xl font-semibold text-gray-900">Confirmar Eliminación</h2>
+      </div>
+      <button type="button" (click)="cerrarModalEliminar()"
+              class="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors duration-200">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <div class="p-6">
+      <div class="mb-6">
+        <p class="text-gray-700 mb-4">¿Estás seguro de que deseas eliminar el rol de participante?</p>
+        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200" *ngIf="rolParticipanteAEliminar">
+          <div class="space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium text-gray-600">Nombre:</span>
+              <span class="text-sm text-gray-900">{{rolParticipanteAEliminar.nombre}}</span>
+            </div>
+            <div class="flex items-center gap-2" *ngIf="rolParticipanteAEliminar.descripcion">
+              <span class="text-sm font-medium text-gray-600">Descripción:</span>
+              <span class="text-sm text-gray-900">{{rolParticipanteAEliminar.descripcion}}</span>
+            </div>
+          </div>
+        </div>
+        <p class="text-red-600 text-sm mt-4 font-medium">⚠️ Esta acción no se puede deshacer.</p>
+      </div>
+      <div class="flex justify-end gap-3">
+        <button type="button" (click)="cerrarModalEliminar()" [disabled]="loading"
+                class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
+          Cancelar
+        </button>
+        <button type="button" (click)="confirmarEliminacion()" [disabled]="loading"
+                class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center gap-2">
+          <mat-spinner *ngIf="loading" diameter="20" class="inline"></mat-spinner>
+          <span *ngIf="!loading">Eliminar</span>
+          <span *ngIf="loading">Eliminando...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

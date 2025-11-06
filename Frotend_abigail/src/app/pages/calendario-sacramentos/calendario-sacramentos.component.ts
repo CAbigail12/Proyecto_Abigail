@@ -1,0 +1,257 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { SacramentoAsignacionService } from '../../services/sacramento-asignacion.service';
+import { SacramentoAsignacion } from '../../models/sacramento-asignacion.model';
+
+interface DiaCalendario {
+  fecha: Date;
+  numero: number;
+  esMesActual: boolean;
+  esHoy: boolean;
+  sacramentos: SacramentoAsignacion[];
+}
+
+@Component({
+  selector: 'app-calendario-sacramentos',
+  standalone: true,
+  imports: [
+    CommonModule,
+    MatIconModule,
+    MatButtonModule,
+    MatCardModule,
+    MatProgressSpinnerModule,
+    MatTooltipModule
+  ],
+  templateUrl: './calendario-sacramentos.component.html',
+  styleUrls: ['./calendario-sacramentos.component.css']
+})
+export class CalendarioSacramentosComponent implements OnInit {
+  loading = false;
+  fechaActual = new Date();
+  mesActual = this.fechaActual.getMonth();
+  anioActual = this.fechaActual.getFullYear();
+  diasCalendario: DiaCalendario[] = [];
+  asignaciones: SacramentoAsignacion[] = [];
+  asignacionesPorFecha: Map<string, SacramentoAsignacion[]> = new Map();
+  fechaSeleccionada: Date | null = null;
+  sacramentosFechaSeleccionada: SacramentoAsignacion[] = [];
+  mostrarDetalles = false;
+
+  nombresMeses = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
+
+  diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+  constructor(
+    private sacramentoAsignacionService: SacramentoAsignacionService,
+    private snackBar: MatSnackBar
+  ) {}
+
+  ngOnInit(): void {
+    this.cargarAsignaciones();
+  }
+
+  cargarAsignaciones(): void {
+    this.loading = true;
+    this.sacramentoAsignacionService.obtenerAsignaciones({})
+      .subscribe({
+        next: (response) => {
+          if (response.ok) {
+            this.asignaciones = response.datos.asignaciones || [];
+            this.organizarAsignacionesPorFecha();
+            this.generarCalendario();
+          }
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('Error al cargar asignaciones:', error);
+          this.snackBar.open('Error al cargar los sacramentos', 'Cerrar', { duration: 3000 });
+          this.loading = false;
+        }
+      });
+  }
+
+  organizarAsignacionesPorFecha(): void {
+    this.asignacionesPorFecha.clear();
+    this.asignaciones.forEach(asignacion => {
+      const fecha = new Date(asignacion.fecha_celebracion);
+      const fechaKey = this.obtenerClaveFecha(fecha);
+      
+      if (!this.asignacionesPorFecha.has(fechaKey)) {
+        this.asignacionesPorFecha.set(fechaKey, []);
+      }
+      this.asignacionesPorFecha.get(fechaKey)!.push(asignacion);
+    });
+  }
+
+  obtenerClaveFecha(fecha: Date): string {
+    const anio = fecha.getFullYear();
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    return `${anio}-${mes}-${dia}`;
+  }
+
+  generarCalendario(): void {
+    this.diasCalendario = [];
+    
+    // Primer día del mes
+    const primerDia = new Date(this.anioActual, this.mesActual, 1);
+    // Último día del mes
+    const ultimoDia = new Date(this.anioActual, this.mesActual + 1, 0);
+    
+    // Día de la semana del primer día (0 = domingo, 6 = sábado)
+    const diaSemanaInicio = primerDia.getDay();
+    
+    // Días del mes anterior para completar la primera semana
+    const mesAnterior = new Date(this.anioActual, this.mesActual, 0);
+    const diasMesAnterior = mesAnterior.getDate();
+    
+    // Agregar días del mes anterior
+    for (let i = diaSemanaInicio - 1; i >= 0; i--) {
+      const fecha = new Date(this.anioActual, this.mesActual - 1, diasMesAnterior - i);
+      const dia: DiaCalendario = {
+        fecha: fecha,
+        numero: fecha.getDate(),
+        esMesActual: false,
+        esHoy: this.esHoy(fecha),
+        sacramentos: this.obtenerSacramentosPorFecha(fecha)
+      };
+      this.diasCalendario.push(dia);
+    }
+    
+    // Agregar días del mes actual
+    for (let dia = 1; dia <= ultimoDia.getDate(); dia++) {
+      const fecha = new Date(this.anioActual, this.mesActual, dia);
+      const diaCal: DiaCalendario = {
+        fecha: fecha,
+        numero: dia,
+        esMesActual: true,
+        esHoy: this.esHoy(fecha),
+        sacramentos: this.obtenerSacramentosPorFecha(fecha)
+      };
+      this.diasCalendario.push(diaCal);
+    }
+    
+    // Completar con días del mes siguiente para tener 6 semanas
+    const diasRestantes = 42 - this.diasCalendario.length;
+    for (let dia = 1; dia <= diasRestantes; dia++) {
+      const fecha = new Date(this.anioActual, this.mesActual + 1, dia);
+      const diaCal: DiaCalendario = {
+        fecha: fecha,
+        numero: dia,
+        esMesActual: false,
+        esHoy: this.esHoy(fecha),
+        sacramentos: this.obtenerSacramentosPorFecha(fecha)
+      };
+      this.diasCalendario.push(diaCal);
+    }
+  }
+
+  obtenerSacramentosPorFecha(fecha: Date): SacramentoAsignacion[] {
+    const clave = this.obtenerClaveFecha(fecha);
+    return this.asignacionesPorFecha.get(clave) || [];
+  }
+
+  esHoy(fecha: Date): boolean {
+    const hoy = new Date();
+    return fecha.getDate() === hoy.getDate() &&
+           fecha.getMonth() === hoy.getMonth() &&
+           fecha.getFullYear() === hoy.getFullYear();
+  }
+
+  esPasado(fecha: Date): boolean {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const fechaComparar = new Date(fecha);
+    fechaComparar.setHours(0, 0, 0, 0);
+    return fechaComparar < hoy;
+  }
+
+  mesAnterior(): void {
+    if (this.mesActual === 0) {
+      this.mesActual = 11;
+      this.anioActual--;
+    } else {
+      this.mesActual--;
+    }
+    this.generarCalendario();
+  }
+
+  mesSiguiente(): void {
+    if (this.mesActual === 11) {
+      this.mesActual = 0;
+      this.anioActual++;
+    } else {
+      this.mesActual++;
+    }
+    this.generarCalendario();
+  }
+
+  irAHoy(): void {
+    this.fechaActual = new Date();
+    this.mesActual = this.fechaActual.getMonth();
+    this.anioActual = this.fechaActual.getFullYear();
+    this.generarCalendario();
+  }
+
+  seleccionarFecha(dia: DiaCalendario): void {
+    if (dia.sacramentos.length > 0) {
+      this.fechaSeleccionada = dia.fecha;
+      this.sacramentosFechaSeleccionada = dia.sacramentos;
+      this.mostrarDetalles = true;
+    }
+  }
+
+  cerrarDetalles(): void {
+    this.mostrarDetalles = false;
+    this.fechaSeleccionada = null;
+    this.sacramentosFechaSeleccionada = [];
+  }
+
+  obtenerNombreSacramento(idSacramento: number): string {
+    const nombres: { [key: number]: string } = {
+      1: 'Bautizo',
+      2: 'Primera Comunión',
+      3: 'Confirmación',
+      4: 'Matrimonio'
+    };
+    return nombres[idSacramento] || 'Sacramento';
+  }
+
+  obtenerColorSacramento(idSacramento: number): string {
+    const colores: { [key: number]: string } = {
+      1: 'bg-blue-500',
+      2: 'bg-green-500',
+      3: 'bg-purple-500',
+      4: 'bg-pink-500'
+    };
+    return colores[idSacramento] || 'bg-gray-500';
+  }
+
+  obtenerNombresParticipantes(asignacion: SacramentoAsignacion): string {
+    if (!asignacion.participantes || asignacion.participantes.length === 0) {
+      return 'Sin participantes';
+    }
+    return asignacion.participantes
+      .map(p => p.nombre_completo || `${p.primer_nombre} ${p.primer_apellido}`)
+      .join(', ');
+  }
+
+  formatearFecha(fecha: Date): string {
+    return fecha.toLocaleDateString('es-GT', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }
+}
+

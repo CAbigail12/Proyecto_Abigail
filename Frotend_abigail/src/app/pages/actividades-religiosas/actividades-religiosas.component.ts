@@ -81,6 +81,8 @@ export class ActividadesReligiosasComponent implements OnInit, AfterViewInit {
   mostrarModalActividad = false;
   mostrarModalTipo = false;
   modoEdicion = false;
+  mostrarModalEliminar = false;
+  actividadAEliminar: ActividadReligiosa | null = null;
 
   // Filtros (id_tipo_actividad puede ser number, string o undefined cuando viene del formulario)
   filtros: FiltrosActividad & { id_tipo_actividad?: number | string | undefined } = {
@@ -484,23 +486,39 @@ export class ActividadesReligiosasComponent implements OnInit, AfterViewInit {
   }
 
   eliminarActividad(actividad: ActividadReligiosa): void {
-    if (confirm(`¿Estás seguro de que deseas eliminar la actividad "${actividad.nombre}"?`)) {
-      this.actividadService.eliminarActividad(actividad.id_actividad).subscribe({
-        next: (response) => {
-          if (response.ok) {
-            this.mostrarExito('Actividad eliminada correctamente');
-            this.cargarActividades();
-            this.cargarEstadisticas();
-          } else {
-            this.mostrarError('Error al eliminar actividad');
-          }
-        },
-        error: (error) => {
-          console.error('Error al eliminar actividad:', error);
+    this.actividadAEliminar = actividad;
+    this.mostrarModalEliminar = true;
+  }
+
+  cerrarModalEliminar(): void {
+    this.mostrarModalEliminar = false;
+    this.actividadAEliminar = null;
+  }
+
+  confirmarEliminacion(): void {
+    if (!this.actividadAEliminar) {
+      return;
+    }
+
+    this.guardando = true;
+    this.actividadService.eliminarActividad(this.actividadAEliminar.id_actividad).subscribe({
+      next: (response) => {
+        if (response.ok) {
+          this.mostrarExito('Actividad eliminada correctamente');
+          this.cargarActividades();
+          this.cargarEstadisticas();
+          this.cerrarModalEliminar();
+        } else {
           this.mostrarError('Error al eliminar actividad');
         }
-      });
-    }
+        this.guardando = false;
+      },
+      error: (error) => {
+        console.error('Error al eliminar actividad:', error);
+        this.mostrarError('Error al eliminar actividad');
+        this.guardando = false;
+      }
+    });
   }
 
   // ========================================

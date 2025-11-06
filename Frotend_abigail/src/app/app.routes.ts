@@ -101,6 +101,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/sacramentos-asignacion/sacramentos-asignacion.component').then(m => m.SacramentosAsignacionComponent)
       },
       {
+        path: 'calendario-sacramentos',
+        loadComponent: () => import('./pages/calendario-sacramentos/calendario-sacramentos.component').then(m => m.CalendarioSacramentosComponent)
+      },
+      {
         path: 'actividades-religiosas',
         loadComponent: () => import('./pages/actividades-religiosas/actividades-religiosas.component').then(m => m.ActividadesReligiosasComponent)
       }

@@ -57,6 +57,14 @@ export class MainLayoutComponent implements OnInit {
       expanded: false
     },
     {
+      title: 'Calendario de Sacramentos',
+      description: 'Visualización de sacramentos en calendario',
+      icon: 'calendar_month',
+      route: '/calendario-sacramentos',
+      disponible: true,
+      expanded: false
+    },
+    {
       title: 'Actividades Religiosas',
       description: 'Gestión de actividades religiosas',
       icon: 'event_note',
