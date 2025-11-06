@@ -82,7 +82,8 @@ export class CalendarioSacramentosComponent implements OnInit {
   organizarAsignacionesPorFecha(): void {
     this.asignacionesPorFecha.clear();
     this.asignaciones.forEach(asignacion => {
-      const fecha = new Date(asignacion.fecha_celebracion);
+      // Parsear la fecha de manera segura, ignorando timezone
+      const fecha = this.parsearFechaLocal(asignacion.fecha_celebracion);
       const fechaKey = this.obtenerClaveFecha(fecha);
       
       if (!this.asignacionesPorFecha.has(fechaKey)) {
@@ -90,6 +91,27 @@ export class CalendarioSacramentosComponent implements OnInit {
       }
       this.asignacionesPorFecha.get(fechaKey)!.push(asignacion);
     });
+  }
+
+  parsearFechaLocal(fechaString: string | Date): Date {
+    // Si ya es un Date, retornarlo
+    if (fechaString instanceof Date) {
+      return fechaString;
+    }
+    
+    // Si es un string, parsearlo de manera segura
+    // Formato esperado: "YYYY-MM-DD" o "YYYY-MM-DDTHH:mm:ss"
+    const partes = fechaString.split('T')[0].split('-');
+    if (partes.length === 3) {
+      const anio = parseInt(partes[0], 10);
+      const mes = parseInt(partes[1], 10) - 1; // Los meses en Date son 0-indexed
+      const dia = parseInt(partes[2], 10);
+      // Crear fecha en hora local, sin considerar timezone
+      return new Date(anio, mes, dia, 12, 0, 0); // Usar mediodía para evitar problemas de timezone
+    }
+    
+    // Fallback: intentar parsear normalmente
+    return new Date(fechaString);
   }
 
   obtenerClaveFecha(fecha: Date): string {
@@ -102,21 +124,21 @@ export class CalendarioSacramentosComponent implements OnInit {
   generarCalendario(): void {
     this.diasCalendario = [];
     
-    // Primer día del mes
-    const primerDia = new Date(this.anioActual, this.mesActual, 1);
+    // Primer día del mes (usar mediodía para evitar problemas de timezone)
+    const primerDia = new Date(this.anioActual, this.mesActual, 1, 12, 0, 0);
     // Último día del mes
-    const ultimoDia = new Date(this.anioActual, this.mesActual + 1, 0);
+    const ultimoDia = new Date(this.anioActual, this.mesActual + 1, 0, 12, 0, 0);
     
     // Día de la semana del primer día (0 = domingo, 6 = sábado)
     const diaSemanaInicio = primerDia.getDay();
     
     // Días del mes anterior para completar la primera semana
-    const mesAnterior = new Date(this.anioActual, this.mesActual, 0);
+    const mesAnterior = new Date(this.anioActual, this.mesActual, 0, 12, 0, 0);
     const diasMesAnterior = mesAnterior.getDate();
     
     // Agregar días del mes anterior
     for (let i = diaSemanaInicio - 1; i >= 0; i--) {
-      const fecha = new Date(this.anioActual, this.mesActual - 1, diasMesAnterior - i);
+      const fecha = new Date(this.anioActual, this.mesActual - 1, diasMesAnterior - i, 12, 0, 0);
       const dia: DiaCalendario = {
         fecha: fecha,
         numero: fecha.getDate(),
@@ -129,7 +151,7 @@ export class CalendarioSacramentosComponent implements OnInit {
     
     // Agregar días del mes actual
     for (let dia = 1; dia <= ultimoDia.getDate(); dia++) {
-      const fecha = new Date(this.anioActual, this.mesActual, dia);
+      const fecha = new Date(this.anioActual, this.mesActual, dia, 12, 0, 0);
       const diaCal: DiaCalendario = {
         fecha: fecha,
         numero: dia,
@@ -143,7 +165,7 @@ export class CalendarioSacramentosComponent implements OnInit {
     // Completar con días del mes siguiente para tener 6 semanas
     const diasRestantes = 42 - this.diasCalendario.length;
     for (let dia = 1; dia <= diasRestantes; dia++) {
-      const fecha = new Date(this.anioActual, this.mesActual + 1, dia);
+      const fecha = new Date(this.anioActual, this.mesActual + 1, dia, 12, 0, 0);
       const diaCal: DiaCalendario = {
         fecha: fecha,
         numero: dia,
@@ -162,17 +184,32 @@ export class CalendarioSacramentosComponent implements OnInit {
 
   esHoy(fecha: Date): boolean {
     const hoy = new Date();
-    return fecha.getDate() === hoy.getDate() &&
-           fecha.getMonth() === hoy.getMonth() &&
-           fecha.getFullYear() === hoy.getFullYear();
+    // Normalizar ambas fechas a mediodía para comparación precisa
+    const hoyNormalizado = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 12, 0, 0);
+    const fechaNormalizada = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate(), 12, 0, 0);
+    return fechaNormalizada.getTime() === hoyNormalizado.getTime();
   }
 
   esPasado(fecha: Date): boolean {
     const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    const fechaComparar = new Date(fecha);
-    fechaComparar.setHours(0, 0, 0, 0);
-    return fechaComparar < hoy;
+    // Normalizar ambas fechas a inicio del día (00:00:00) para comparación precisa
+    const hoyNormalizado = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 0, 0, 0, 0);
+    const fechaNormalizada = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate(), 0, 0, 0, 0);
+    // Es pasado si la fecha es estrictamente menor que hoy (no incluye hoy)
+    return fechaNormalizada.getTime() < hoyNormalizado.getTime();
+  }
+
+  esFechaPasada(fechaString: string | Date | null | undefined): boolean {
+    if (!fechaString) {
+      return false;
+    }
+    try {
+      const fecha = this.parsearFechaLocal(fechaString);
+      return this.esPasado(fecha);
+    } catch (error) {
+      console.error('Error al verificar si fecha es pasada:', error);
+      return false;
+    }
   }
 
   mesAnterior(): void {
@@ -238,11 +275,22 @@ export class CalendarioSacramentosComponent implements OnInit {
 
   obtenerNombresParticipantes(asignacion: SacramentoAsignacion): string {
     if (!asignacion.participantes || asignacion.participantes.length === 0) {
-      return 'Sin participantes';
+      return 'No especificado';
     }
-    return asignacion.participantes
-      .map(p => p.nombre_completo || `${p.primer_nombre} ${p.primer_apellido}`)
-      .join(', ');
+    const nombres = asignacion.participantes
+      .filter(p => p && (p.nombre_completo || (p.primer_nombre && p.primer_apellido)))
+      .map(p => {
+        if (p.nombre_completo && p.nombre_completo.trim()) {
+          return p.nombre_completo.trim();
+        }
+        if (p.primer_nombre && p.primer_apellido) {
+          return `${p.primer_nombre.trim()} ${p.primer_apellido.trim()}`;
+        }
+        return null;
+      })
+      .filter(nombre => nombre !== null);
+    
+    return nombres.length > 0 ? nombres.join(', ') : 'No especificado';
   }
 
   formatearFecha(fecha: Date): string {
@@ -252,6 +300,37 @@ export class CalendarioSacramentosComponent implements OnInit {
       month: 'long',
       day: 'numeric'
     });
+  }
+
+  formatearFechaCelebracion(fechaString: string | Date | null | undefined): string {
+    if (!fechaString) {
+      return 'No especificado';
+    }
+    try {
+      const fecha = this.parsearFechaLocal(fechaString);
+      return fecha.toLocaleDateString('es-GT', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error al formatear fecha:', error);
+      return 'No especificado';
+    }
+  }
+
+  obtenerValorOEspecificado(valor: string | null | undefined): string {
+    if (!valor || (typeof valor === 'string' && !valor.trim())) {
+      return 'No especificado';
+    }
+    return valor.trim();
+  }
+
+  obtenerMontoPagado(monto: number | null | undefined): string {
+    if (!monto || monto === 0) {
+      return 'No especificado';
+    }
+    return `Q ${monto.toFixed(2)}`;
   }
 }
 

@@ -80,7 +80,7 @@
             <div 
               *ngFor="let sacramento of dia.sacramentos.slice(0, 3)"
               class="text-xs px-2 py-1 rounded truncate"
-              [class]="esPasado(dia.fecha) ? 'bg-gray-400 text-white' : obtenerColorSacramento(sacramento.id_sacramento) + ' text-white'"
+              [class]="esFechaPasada(sacramento.fecha_celebracion) ? 'bg-gray-400 text-white' : obtenerColorSacramento(sacramento.id_sacramento) + ' text-white'"
               [matTooltip]="obtenerNombreSacramento(sacramento.id_sacramento) + ' - ' + obtenerNombresParticipantes(sacramento)">
               {{ obtenerNombreSacramento(sacramento.id_sacramento) }}
             </div>
@@ -156,14 +156,14 @@
           <div 
             *ngFor="let asignacion of sacramentosFechaSeleccionada"
             class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200"
-            [class.bg-gray-50]="esPasado(fechaSeleccionada!)"
-            [class.bg-white]="!esPasado(fechaSeleccionada!)">
+            [class.bg-gray-50]="esFechaPasada(asignacion.fecha_celebracion)"
+            [class.bg-white]="!esFechaPasada(asignacion.fecha_celebracion)">
             <!-- Header del sacramento -->
             <div class="flex items-start justify-between mb-3">
               <div class="flex items-center gap-3">
                 <div 
                   class="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold"
-                  [class]="esPasado(fechaSeleccionada!) ? 'bg-gray-400' : obtenerColorSacramento(asignacion.id_sacramento)">
+                  [class]="esFechaPasada(asignacion.fecha_celebracion) ? 'bg-gray-400' : obtenerColorSacramento(asignacion.id_sacramento)">
                   <mat-icon>{{ asignacion.id_sacramento === 4 ? 'favorite' : 'church' }}</mat-icon>
                 </div>
                 <div>
@@ -171,16 +171,16 @@
                     {{ obtenerNombreSacramento(asignacion.id_sacramento) }}
                   </h3>
                   <p class="text-sm text-gray-600">
-                    {{ asignacion.sacramento_descripcion || 'Sin descripción' }}
+                    {{ obtenerValorOEspecificado(asignacion.sacramento_descripcion) }}
                   </p>
                 </div>
               </div>
               <div 
                 class="px-3 py-1 rounded-full text-xs font-medium"
-                [class.bg-green-100]="asignacion.pagado && !esPasado(fechaSeleccionada!)"
-                [class.text-green-700]="asignacion.pagado && !esPasado(fechaSeleccionada!)"
-                [class.bg-gray-200]="!asignacion.pagado || esPasado(fechaSeleccionada!)"
-                [class.text-gray-600]="!asignacion.pagado || esPasado(fechaSeleccionada!)">
+                [class.bg-green-100]="asignacion.pagado && !esFechaPasada(asignacion.fecha_celebracion)"
+                [class.text-green-700]="asignacion.pagado && !esFechaPasada(asignacion.fecha_celebracion)"
+                [class.bg-gray-200]="!asignacion.pagado || esFechaPasada(asignacion.fecha_celebracion)"
+                [class.text-gray-600]="!asignacion.pagado || esFechaPasada(asignacion.fecha_celebracion)">
                 {{ asignacion.pagado ? 'Pagado' : 'Pendiente' }}
               </div>
             </div>
@@ -188,25 +188,33 @@
             <!-- Participantes -->
             <div class="mb-3">
               <p class="text-sm font-medium text-gray-700 mb-1">Participante(s):</p>
-              <p class="text-sm text-gray-900">{{ obtenerNombresParticipantes(asignacion) }}</p>
+              <p class="text-sm text-gray-900">
+                {{ obtenerNombresParticipantes(asignacion) }}
+              </p>
             </div>
 
             <!-- Información adicional -->
             <div class="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <p class="text-gray-600">Hora:</p>
-                <p class="text-gray-900 font-medium">No especificada</p>
+                <p class="text-gray-600">Fecha de celebración:</p>
+                <p class="text-gray-900 font-medium">
+                  {{ formatearFechaCelebracion(asignacion.fecha_celebracion) }}
+                </p>
               </div>
-              <div *ngIf="asignacion.monto_pagado">
+              <div>
                 <p class="text-gray-600">Monto pagado:</p>
-                <p class="text-gray-900 font-medium">Q {{ asignacion.monto_pagado.toFixed(2) }}</p>
+                <p class="text-gray-900 font-medium">
+                  {{ obtenerMontoPagado(asignacion.monto_pagado) }}
+                </p>
               </div>
             </div>
 
             <!-- Comentarios -->
-            <div *ngIf="asignacion.comentarios" class="mt-3 pt-3 border-t border-gray-200">
+            <div class="mt-3 pt-3 border-t border-gray-200">
               <p class="text-sm font-medium text-gray-700 mb-1">Comentarios:</p>
-              <p class="text-sm text-gray-600">{{ asignacion.comentarios }}</p>
+              <p class="text-sm text-gray-600">
+                {{ obtenerValorOEspecificado(asignacion.comentarios) }}
+              </p>
             </div>
           </div>
         </div>
