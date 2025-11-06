@@ -17,6 +17,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { Router } from '@angular/router';
+import * as XLSX from 'xlsx';
 import { FeligresService } from '../../services/feligres.service';
 import { Feligres, FeligresCreate, FeligresUpdate, FiltrosFeligres, ComunidadSelect } from '../../models/mantenimiento.model';
 
@@ -473,5 +474,86 @@ export class FeligresesComponent implements OnInit {
 
   trackByFeligresId(index: number, feligres: Feligres): number {
     return feligres.id_feligres;
+  }
+
+  /**
+   * Exportar datos filtrados a Excel
+   */
+  exportarAExcel(): void {
+    // Obtener los datos filtrados actuales (no solo los de la página actual)
+    const datosParaExportar = this.dataSource.data;
+    
+    if (datosParaExportar.length === 0) {
+      this.snackBar.open('No hay datos para exportar', 'Cerrar', {
+        duration: 3000
+      });
+      return;
+    }
+
+    // Formatear los datos para Excel
+    const datosFormateados = datosParaExportar.map(feligres => {
+      return {
+        'ID': feligres.id_feligres,
+        'Nombre Completo': this.getNombreCompleto(feligres),
+        'Primer Nombre': feligres.primer_nombre,
+        'Segundo Nombre': feligres.segundo_nombre || '',
+        'Otros Nombres': feligres.otros_nombres || '',
+        'Primer Apellido': feligres.primer_apellido,
+        'Segundo Apellido': feligres.segundo_apellido || '',
+        'Apellido Casada': feligres.apellido_casada || '',
+        'Fecha de Nacimiento': feligres.fecha_nacimiento 
+          ? new Date(feligres.fecha_nacimiento).toLocaleDateString('es-ES')
+          : '',
+        'Sexo': feligres.sexo === 'M' ? 'Masculino' : feligres.sexo === 'F' ? 'Femenino' : feligres.sexo,
+        'Teléfono': feligres.telefono || '',
+        'Correo': feligres.correo || '',
+        'Dirección': feligres.direccion || '',
+        'Comunidad': feligres.comunidad_nombre || '',
+        'Estado': feligres.activo ? 'Activo' : 'Inactivo',
+        'Fecha de Registro': feligres.created_at 
+          ? new Date(feligres.created_at).toLocaleDateString('es-ES')
+          : ''
+      };
+    });
+
+    // Crear el libro de trabajo de Excel
+    const ws = XLSX.utils.json_to_sheet(datosFormateados);
+    
+    // Ajustar el ancho de las columnas
+    const columnWidths = [
+      { wch: 8 },  // ID
+      { wch: 30 }, // Nombre Completo
+      { wch: 15 }, // Primer Nombre
+      { wch: 15 }, // Segundo Nombre
+      { wch: 15 }, // Otros Nombres
+      { wch: 15 }, // Primer Apellido
+      { wch: 15 }, // Segundo Apellido
+      { wch: 15 }, // Apellido Casada
+      { wch: 18 }, // Fecha de Nacimiento
+      { wch: 12 }, // Sexo
+      { wch: 15 }, // Teléfono
+      { wch: 25 }, // Correo
+      { wch: 30 }, // Dirección
+      { wch: 20 }, // Comunidad
+      { wch: 10 }, // Estado
+      { wch: 18 }  // Fecha de Registro
+    ];
+    ws['!cols'] = columnWidths;
+
+    // Crear el libro de trabajo
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Feligreses');
+
+    // Generar el nombre del archivo con fecha
+    const fecha = new Date().toISOString().split('T')[0];
+    const nombreArchivo = `Feligreses_${fecha}.xlsx`;
+
+    // Descargar el archivo
+    XLSX.writeFile(wb, nombreArchivo);
+
+    // Mostrar mensaje de éxito
+    this.snackBar.open(`Se exportaron ${datosParaExportar.length} feligreses a Excel`, 'Cerrar', {
+      duration: 3000
+    });
   }
 }

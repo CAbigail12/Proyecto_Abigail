@@ -9,8 +9,8 @@ class SacramentoAsignacionModel {
       
       // Insertar la asignación principal
       const queryAsignacion = `
-        INSERT INTO sacramento_asignacion (id_sacramento, fecha_celebracion, pagado, comentarios)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO sacramento_asignacion (id_sacramento, fecha_celebracion, pagado, monto_pagado, comentarios)
+        VALUES ($1, $2, $3, $4, $5)
         RETURNING id_asignacion
       `;
       
@@ -18,6 +18,7 @@ class SacramentoAsignacionModel {
         datos.id_sacramento,
         datos.fecha_celebracion,
         datos.pagado || false,
+        datos.monto_pagado || null,
         datos.comentarios || null
       ]);
       
@@ -61,6 +62,7 @@ class SacramentoAsignacionModel {
           sa.id_sacramento,
           sa.fecha_celebracion,
           sa.pagado,
+          sa.monto_pagado,
           sa.comentarios,
           sa.activo,
           sa.created_at,
@@ -206,6 +208,7 @@ class SacramentoAsignacionModel {
           sa.id_sacramento,
           sa.fecha_celebracion,
           sa.pagado,
+          sa.monto_pagado,
           sa.comentarios,
           sa.activo,
           sa.created_at,
@@ -247,14 +250,15 @@ class SacramentoAsignacionModel {
       // Actualizar la asignación principal
       const queryAsignacion = `
         UPDATE sacramento_asignacion 
-        SET id_sacramento = $1, fecha_celebracion = $2, pagado = $3, comentarios = $4
-        WHERE id_asignacion = $5 AND activo = true
+        SET id_sacramento = $1, fecha_celebracion = $2, pagado = $3, monto_pagado = $4, comentarios = $5
+        WHERE id_asignacion = $6 AND activo = true
       `;
       
       await cliente.query(queryAsignacion, [
         datos.id_sacramento,
         datos.fecha_celebracion,
         datos.pagado || false,
+        datos.monto_pagado || null,
         datos.comentarios || null,
         idAsignacion
       ]);

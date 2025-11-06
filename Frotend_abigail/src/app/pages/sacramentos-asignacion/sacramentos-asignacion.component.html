@@ -127,6 +127,25 @@
                   </mat-checkbox>
                 </div>
                 
+                <div *ngIf="formularioBautizo.get('pagado')?.value" class="mt-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Monto Pagado *</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput 
+                           type="number"
+                           formControlName="monto_pagado"
+                           placeholder="0.00"
+                           step="0.01"
+                           min="0.01">
+                    <span matPrefix class="pl-2">Q&nbsp;</span>
+                    <mat-error *ngIf="formularioBautizo.get('monto_pagado')?.hasError('required')">
+                      El monto es requerido
+                    </mat-error>
+                    <mat-error *ngIf="formularioBautizo.get('monto_pagado')?.hasError('min')">
+                      El monto debe ser mayor a 0
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+                
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-2">Comentarios</label>
                   <mat-form-field appearance="outline" class="w-full">
@@ -210,6 +229,25 @@
                   <mat-checkbox formControlName="pagado" class="mr-2">
                     ¿Ya pagó el sacramento?
                   </mat-checkbox>
+                </div>
+                
+                <div *ngIf="formularioConfirmacion.get('pagado')?.value" class="mt-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Monto Pagado *</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput 
+                           type="number"
+                           formControlName="monto_pagado"
+                           placeholder="0.00"
+                           step="0.01"
+                           min="0.01">
+                    <span matPrefix class="pl-2">Q&nbsp;</span>
+                    <mat-error *ngIf="formularioConfirmacion.get('monto_pagado')?.hasError('required')">
+                      El monto es requerido
+                    </mat-error>
+                    <mat-error *ngIf="formularioConfirmacion.get('monto_pagado')?.hasError('min')">
+                      El monto debe ser mayor a 0
+                    </mat-error>
+                  </mat-form-field>
                 </div>
                 
                 <div>
@@ -322,6 +360,25 @@
                     ¿Ya pagaron el sacramento?
                   </mat-checkbox>
                 </div>
+                
+                <div *ngIf="formularioMatrimonio.get('pagado')?.value" class="mt-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Monto Pagado *</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput 
+                           type="number"
+                           formControlName="monto_pagado"
+                           placeholder="0.00"
+                           step="0.01"
+                           min="0.01">
+                    <span matPrefix class="pl-2">Q&nbsp;</span>
+                    <mat-error *ngIf="formularioMatrimonio.get('monto_pagado')?.hasError('required')">
+                      El monto es requerido
+                    </mat-error>
+                    <mat-error *ngIf="formularioMatrimonio.get('monto_pagado')?.hasError('min')">
+                      El monto debe ser mayor a 0
+                    </mat-error>
+                  </mat-form-field>
+                </div>
               </div>
               
               <!-- Comentarios -->
@@ -364,6 +421,89 @@
                 <mat-icon>refresh</mat-icon>
                 Actualizar
               </button>
+            </div>
+            
+            <!-- Filtros -->
+            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">Filtros de Búsqueda</h3>
+              <form [formGroup]="formularioFiltros" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Filtro por Sacramento -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Sacramento</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <mat-select formControlName="id_sacramento">
+                      <mat-option value="">Todos</mat-option>
+                      <mat-option *ngFor="let sacramento of sacramentos" [value]="sacramento.id_sacramento">
+                        {{sacramento.nombre}}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                
+                <!-- Filtro por Participante -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Buscar Participante</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput 
+                           formControlName="busqueda"
+                           placeholder="Nombre del participante...">
+                    <mat-icon matPrefix>search</mat-icon>
+                  </mat-form-field>
+                </div>
+                
+                <!-- Filtro por Estado de Pago -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Estado de Pago</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <mat-select formControlName="pagado">
+                      <mat-option value="">Todos</mat-option>
+                      <mat-option value="true">Pagado</mat-option>
+                      <mat-option value="false">Pendiente</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+                
+                <!-- Filtro por Fecha Desde -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Fecha Desde</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput 
+                           [matDatepicker]="pickerFechaDesde"
+                           formControlName="fecha_desde"
+                           placeholder="Fecha desde...">
+                    <mat-datepicker-toggle matSuffix [for]="pickerFechaDesde"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerFechaDesde></mat-datepicker>
+                  </mat-form-field>
+                </div>
+                
+                <!-- Filtro por Fecha Hasta -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Fecha Hasta</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput 
+                           [matDatepicker]="pickerFechaHasta"
+                           formControlName="fecha_hasta"
+                           placeholder="Fecha hasta...">
+                    <mat-datepicker-toggle matSuffix [for]="pickerFechaHasta"></mat-datepicker-toggle>
+                    <mat-datepicker #pickerFechaHasta></mat-datepicker>
+                  </mat-form-field>
+                </div>
+                
+                <!-- Botones de acción -->
+                <div class="flex items-end gap-2">
+                  <button type="button"
+                          (click)="aplicarFiltros()"
+                          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex-1">
+                    <mat-icon class="text-lg mr-1">search</mat-icon>
+                    Buscar
+                  </button>
+                  <button type="button"
+                          (click)="limpiarFiltros()"
+                          class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors">
+                    <mat-icon class="text-lg">clear</mat-icon>
+                  </button>
+                </div>
+              </form>
             </div>
             
             <!-- Tabla de asignaciones -->
@@ -487,5 +627,431 @@
       </mat-tab-group>
     </div>
     
+  </div>
+</div>
+
+<!-- Modal de Edición -->
+<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4"
+     *ngIf="mostrarModalEdicion" (click)="cerrarModalEdicion()">
+  <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto relative"
+       (click)="$event.stopPropagation()">
+    <!-- Header del modal -->
+    <div class="flex justify-between items-center p-4 border-b border-gray-200 sticky top-0 bg-white z-10">
+      <h2 class="text-xl font-semibold text-gray-900">
+        <span *ngIf="tipoSacramentoModal === 'bautizo'">Editar Bautizo</span>
+        <span *ngIf="tipoSacramentoModal === 'confirmacion'">Editar Confirmación</span>
+        <span *ngIf="tipoSacramentoModal === 'matrimonio'">Editar Matrimonio</span>
+        <span *ngIf="!tipoSacramentoModal" class="text-red-600">Error: Tipo de sacramento no identificado</span>
+      </h2>
+      <button type="button"
+              (click)="cerrarModalEdicion()"
+              class="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors duration-200">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <!-- Debug info -->
+    <div class="p-4 bg-yellow-100 text-xs" *ngIf="false">
+      Debug: mostrarModalEdicion={{mostrarModalEdicion}}, tipoSacramentoModal={{tipoSacramentoModal}}
+    </div>
+
+    <!-- Contenido del modal - Bautizo -->
+    <div class="p-6" *ngIf="tipoSacramentoModal === 'bautizo'">
+      <form [formGroup]="formularioModalBautizo" class="space-y-6">
+        <!-- Selección de feligrés -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Feligrés a Bautizar *</label>
+          <mat-form-field appearance="outline" class="w-full">
+            <input matInput 
+                   [formControl]="controladorFeligresModalBautizo"
+                   placeholder="Buscar o seleccionar feligrés..."
+                   [matAutocomplete]="autoModalBautizo"
+                   (click)="activarAutocomplete(controladorFeligresModalBautizo)"
+                   (focus)="activarAutocomplete(controladorFeligresModalBautizo)">
+            <mat-autocomplete #autoModalBautizo="matAutocomplete" 
+                              (optionSelected)="seleccionarFeligresModalBautizo($event.option.value)"
+                              [displayWith]="displayFeligres">
+              <mat-option *ngFor="let feligres of feligresesFiltradosModalBautizo | async" 
+                          [value]="feligres">
+                <div class="flex items-center justify-between">
+                  <span>{{feligres.primer_nombre}} {{feligres.primer_apellido}}</span>
+                  <span class="text-xs text-gray-500 ml-2">{{feligres.comunidad_nombre}}</span>
+                </div>
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
+        </div>
+        
+        <!-- Fecha de celebración -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Celebración *</label>
+          <mat-form-field appearance="outline" class="w-full">
+            <input matInput 
+                   [matDatepicker]="pickerModalBautizo"
+                   formControlName="fecha_celebracion"
+                   placeholder="Seleccionar fecha">
+            <mat-datepicker-toggle matSuffix [for]="pickerModalBautizo"></mat-datepicker-toggle>
+            <mat-datepicker #pickerModalBautizo></mat-datepicker>
+          </mat-form-field>
+        </div>
+        
+        <!-- Estado de pago y comentarios -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="flex items-center">
+            <mat-checkbox formControlName="pagado" class="mr-2">
+              ¿Ya pagó el sacramento?
+            </mat-checkbox>
+          </div>
+          
+          <div *ngIf="formularioModalBautizo.get('pagado')?.value" class="mt-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Monto Pagado *</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <input matInput 
+                     type="number"
+                     formControlName="monto_pagado"
+                     placeholder="0.00"
+                     step="0.01"
+                     min="0.01">
+              <span matPrefix class="pl-2">Q&nbsp;</span>
+              <mat-error *ngIf="formularioModalBautizo.get('monto_pagado')?.hasError('required')">
+                El monto es requerido
+              </mat-error>
+              <mat-error *ngIf="formularioModalBautizo.get('monto_pagado')?.hasError('min')">
+                El monto debe ser mayor a 0
+              </mat-error>
+            </mat-form-field>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Comentarios</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <textarea matInput 
+                        formControlName="comentarios"
+                        placeholder="Comentarios adicionales..."
+                        rows="3"></textarea>
+            </mat-form-field>
+          </div>
+        </div>
+        
+        <!-- Botones -->
+        <div class="flex justify-end space-x-4 pt-4 border-t">
+          <button type="button" 
+                  (click)="cerrarModalEdicion()"
+                  class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors">
+            Cancelar
+          </button>
+          <button type="button" 
+                  (click)="guardarModalBautizo()"
+                  [disabled]="loading || !formularioModalBautizo.valid || !feligresSeleccionadoModalBautizo"
+                  class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg transition-colors">
+            <mat-spinner *ngIf="loading" diameter="20" class="inline mr-2"></mat-spinner>
+            Guardar Cambios
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Contenido del modal - Confirmación -->
+    <div class="p-6" *ngIf="tipoSacramentoModal === 'confirmacion'">
+      <form [formGroup]="formularioModalConfirmacion" class="space-y-6">
+        <!-- Selección de feligrés -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Feligrés a Confirmar *</label>
+          <mat-form-field appearance="outline" class="w-full">
+            <input matInput 
+                   [formControl]="controladorFeligresModalConfirmacion"
+                   placeholder="Buscar o seleccionar feligrés..."
+                   [matAutocomplete]="autoModalConfirmacion"
+                   (click)="activarAutocomplete(controladorFeligresModalConfirmacion)"
+                   (focus)="activarAutocomplete(controladorFeligresModalConfirmacion)">
+            <mat-autocomplete #autoModalConfirmacion="matAutocomplete" 
+                              (optionSelected)="seleccionarFeligresModalConfirmacion($event.option.value)"
+                              [displayWith]="displayFeligres">
+              <mat-option *ngFor="let feligres of feligresesFiltradosModalConfirmacion | async" 
+                          [value]="feligres">
+                <div class="flex items-center justify-between">
+                  <span>{{feligres.primer_nombre}} {{feligres.primer_apellido}}</span>
+                  <span class="text-xs text-gray-500 ml-2">{{feligres.comunidad_nombre}}</span>
+                </div>
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
+        </div>
+        
+        <!-- Fecha de celebración -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Celebración *</label>
+          <mat-form-field appearance="outline" class="w-full">
+            <input matInput 
+                   [matDatepicker]="pickerModalConfirmacion"
+                   formControlName="fecha_celebracion"
+                   placeholder="Seleccionar fecha">
+            <mat-datepicker-toggle matSuffix [for]="pickerModalConfirmacion"></mat-datepicker-toggle>
+            <mat-datepicker #pickerModalConfirmacion></mat-datepicker>
+          </mat-form-field>
+        </div>
+        
+        <!-- Estado de pago y comentarios -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="flex items-center">
+            <mat-checkbox formControlName="pagado" class="mr-2">
+              ¿Ya pagó el sacramento?
+            </mat-checkbox>
+          </div>
+          
+          <div *ngIf="formularioModalConfirmacion.get('pagado')?.value" class="mt-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Monto Pagado *</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <input matInput 
+                     type="number"
+                     formControlName="monto_pagado"
+                     placeholder="0.00"
+                     step="0.01"
+                     min="0.01">
+              <span matPrefix class="pl-2">Q&nbsp;</span>
+              <mat-error *ngIf="formularioModalConfirmacion.get('monto_pagado')?.hasError('required')">
+                El monto es requerido
+              </mat-error>
+              <mat-error *ngIf="formularioModalConfirmacion.get('monto_pagado')?.hasError('min')">
+                El monto debe ser mayor a 0
+              </mat-error>
+            </mat-form-field>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Comentarios</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <textarea matInput 
+                        formControlName="comentarios"
+                        placeholder="Comentarios adicionales..."
+                        rows="3"></textarea>
+            </mat-form-field>
+          </div>
+        </div>
+        
+        <!-- Botones -->
+        <div class="flex justify-end space-x-4 pt-4 border-t">
+          <button type="button" 
+                  (click)="cerrarModalEdicion()"
+                  class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors">
+            Cancelar
+          </button>
+          <button type="button" 
+                  (click)="guardarModalConfirmacion()"
+                  [disabled]="loading || !formularioModalConfirmacion.valid || !feligresSeleccionadoModalConfirmacion"
+                  class="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg transition-colors">
+            <mat-spinner *ngIf="loading" diameter="20" class="inline mr-2"></mat-spinner>
+            Guardar Cambios
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Contenido del modal - Matrimonio -->
+    <div class="p-6" *ngIf="tipoSacramentoModal === 'matrimonio'">
+      <form [formGroup]="formularioModalMatrimonio" class="space-y-6">
+        <!-- Selección de novio y novia -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Novio *</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <input matInput 
+                     [formControl]="controladorFeligresModalNovio"
+                     placeholder="Buscar o seleccionar novio..."
+                     [matAutocomplete]="autoModalNovio"
+                     (click)="activarAutocomplete(controladorFeligresModalNovio)"
+                     (focus)="activarAutocomplete(controladorFeligresModalNovio)">
+              <mat-autocomplete #autoModalNovio="matAutocomplete" 
+                                (optionSelected)="seleccionarNovioModal($event.option.value)"
+                                [displayWith]="displayFeligres">
+                <mat-option *ngFor="let feligres of feligresesFiltradosModalNovio | async" 
+                            [value]="feligres">
+                  <div class="flex items-center justify-between">
+                    <span>{{feligres.primer_nombre}} {{feligres.primer_apellido}}</span>
+                    <span class="text-xs text-gray-500 ml-2">{{feligres.comunidad_nombre}}</span>
+                  </div>
+                </mat-option>
+              </mat-autocomplete>
+            </mat-form-field>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Novia *</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <input matInput 
+                     [formControl]="controladorFeligresModalNovia"
+                     placeholder="Buscar o seleccionar novia..."
+                     [matAutocomplete]="autoModalNovia2"
+                     (click)="activarAutocomplete(controladorFeligresModalNovia)"
+                     (focus)="activarAutocomplete(controladorFeligresModalNovia)">
+              <mat-autocomplete #autoModalNovia2="matAutocomplete" 
+                                (optionSelected)="seleccionarNoviaModal($event.option.value)"
+                                [displayWith]="displayFeligres">
+                <mat-option *ngFor="let feligres of feligresesFiltradosModalNovia | async" 
+                            [value]="feligres">
+                  <div class="flex items-center justify-between">
+                    <span>{{feligres.primer_nombre}} {{feligres.primer_apellido}}</span>
+                    <span class="text-xs text-gray-500 ml-2">{{feligres.comunidad_nombre}}</span>
+                  </div>
+                </mat-option>
+              </mat-autocomplete>
+            </mat-form-field>
+          </div>
+        </div>
+        
+        <!-- Fecha de celebración -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Celebración *</label>
+          <mat-form-field appearance="outline" class="w-full">
+            <input matInput 
+                   [matDatepicker]="pickerModalMatrimonio"
+                   formControlName="fecha_celebracion"
+                   placeholder="Seleccionar fecha">
+            <mat-datepicker-toggle matSuffix [for]="pickerModalMatrimonio"></mat-datepicker-toggle>
+            <mat-datepicker #pickerModalMatrimonio></mat-datepicker>
+          </mat-form-field>
+        </div>
+        
+        <!-- Estado de pago y comentarios -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="flex items-center">
+            <mat-checkbox formControlName="pagado" class="mr-2">
+              ¿Ya pagaron el sacramento?
+            </mat-checkbox>
+          </div>
+          
+          <div *ngIf="formularioModalMatrimonio.get('pagado')?.value" class="mt-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Monto Pagado *</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <input matInput 
+                     type="number"
+                     formControlName="monto_pagado"
+                     placeholder="0.00"
+                     step="0.01"
+                     min="0.01">
+              <span matPrefix class="pl-2">Q&nbsp;</span>
+              <mat-error *ngIf="formularioModalMatrimonio.get('monto_pagado')?.hasError('required')">
+                El monto es requerido
+              </mat-error>
+              <mat-error *ngIf="formularioModalMatrimonio.get('monto_pagado')?.hasError('min')">
+                El monto debe ser mayor a 0
+              </mat-error>
+            </mat-form-field>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Comentarios</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <textarea matInput 
+                        formControlName="comentarios"
+                        placeholder="Comentarios adicionales..."
+                        rows="3"></textarea>
+            </mat-form-field>
+          </div>
+        </div>
+        
+        <!-- Botones -->
+        <div class="flex justify-end space-x-4 pt-4 border-t">
+          <button type="button" 
+                  (click)="cerrarModalEdicion()"
+                  class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors">
+            Cancelar
+          </button>
+          <button type="button" 
+                  (click)="guardarModalMatrimonio()"
+                  [disabled]="loading || !formularioModalMatrimonio.valid || !feligresSeleccionadoModalNovio || !feligresSeleccionadoModalNovia"
+                  class="bg-pink-600 hover:bg-pink-700 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg transition-colors">
+            <mat-spinner *ngIf="loading" diameter="20" class="inline mr-2"></mat-spinner>
+            Guardar Cambios
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Mensaje de error si no hay tipo de sacramento -->
+    <div class="p-6" *ngIf="!tipoSacramentoModal && mostrarModalEdicion">
+      <div class="text-center py-8">
+        <mat-icon class="text-6xl text-red-500 mb-4">error</mat-icon>
+        <p class="text-lg font-semibold text-gray-900 mb-2">Error al cargar el formulario</p>
+        <p class="text-gray-600 mb-4">No se pudo identificar el tipo de sacramento para esta asignación.</p>
+        <button type="button"
+                (click)="cerrarModalEdicion()"
+                class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Confirmación de Eliminación -->
+<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4"
+     *ngIf="mostrarModalEliminar" (click)="cerrarModalEliminar()">
+  <div class="bg-white rounded-lg shadow-2xl w-full max-w-md relative"
+       (click)="$event.stopPropagation()">
+    <!-- Header del modal -->
+    <div class="flex justify-between items-center p-6 border-b border-gray-200">
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-red-100 rounded-full">
+          <mat-icon class="text-red-600">warning</mat-icon>
+        </div>
+        <h2 class="text-xl font-semibold text-gray-900">Confirmar Eliminación</h2>
+      </div>
+      <button type="button"
+              (click)="cerrarModalEliminar()"
+              class="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors duration-200">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <!-- Contenido del modal -->
+    <div class="p-6">
+      <div class="mb-6">
+        <p class="text-gray-700 mb-4">
+          ¿Estás seguro de que deseas eliminar esta asignación?
+        </p>
+        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200" *ngIf="asignacionAEliminar">
+          <div class="space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium text-gray-600">Sacramento:</span>
+              <span class="text-sm text-gray-900">{{asignacionAEliminar.sacramento_nombre}}</span>
+            </div>
+            <div class="flex items-center gap-2" *ngIf="asignacionAEliminar.participantes && asignacionAEliminar.participantes.length > 0">
+              <span class="text-sm font-medium text-gray-600">Participante(s):</span>
+              <span class="text-sm text-gray-900">
+                <span *ngFor="let participante of asignacionAEliminar.participantes; let i = index">
+                  {{participante.nombre_completo || (participante.primer_nombre + ' ' + participante.primer_apellido)}}<span *ngIf="i < asignacionAEliminar.participantes.length - 1">, </span>
+                </span>
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium text-gray-600">Fecha:</span>
+              <span class="text-sm text-gray-900">{{asignacionAEliminar.fecha_celebracion | date:'dd/MM/yyyy'}}</span>
+            </div>
+          </div>
+        </div>
+        <p class="text-red-600 text-sm mt-4 font-medium">
+          ⚠️ Esta acción no se puede deshacer.
+        </p>
+      </div>
+
+      <!-- Botones -->
+      <div class="flex justify-end gap-3">
+        <button type="button"
+                (click)="cerrarModalEliminar()"
+                [disabled]="loading"
+                class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
+          Cancelar
+        </button>
+        <button type="button"
+                (click)="confirmarEliminacion()"
+                [disabled]="loading"
+                class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center gap-2">
+          <mat-spinner *ngIf="loading" diameter="20" class="inline"></mat-spinner>
+          <span *ngIf="!loading">Eliminar</span>
+          <span *ngIf="loading">Eliminando...</span>
+        </button>
+      </div>
+    </div>
   </div>
 </div>

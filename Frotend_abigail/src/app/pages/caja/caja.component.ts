@@ -315,7 +315,7 @@ export class CajaComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (filtros.id_feligres) {
       resultado = resultado.filter(m => m.id_feligres === parseInt(filtros.id_feligres));
-    }
+        }
 
     return resultado;
   }
@@ -334,7 +334,7 @@ export class CajaComponent implements OnInit, AfterViewInit, OnDestroy {
     const startIndex = this.paginatorIngresos.pageIndex * this.paginatorIngresos.pageSize;
     const endIndex = startIndex + this.paginatorIngresos.pageSize;
     this.ingresosPaginados = this.ingresos.slice(startIndex, endIndex);
-  }
+          }
 
   actualizarDatosPaginadosEgresos(): void {
     if (!this.paginatorEgresos) {
@@ -349,7 +349,7 @@ export class CajaComponent implements OnInit, AfterViewInit, OnDestroy {
     const startIndex = this.paginatorEgresos.pageIndex * this.paginatorEgresos.pageSize;
     const endIndex = startIndex + this.paginatorEgresos.pageSize;
     this.egresosPaginados = this.egresos.slice(startIndex, endIndex);
-  }
+        }
 
   actualizarDatosPaginadosBalance(): void {
     if (!this.paginatorBalance) {
@@ -374,7 +374,7 @@ export class CajaComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     this.actualizarDatosPaginadosIngresos();
     this.cdr.detectChanges();
-  }
+          }
 
   onPageChangeEgresos(event: any): void {
     this.pageSizeEgresos = event.pageSize;
@@ -389,7 +389,7 @@ export class CajaComponent implements OnInit, AfterViewInit, OnDestroy {
     this.pageSizeBalance = event.pageSize;
     if (this.paginatorBalance) {
       this.paginatorBalance.length = this.totalMovimientos;
-    }
+        }
     this.actualizarDatosPaginadosBalance();
     this.cdr.detectChanges();
   }
@@ -497,7 +497,7 @@ export class CajaComponent implements OnInit, AfterViewInit, OnDestroy {
     
     // Los datos ya están cargados, solo actualizar paginación
     if (index === 2) { // Balance
-      this.cargarBalancePorCuenta();
+        this.cargarBalancePorCuenta();
     }
     // Los datos ya están disponibles desde todosLosMovimientos
   }

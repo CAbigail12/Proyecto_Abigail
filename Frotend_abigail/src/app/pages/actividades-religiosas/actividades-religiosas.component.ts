@@ -376,7 +376,7 @@ export class ActividadesReligiosasComponent implements OnInit, AfterViewInit {
       }, 0);
     } else {
       // Si no hay datos cargados, cargar desde el backend
-      this.cargarActividades();
+    this.cargarActividades();
     }
   }
 
@@ -393,8 +393,8 @@ export class ActividadesReligiosasComponent implements OnInit, AfterViewInit {
     // Resetear a la primera página
     if (this.paginator) {
       this.paginator.pageIndex = 0;
-    }
-    
+  }
+
     // Si ya tenemos todos los datos cargados, aplicar filtros localmente (vacíos)
     if (this.todosLosDatos.length > 0) {
       let datosFiltrados = this.aplicarFiltrosLocales(this.todosLosDatos);
@@ -488,9 +488,9 @@ export class ActividadesReligiosasComponent implements OnInit, AfterViewInit {
       this.actividadService.eliminarActividad(actividad.id_actividad).subscribe({
         next: (response) => {
           if (response.ok) {
-          this.mostrarExito('Actividad eliminada correctamente');
-          this.cargarActividades();
-          this.cargarEstadisticas();
+            this.mostrarExito('Actividad eliminada correctamente');
+            this.cargarActividades();
+            this.cargarEstadisticas();
           } else {
             this.mostrarError('Error al eliminar actividad');
           }

@@ -16,7 +16,7 @@ class FeligresModel {
 
     try {
       const resultados = await pool.query(query);
-      
+
       const total = resultados.rows.length;
 
       return {

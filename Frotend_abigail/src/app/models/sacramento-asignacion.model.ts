@@ -14,6 +14,7 @@ export interface SacramentoAsignacion {
   id_sacramento: number;
   fecha_celebracion: string;
   pagado: boolean;
+  monto_pagado?: number;
   comentarios?: string;
   activo: boolean;
   created_at: string;
@@ -37,6 +38,7 @@ export interface SacramentoAsignacionCreate {
   id_sacramento: number;
   fecha_celebracion: string;
   pagado: boolean;
+  monto_pagado?: number | null;
   comentarios?: string;
   participantes: ParticipanteAsignacionCreate[];
 }
@@ -50,6 +52,7 @@ export interface SacramentoAsignacionUpdate {
   id_sacramento?: number;
   fecha_celebracion?: string;
   pagado?: boolean;
+  monto_pagado?: number | null;
   comentarios?: string;
   participantes?: ParticipanteAsignacionCreate[];
 }

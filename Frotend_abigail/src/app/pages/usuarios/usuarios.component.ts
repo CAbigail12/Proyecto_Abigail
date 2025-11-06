@@ -228,7 +228,7 @@ export class UsuariosComponent implements OnInit {
       }, 0);
     } else {
       // Si no hay datos cargados, cargar desde el backend
-      this.cargarUsuarios();
+    this.cargarUsuarios();
     }
   }
 
