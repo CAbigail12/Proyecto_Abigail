@@ -1,4 +1,5 @@
 const { pool } = require('../config/db');
+const TestigosPadrinosModel = require('./testigosPadrinosModel');
 
 class SacramentoAsignacionModel {
   // Crear nueva asignación de sacramento
@@ -39,6 +40,17 @@ class SacramentoAsignacionModel {
         }
       }
       
+      // Insertar testigos/padrinos si existen
+      if (datos.testigos_padrinos && datos.testigos_padrinos.length > 0) {
+        const testigosPadrinosData = datos.testigos_padrinos.map(tp => ({
+          id_asignacion: idAsignacion,
+          id_feligres: tp.id_feligres,
+          id_tipo_testigo_padrino: tp.id_tipo_testigo_padrino,
+          numero_orden: tp.numero_orden || 1
+        }));
+        await TestigosPadrinosModel.crearMultiples(testigosPadrinosData);
+      }
+      
       await cliente.query('COMMIT');
       return { id_asignacion: idAsignacion };
     } catch (error) {
@@ -49,13 +61,53 @@ class SacramentoAsignacionModel {
     }
   }
 
-  // Obtener todas las asignaciones con filtros (sin paginación - se aplica en el frontend)
+  // Obtener todas las asignaciones con filtros (sin paginación - trae todos los datos)
   static async obtenerTodos(filtros = {}, paginacion = {}) {
     const cliente = await pool.connect();
     try {
-      // El backend siempre devuelve TODOS los datos
-      // La paginación se aplica en el frontend
+      // Construir la parte WHERE de la consulta
+      let whereClause = 'WHERE sa.activo = true';
+      const parametros = [];
+      let contadorParametros = 1;
       
+      // Filtros
+      if (filtros.id_sacramento) {
+        whereClause += ` AND sa.id_sacramento = $${contadorParametros}`;
+        parametros.push(filtros.id_sacramento);
+        contadorParametros++;
+      }
+      
+      if (filtros.fecha_desde) {
+        whereClause += ` AND sa.fecha_celebracion >= $${contadorParametros}`;
+        parametros.push(filtros.fecha_desde);
+        contadorParametros++;
+      }
+      
+      if (filtros.fecha_hasta) {
+        whereClause += ` AND sa.fecha_celebracion <= $${contadorParametros}`;
+        parametros.push(filtros.fecha_hasta);
+        contadorParametros++;
+      }
+      
+      if (filtros.pagado !== undefined && filtros.pagado !== '') {
+        whereClause += ` AND sa.pagado = $${contadorParametros}`;
+        parametros.push(filtros.pagado === 'true');
+        contadorParametros++;
+      }
+      
+      if (filtros.busqueda) {
+        const busquedaParam = `%${filtros.busqueda}%`;
+        whereClause += ` AND (
+          cs.nombre ILIKE $${contadorParametros} OR
+          f.primer_nombre ILIKE $${contadorParametros + 1} OR
+          f.primer_apellido ILIKE $${contadorParametros + 2} OR
+          sa.comentarios ILIKE $${contadorParametros + 3}
+        )`;
+        parametros.push(busquedaParam, busquedaParam, busquedaParam, busquedaParam);
+        contadorParametros += 4;
+      }
+      
+      // Consulta principal SIN paginación - trae todos los datos
       let consulta = `
         SELECT 
           sa.id_asignacion,
@@ -87,50 +139,7 @@ class SacramentoAsignacionModel {
         LEFT JOIN sacramento_participante sp ON sa.id_asignacion = sp.id_asignacion
         LEFT JOIN feligres f ON sp.id_feligres = f.id_feligres
         LEFT JOIN cat_rol_participante crp ON sp.id_rol_participante = crp.id_rol_participante
-        WHERE sa.activo = true
-      `;
-      
-      const parametros = [];
-      let contadorParametros = 1;
-      
-      // Filtros
-      if (filtros.id_sacramento) {
-        consulta += ` AND sa.id_sacramento = $${contadorParametros}`;
-        parametros.push(filtros.id_sacramento);
-        contadorParametros++;
-      }
-      
-      if (filtros.fecha_desde) {
-        consulta += ` AND sa.fecha_celebracion >= $${contadorParametros}`;
-        parametros.push(filtros.fecha_desde);
-        contadorParametros++;
-      }
-      
-      if (filtros.fecha_hasta) {
-        consulta += ` AND sa.fecha_celebracion <= $${contadorParametros}`;
-        parametros.push(filtros.fecha_hasta);
-        contadorParametros++;
-      }
-      
-      if (filtros.pagado !== undefined && filtros.pagado !== '') {
-        consulta += ` AND sa.pagado = $${contadorParametros}`;
-        parametros.push(filtros.pagado === 'true');
-        contadorParametros++;
-      }
-      
-      if (filtros.busqueda) {
-        const busquedaParam = `%${filtros.busqueda}%`;
-        consulta += ` AND (
-          cs.nombre ILIKE $${contadorParametros} OR
-          f.primer_nombre ILIKE $${contadorParametros + 1} OR
-          f.primer_apellido ILIKE $${contadorParametros + 2} OR
-          sa.comentarios ILIKE $${contadorParametros + 3}
-        )`;
-        parametros.push(busquedaParam, busquedaParam, busquedaParam, busquedaParam);
-        contadorParametros += 4;
-      }
-      
-      consulta += `
+        ${whereClause}
         GROUP BY sa.id_asignacion, sa.id_sacramento, sa.fecha_celebracion, sa.pagado, sa.monto_pagado, 
                  sa.comentarios, sa.activo, sa.created_at, sa.updated_at, cs.nombre, cs.descripcion
         ORDER BY sa.fecha_celebracion ASC, sa.created_at DESC
@@ -141,14 +150,32 @@ class SacramentoAsignacionModel {
       
       const resultado = await cliente.query(consulta, parametros);
       
-      console.log('✅ Resultado obtenido:', resultado.rows.length, 'asignaciones');
+      console.log('✅ Resultado obtenido:', resultado.rows.length, 'asignaciones (todas sin paginación)');
+      
+      // Obtener testigos/padrinos para cada asignación
+      const asignacionesConTestigos = await Promise.all(
+        resultado.rows.map(async (asignacion) => {
+          const testigosPadrinos = await TestigosPadrinosModel.obtenerPorAsignacion(asignacion.id_asignacion);
+          return {
+            ...asignacion,
+            testigos_padrinos: testigosPadrinos
+          };
+        })
+      );
+      
+      // Devolver todos los datos con información de paginación para el frontend
+      // (aunque no se aplicó paginación en el backend)
+      const total = asignacionesConTestigos.length;
+      const pagina = paginacion.pagina || 1;
+      const limite = paginacion.limite || 10;
+      const totalPaginas = Math.ceil(total / limite);
       
       return {
-        asignaciones: resultado.rows,
-        total: resultado.rows.length,
-        pagina: 1,
-        limite: resultado.rows.length,
-        totalPaginas: 1
+        asignaciones: asignacionesConTestigos,
+        total: total,
+        pagina: pagina,
+        limite: limite,
+        totalPaginas: totalPaginas
       };
     } catch (error) {
       console.error('❌ Error en obtenerTodos:', error);
@@ -200,7 +227,14 @@ class SacramentoAsignacionModel {
       `;
       
       const resultado = await cliente.query(consulta, [idAsignacion]);
-      return resultado.rows[0] || null;
+      const asignacion = resultado.rows[0] || null;
+      
+      // Obtener testigos/padrinos si existe la asignación
+      if (asignacion) {
+        asignacion.testigos_padrinos = await TestigosPadrinosModel.obtenerPorAsignacion(idAsignacion);
+      }
+      
+      return asignacion;
     } finally {
       cliente.release();
     }
@@ -245,6 +279,31 @@ class SacramentoAsignacionModel {
             idAsignacion,
             participante.id_feligres,
             participante.id_rol_participante || null
+          ]);
+        }
+      }
+      
+      // Eliminar físicamente testigos/padrinos existentes antes de insertar nuevos
+      // (necesario para evitar violación de restricción única)
+      // Usar la misma conexión de cliente para mantener la transacción
+      await cliente.query(
+        'DELETE FROM testigos_padrinos WHERE id_asignacion = $1',
+        [idAsignacion]
+      );
+      
+      // Insertar nuevos testigos/padrinos si existen
+      // Usar la misma conexión de cliente para mantener la transacción
+      if (datos.testigos_padrinos && datos.testigos_padrinos.length > 0) {
+        for (const tp of datos.testigos_padrinos) {
+          const queryTestigoPadrino = `
+            INSERT INTO testigos_padrinos (id_asignacion, id_feligres, id_tipo_testigo_padrino, numero_orden)
+            VALUES ($1, $2, $3, $4)
+          `;
+          await cliente.query(queryTestigoPadrino, [
+            idAsignacion,
+            tp.id_feligres,
+            tp.id_tipo_testigo_padrino,
+            tp.numero_orden || 1
           ]);
         }
       }
@@ -316,15 +375,58 @@ class SacramentoAsignacionModel {
   static async obtenerEstadisticas() {
     const cliente = await pool.connect();
     try {
-      const query = `
+      // Primero obtener los IDs de los sacramentos por nombre
+      const sacramentosQuery = await cliente.query(`
+        SELECT id_sacramento, nombre 
+        FROM cat_sacramento 
+        WHERE activo = true
+      `);
+      
+      // Buscar IDs de los sacramentos principales
+      let idBautizo = null;
+      let idConfirmacion = null;
+      let idMatrimonio = null;
+      
+      sacramentosQuery.rows.forEach(sacramento => {
+        const nombre = sacramento.nombre.toLowerCase();
+        if (nombre.includes('bautizo') || nombre.includes('bautismo')) {
+          idBautizo = sacramento.id_sacramento;
+        } else if (nombre.includes('confirmación') || nombre.includes('confirmacion')) {
+          idConfirmacion = sacramento.id_sacramento;
+        } else if (nombre.includes('matrimonio')) {
+          idMatrimonio = sacramento.id_sacramento;
+        }
+      });
+      
+      // Construir la consulta con los IDs encontrados
+      let query = `
         SELECT 
           COUNT(*) as total_asignaciones,
           COUNT(CASE WHEN pagado = true THEN 1 END) as asignaciones_pagadas,
           COUNT(CASE WHEN pagado = false THEN 1 END) as asignaciones_pendientes,
-          COUNT(CASE WHEN fecha_celebracion >= CURRENT_DATE THEN 1 END) as proximas_celebraciones,
-          COUNT(CASE WHEN id_sacramento = 1 THEN 1 END) as total_bautizos,
-          COUNT(CASE WHEN id_sacramento = 3 THEN 1 END) as total_confirmaciones,
-          COUNT(CASE WHEN id_sacramento = 4 THEN 1 END) as total_matrimonios
+          COUNT(CASE WHEN fecha_celebracion >= CURRENT_DATE THEN 1 END) as proximas_celebraciones
+      `;
+      
+      // Agregar conteos por sacramento solo si se encontraron los IDs
+      if (idBautizo) {
+        query += `, COUNT(CASE WHEN id_sacramento = ${idBautizo} THEN 1 END) as total_bautizos`;
+      } else {
+        query += `, 0 as total_bautizos`;
+      }
+      
+      if (idConfirmacion) {
+        query += `, COUNT(CASE WHEN id_sacramento = ${idConfirmacion} THEN 1 END) as total_confirmaciones`;
+      } else {
+        query += `, 0 as total_confirmaciones`;
+      }
+      
+      if (idMatrimonio) {
+        query += `, COUNT(CASE WHEN id_sacramento = ${idMatrimonio} THEN 1 END) as total_matrimonios`;
+      } else {
+        query += `, 0 as total_matrimonios`;
+      }
+      
+      query += `
         FROM sacramento_asignacion 
         WHERE activo = true
       `;

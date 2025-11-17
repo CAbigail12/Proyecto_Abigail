@@ -1,0 +1,9 @@
+/* Estilos específicos para el componente de párrocos */
+.estado-activo {
+  @apply bg-green-100 text-green-700;
+}
+
+.estado-inactivo {
+  @apply bg-red-100 text-red-700;
+}
+

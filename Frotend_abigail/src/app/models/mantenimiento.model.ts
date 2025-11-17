@@ -180,6 +180,31 @@ export interface TipoEspacioUpdate {
 }
 
 // ============================================================
+// MODELO DE PÁRROCO
+// ============================================================
+
+export interface Parroco {
+  id_parroco: number;
+  nombre: string;
+  apellido: string;
+  activo: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ParrocoCreate {
+  nombre: string;
+  apellido: string;
+  activo?: boolean;
+}
+
+export interface ParrocoUpdate {
+  nombre?: string;
+  apellido?: string;
+  activo?: boolean;
+}
+
+// ============================================================
 // MODELOS DE RESPUESTA DE LA API
 // ============================================================
 

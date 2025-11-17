@@ -32,12 +32,19 @@ export class SacramentoAsignacionService {
   obtenerAsignaciones(filtros: FiltrosAsignacion = {}): Observable<ApiResponse<AsignacionResponse>> {
     let params = new HttpParams();
     
-    if (filtros.pagina) params = params.set('pagina', filtros.pagina.toString());
-    if (filtros.limite) params = params.set('limite', filtros.limite.toString());
+    // Siempre enviar parámetros de paginación (valores por defecto si no están presentes)
+    const pagina = filtros.pagina || 1;
+    const limite = filtros.limite || 10;
+    params = params.set('pagina', pagina.toString());
+    params = params.set('limite', limite.toString());
+    
+    // Filtros opcionales
     if (filtros.id_sacramento) params = params.set('id_sacramento', filtros.id_sacramento.toString());
     if (filtros.fecha_desde) params = params.set('fecha_desde', filtros.fecha_desde);
     if (filtros.fecha_hasta) params = params.set('fecha_hasta', filtros.fecha_hasta);
-    if (filtros.pagado) params = params.set('pagado', filtros.pagado);
+    if (filtros.pagado !== undefined && filtros.pagado !== null && filtros.pagado !== '') {
+      params = params.set('pagado', filtros.pagado.toString());
+    }
     if (filtros.busqueda) params = params.set('busqueda', filtros.busqueda);
 
     return this.http.get<ApiResponse<AsignacionResponse>>(`${this.baseUrl}/asignaciones`, { params });
@@ -87,6 +94,13 @@ export class SacramentoAsignacionService {
    */
   obtenerRolesParticipante(): Observable<ApiResponse<RolParticipanteCatalogo[]>> {
     return this.http.get<ApiResponse<RolParticipanteCatalogo[]>>(`${this.baseUrl}/roles-participante`);
+  }
+
+  /**
+   * Obtener catálogo de tipos de testigos/padrinos
+   */
+  obtenerTiposTestigoPadrino(): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(`${environment.apiUrl}/mantenimiento/tipos-testigo-padrino/activos`);
   }
 
   // ============================================================

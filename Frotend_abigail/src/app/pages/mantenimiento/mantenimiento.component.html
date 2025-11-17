@@ -14,9 +14,6 @@
               class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center shadow-lg">
               <mat-icon class="text-white text-2xl">settings</mat-icon>
             </div>
-            <div class="absolute -top-1 -right-1 w-6 h-6 bg-purple-400 rounded-full flex items-center justify-center">
-              <span class="text-xs font-bold text-gray-800">{{catalogos.length}}</span>
-            </div>
           </div>
           <div>
             <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -45,13 +42,14 @@
     <!-- Tarjeta de catálogo -->
     <div *ngFor="let catalogo of catalogos; trackBy: trackByCatalogoId" 
          class="group cursor-pointer transform transition-transform duration-200 hover:scale-102 hover:-translate-y-1"
-         [routerLink]="catalogo.ruta">
+         [routerLink]="catalogo.ruta"
+         routerLinkActive="active">
       
       <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 overflow-hidden h-full">
         
         <!-- Header de la tarjeta con gradiente -->
         <div class="relative p-6" [class]="catalogo.color">
-          <div class="flex items-center justify-between">
+          <div class="flex items-center">
             <div class="flex items-center gap-3">
               <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
                 <mat-icon class="text-white text-xl">{{catalogo.icono}}</mat-icon>
@@ -60,11 +58,6 @@
                 <h3 class="text-white font-bold text-lg">{{catalogo.titulo}}</h3>
                 <p class="text-white/80 text-sm">Catálogo</p>
               </div>
-            </div>
-            
-            <!-- Indicador de registros -->
-            <div class="bg-white/20 rounded-full px-3 py-1">
-              <span class="text-white text-sm font-semibold">{{catalogo.totalRegistros || 0}}</span>
             </div>
           </div>
         </div>

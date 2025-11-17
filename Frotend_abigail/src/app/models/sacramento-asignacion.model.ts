@@ -22,6 +22,7 @@ export interface SacramentoAsignacion {
   sacramento_nombre?: string;
   sacramento_descripcion?: string;
   participantes: ParticipanteAsignacion[];
+  testigos_padrinos?: TestigoPadrino[];
 }
 
 export interface ParticipanteAsignacion {
@@ -41,6 +42,7 @@ export interface SacramentoAsignacionCreate {
   monto_pagado?: number | null;
   comentarios?: string;
   participantes: ParticipanteAsignacionCreate[];
+  testigos_padrinos?: TestigoPadrinoCreate[];
 }
 
 export interface ParticipanteAsignacionCreate {
@@ -55,6 +57,7 @@ export interface SacramentoAsignacionUpdate {
   monto_pagado?: number | null;
   comentarios?: string;
   participantes?: ParticipanteAsignacionCreate[];
+  testigos_padrinos?: TestigoPadrinoCreate[];
 }
 
 // ============================================================
@@ -138,4 +141,32 @@ export interface EstadisticasSacramentos {
   total_bautizos: number;
   total_confirmaciones: number;
   total_matrimonios: number;
+}
+
+// ============================================================
+// MODELOS PARA TESTIGOS/PADRINOS
+// ============================================================
+
+export interface TestigoPadrino {
+  id_testigo_padrino: number;
+  id_asignacion: number;
+  id_feligres: number;
+  id_tipo_testigo_padrino: number;
+  numero_orden: number;
+  nombre_completo?: string;
+  tipo_nombre?: string;
+  tipo_descripcion?: string;
+}
+
+export interface TestigoPadrinoCreate {
+  id_feligres: number;
+  id_tipo_testigo_padrino: number;
+  numero_orden: number;
+}
+
+export interface TipoTestigoPadrino {
+  id_tipo_testigo_padrino: number;
+  nombre: string;
+  descripcion?: string;
+  activo: boolean;
 }

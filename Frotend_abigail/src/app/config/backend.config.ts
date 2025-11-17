@@ -5,7 +5,7 @@
  */
 export const BACKEND_CONFIG = {
   // Cambia esta URL cuando sea necesario
-  BASE_URL: 'https://gspa-api.com',
+  BASE_URL: 'http://localhost:3001',
   
   // La URL completa de la API se construye automáticamente
   get API_URL() {

@@ -27,7 +27,7 @@ interface CatalogoCard {
   ],
   templateUrl: './mantenimiento.component.html',
   styleUrls: ['./mantenimiento.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.Default
 })
 export class MantenimientoComponent implements OnInit {
   
@@ -87,6 +87,14 @@ export class MantenimientoComponent implements OnInit {
       icono: 'home',
       color: 'bg-gradient-to-br from-indigo-500 to-indigo-600',
       ruta: '/mantenimiento/tipos-espacio'
+    },
+    {
+      id: 'parrocos',
+      titulo: 'Párrocos',
+      descripcion: 'Gestiona el registro de párrocos de la parroquia',
+      icono: 'person',
+      color: 'bg-gradient-to-br from-amber-500 to-amber-600',
+      ruta: '/mantenimiento/parrocos'
     }
   ];
 
@@ -98,11 +106,8 @@ export class MantenimientoComponent implements OnInit {
   }
 
   private cargarEstadisticas(): void {
-    // TODO: Implementar carga de estadísticas desde el backend
-    // Por ahora se dejan valores fijos para evitar re-renderizados
-    this.catalogos.forEach(catalogo => {
-      catalogo.totalRegistros = 10; // Valor fijo en lugar de random
-    });
+    // TODO: Implementar carga de estadísticas desde el backend si se necesita en el futuro
+    // Por ahora no se cargan estadísticas
   }
 
   navegarACatalogo(ruta: string): void {

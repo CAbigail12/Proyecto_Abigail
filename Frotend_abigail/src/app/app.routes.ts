@@ -93,6 +93,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/mantenimiento/tipos-espacio/tipos-espacio.component').then(m => m.TiposEspacioComponent)
       },
       {
+        path: 'mantenimiento/parrocos',
+        loadComponent: () => import('./pages/mantenimiento/parrocos/parrocos.component').then(m => m.ParrocosComponent)
+      },
+      {
         path: 'feligreses',
         loadComponent: () => import('./pages/feligreses/feligreses.component').then(m => m.FeligresesComponent)
       },

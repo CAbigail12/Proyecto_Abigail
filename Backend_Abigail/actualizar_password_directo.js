@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt');
 async function actualizarPassword() {
   const cliente = await pool.connect();
   try {
-    const correo = 'abigail@aju.com';
+    const correo = 'admin@parroquia.com';
     const nuevaPassword = 'Admin123!';
     
     console.log('🔍 Buscando usuario:', correo);

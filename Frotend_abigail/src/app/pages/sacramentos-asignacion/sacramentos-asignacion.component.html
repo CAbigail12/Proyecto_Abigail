@@ -119,6 +119,55 @@
                 </div>
               </div>
               
+              <!-- Padrinos -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Padrino 1</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput 
+                           [formControl]="controladorPadrino1Bautizo"
+                           placeholder="Buscar o seleccionar padrino..."
+                           [matAutocomplete]="autoPadrino1Bautizo"
+                           (click)="activarAutocomplete(controladorPadrino1Bautizo)"
+                           (focus)="activarAutocomplete(controladorPadrino1Bautizo)">
+                    <mat-autocomplete #autoPadrino1Bautizo="matAutocomplete" 
+                                      (optionSelected)="seleccionarPadrino1Bautizo($event.option.value)"
+                                      [displayWith]="displayFeligres">
+                      <mat-option *ngFor="let feligres of feligresesFiltradosPadrino1Bautizo | async" 
+                                  [value]="feligres">
+                        <div class="flex items-center justify-between">
+                          <span>{{feligres.primer_nombre}} {{feligres.primer_apellido}}</span>
+                          <span class="text-xs text-gray-500 ml-2">{{feligres.comunidad_nombre}}</span>
+                        </div>
+                      </mat-option>
+                    </mat-autocomplete>
+                  </mat-form-field>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Padrino 2</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput 
+                           [formControl]="controladorPadrino2Bautizo"
+                           placeholder="Buscar o seleccionar padrino..."
+                           [matAutocomplete]="autoPadrino2Bautizo"
+                           (click)="activarAutocomplete(controladorPadrino2Bautizo)"
+                           (focus)="activarAutocomplete(controladorPadrino2Bautizo)">
+                    <mat-autocomplete #autoPadrino2Bautizo="matAutocomplete" 
+                                      (optionSelected)="seleccionarPadrino2Bautizo($event.option.value)"
+                                      [displayWith]="displayFeligres">
+                      <mat-option *ngFor="let feligres of feligresesFiltradosPadrino2Bautizo | async" 
+                                  [value]="feligres">
+                        <div class="flex items-center justify-between">
+                          <span>{{feligres.primer_nombre}} {{feligres.primer_apellido}}</span>
+                          <span class="text-xs text-gray-500 ml-2">{{feligres.comunidad_nombre}}</span>
+                        </div>
+                      </mat-option>
+                    </mat-autocomplete>
+                  </mat-form-field>
+                </div>
+              </div>
+              
               <!-- Estado de pago y comentarios -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="flex items-center">
@@ -219,6 +268,55 @@
                            placeholder="Seleccionar fecha">
                     <mat-datepicker-toggle matSuffix [for]="pickerConfirmacion"></mat-datepicker-toggle>
                     <mat-datepicker #pickerConfirmacion></mat-datepicker>
+                  </mat-form-field>
+                </div>
+              </div>
+              
+              <!-- Padrinos -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Padrino 1</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput 
+                           [formControl]="controladorPadrino1Confirmacion"
+                           placeholder="Buscar o seleccionar padrino..."
+                           [matAutocomplete]="autoPadrino1Confirmacion"
+                           (click)="activarAutocomplete(controladorPadrino1Confirmacion)"
+                           (focus)="activarAutocomplete(controladorPadrino1Confirmacion)">
+                    <mat-autocomplete #autoPadrino1Confirmacion="matAutocomplete" 
+                                      (optionSelected)="seleccionarPadrino1Confirmacion($event.option.value)"
+                                      [displayWith]="displayFeligres">
+                      <mat-option *ngFor="let feligres of feligresesFiltradosPadrino1Confirmacion | async" 
+                                  [value]="feligres">
+                        <div class="flex items-center justify-between">
+                          <span>{{feligres.primer_nombre}} {{feligres.primer_apellido}}</span>
+                          <span class="text-xs text-gray-500 ml-2">{{feligres.comunidad_nombre}}</span>
+                        </div>
+                      </mat-option>
+                    </mat-autocomplete>
+                  </mat-form-field>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Padrino 2</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput 
+                           [formControl]="controladorPadrino2Confirmacion"
+                           placeholder="Buscar o seleccionar padrino..."
+                           [matAutocomplete]="autoPadrino2Confirmacion"
+                           (click)="activarAutocomplete(controladorPadrino2Confirmacion)"
+                           (focus)="activarAutocomplete(controladorPadrino2Confirmacion)">
+                    <mat-autocomplete #autoPadrino2Confirmacion="matAutocomplete" 
+                                      (optionSelected)="seleccionarPadrino2Confirmacion($event.option.value)"
+                                      [displayWith]="displayFeligres">
+                      <mat-option *ngFor="let feligres of feligresesFiltradosPadrino2Confirmacion | async" 
+                                  [value]="feligres">
+                        <div class="flex items-center justify-between">
+                          <span>{{feligres.primer_nombre}} {{feligres.primer_apellido}}</span>
+                          <span class="text-xs text-gray-500 ml-2">{{feligres.comunidad_nombre}}</span>
+                        </div>
+                      </mat-option>
+                    </mat-autocomplete>
                   </mat-form-field>
                 </div>
               </div>
@@ -335,6 +433,55 @@
                       </mat-option>
                       <mat-option *ngIf="(feligresesFiltradosNovia | async)?.length === 0" disabled>
                         <span class="text-gray-500">No se encontraron feligreses</span>
+                      </mat-option>
+                    </mat-autocomplete>
+                  </mat-form-field>
+                </div>
+              </div>
+              
+              <!-- Testigos -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Testigo 1</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput 
+                           [formControl]="controladorTestigo1Matrimonio"
+                           placeholder="Buscar o seleccionar testigo..."
+                           [matAutocomplete]="autoTestigo1Matrimonio"
+                           (click)="activarAutocomplete(controladorTestigo1Matrimonio)"
+                           (focus)="activarAutocomplete(controladorTestigo1Matrimonio)">
+                    <mat-autocomplete #autoTestigo1Matrimonio="matAutocomplete" 
+                                      (optionSelected)="seleccionarTestigo1Matrimonio($event.option.value)"
+                                      [displayWith]="displayFeligres">
+                      <mat-option *ngFor="let feligres of feligresesFiltradosTestigo1Matrimonio | async" 
+                                  [value]="feligres">
+                        <div class="flex items-center justify-between">
+                          <span>{{feligres.primer_nombre}} {{feligres.primer_apellido}}</span>
+                          <span class="text-xs text-gray-500 ml-2">{{feligres.comunidad_nombre}}</span>
+                        </div>
+                      </mat-option>
+                    </mat-autocomplete>
+                  </mat-form-field>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Testigo 2</label>
+                  <mat-form-field appearance="outline" class="w-full">
+                    <input matInput 
+                           [formControl]="controladorTestigo2Matrimonio"
+                           placeholder="Buscar o seleccionar testigo..."
+                           [matAutocomplete]="autoTestigo2Matrimonio"
+                           (click)="activarAutocomplete(controladorTestigo2Matrimonio)"
+                           (focus)="activarAutocomplete(controladorTestigo2Matrimonio)">
+                    <mat-autocomplete #autoTestigo2Matrimonio="matAutocomplete" 
+                                      (optionSelected)="seleccionarTestigo2Matrimonio($event.option.value)"
+                                      [displayWith]="displayFeligres">
+                      <mat-option *ngFor="let feligres of feligresesFiltradosTestigo2Matrimonio | async" 
+                                  [value]="feligres">
+                        <div class="flex items-center justify-between">
+                          <span>{{feligres.primer_nombre}} {{feligres.primer_apellido}}</span>
+                          <span class="text-xs text-gray-500 ml-2">{{feligres.comunidad_nombre}}</span>
+                        </div>
                       </mat-option>
                     </mat-autocomplete>
                   </mat-form-field>
@@ -682,6 +829,55 @@
           </mat-form-field>
         </div>
         
+        <!-- Padrinos -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Padrino 1</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <input matInput 
+                     [formControl]="controladorPadrino1ModalBautizo"
+                     placeholder="Buscar o seleccionar padrino..."
+                     [matAutocomplete]="autoPadrino1ModalBautizo"
+                     (click)="activarAutocomplete(controladorPadrino1ModalBautizo)"
+                     (focus)="activarAutocomplete(controladorPadrino1ModalBautizo)">
+              <mat-autocomplete #autoPadrino1ModalBautizo="matAutocomplete" 
+                                (optionSelected)="seleccionarPadrino1ModalBautizo($event.option.value)"
+                                [displayWith]="displayFeligres">
+                <mat-option *ngFor="let feligres of feligresesFiltradosPadrino1ModalBautizo | async" 
+                            [value]="feligres">
+                  <div class="flex items-center justify-between">
+                    <span>{{feligres.primer_nombre}} {{feligres.primer_apellido}}</span>
+                    <span class="text-xs text-gray-500 ml-2">{{feligres.comunidad_nombre}}</span>
+                  </div>
+                </mat-option>
+              </mat-autocomplete>
+            </mat-form-field>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Padrino 2</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <input matInput 
+                     [formControl]="controladorPadrino2ModalBautizo"
+                     placeholder="Buscar o seleccionar padrino..."
+                     [matAutocomplete]="autoPadrino2ModalBautizo"
+                     (click)="activarAutocomplete(controladorPadrino2ModalBautizo)"
+                     (focus)="activarAutocomplete(controladorPadrino2ModalBautizo)">
+              <mat-autocomplete #autoPadrino2ModalBautizo="matAutocomplete" 
+                                (optionSelected)="seleccionarPadrino2ModalBautizo($event.option.value)"
+                                [displayWith]="displayFeligres">
+                <mat-option *ngFor="let feligres of feligresesFiltradosPadrino2ModalBautizo | async" 
+                            [value]="feligres">
+                  <div class="flex items-center justify-between">
+                    <span>{{feligres.primer_nombre}} {{feligres.primer_apellido}}</span>
+                    <span class="text-xs text-gray-500 ml-2">{{feligres.comunidad_nombre}}</span>
+                  </div>
+                </mat-option>
+              </mat-autocomplete>
+            </mat-form-field>
+          </div>
+        </div>
+        
         <!-- Fecha de celebración -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Celebración *</label>
@@ -742,7 +938,7 @@
           </button>
           <button type="button" 
                   (click)="guardarModalBautizo()"
-                  [disabled]="loading || !formularioModalBautizo.valid || !feligresSeleccionadoModalBautizo"
+                  [disabled]="loading || !puedeGuardarModalBautizo()"
                   class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg transition-colors">
             <mat-spinner *ngIf="loading" diameter="20" class="inline mr-2"></mat-spinner>
             Guardar Cambios
@@ -776,6 +972,55 @@
               </mat-option>
             </mat-autocomplete>
           </mat-form-field>
+        </div>
+        
+        <!-- Padrinos -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Padrino 1</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <input matInput 
+                     [formControl]="controladorPadrino1ModalConfirmacion"
+                     placeholder="Buscar o seleccionar padrino..."
+                     [matAutocomplete]="autoPadrino1ModalConfirmacion"
+                     (click)="activarAutocomplete(controladorPadrino1ModalConfirmacion)"
+                     (focus)="activarAutocomplete(controladorPadrino1ModalConfirmacion)">
+              <mat-autocomplete #autoPadrino1ModalConfirmacion="matAutocomplete" 
+                                (optionSelected)="seleccionarPadrino1ModalConfirmacion($event.option.value)"
+                                [displayWith]="displayFeligres">
+                <mat-option *ngFor="let feligres of feligresesFiltradosPadrino1ModalConfirmacion | async" 
+                            [value]="feligres">
+                  <div class="flex items-center justify-between">
+                    <span>{{feligres.primer_nombre}} {{feligres.primer_apellido}}</span>
+                    <span class="text-xs text-gray-500 ml-2">{{feligres.comunidad_nombre}}</span>
+                  </div>
+                </mat-option>
+              </mat-autocomplete>
+            </mat-form-field>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Padrino 2</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <input matInput 
+                     [formControl]="controladorPadrino2ModalConfirmacion"
+                     placeholder="Buscar o seleccionar padrino..."
+                     [matAutocomplete]="autoPadrino2ModalConfirmacion"
+                     (click)="activarAutocomplete(controladorPadrino2ModalConfirmacion)"
+                     (focus)="activarAutocomplete(controladorPadrino2ModalConfirmacion)">
+              <mat-autocomplete #autoPadrino2ModalConfirmacion="matAutocomplete" 
+                                (optionSelected)="seleccionarPadrino2ModalConfirmacion($event.option.value)"
+                                [displayWith]="displayFeligres">
+                <mat-option *ngFor="let feligres of feligresesFiltradosPadrino2ModalConfirmacion | async" 
+                            [value]="feligres">
+                  <div class="flex items-center justify-between">
+                    <span>{{feligres.primer_nombre}} {{feligres.primer_apellido}}</span>
+                    <span class="text-xs text-gray-500 ml-2">{{feligres.comunidad_nombre}}</span>
+                  </div>
+                </mat-option>
+              </mat-autocomplete>
+            </mat-form-field>
+          </div>
         </div>
         
         <!-- Fecha de celebración -->
@@ -838,7 +1083,7 @@
           </button>
           <button type="button" 
                   (click)="guardarModalConfirmacion()"
-                  [disabled]="loading || !formularioModalConfirmacion.valid || !feligresSeleccionadoModalConfirmacion"
+                  [disabled]="loading || !puedeGuardarModalConfirmacion()"
                   class="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg transition-colors">
             <mat-spinner *ngIf="loading" diameter="20" class="inline mr-2"></mat-spinner>
             Guardar Cambios
@@ -894,25 +1139,74 @@
                     <span class="text-xs text-gray-500 ml-2">{{feligres.comunidad_nombre}}</span>
                   </div>
                 </mat-option>
-              </mat-autocomplete>
-            </mat-form-field>
-          </div>
+            </mat-autocomplete>
+          </mat-form-field>
         </div>
-        
-        <!-- Fecha de celebración -->
+      </div>
+      
+      <!-- Testigos -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Celebración *</label>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Testigo 1</label>
           <mat-form-field appearance="outline" class="w-full">
             <input matInput 
-                   [matDatepicker]="pickerModalMatrimonio"
-                   formControlName="fecha_celebracion"
-                   placeholder="Seleccionar fecha">
-            <mat-datepicker-toggle matSuffix [for]="pickerModalMatrimonio"></mat-datepicker-toggle>
-            <mat-datepicker #pickerModalMatrimonio></mat-datepicker>
+                   [formControl]="controladorTestigo1ModalMatrimonio"
+                   placeholder="Buscar o seleccionar testigo..."
+                   [matAutocomplete]="autoTestigo1ModalMatrimonio"
+                   (click)="activarAutocomplete(controladorTestigo1ModalMatrimonio)"
+                   (focus)="activarAutocomplete(controladorTestigo1ModalMatrimonio)">
+            <mat-autocomplete #autoTestigo1ModalMatrimonio="matAutocomplete" 
+                              (optionSelected)="seleccionarTestigo1ModalMatrimonio($event.option.value)"
+                              [displayWith]="displayFeligres">
+              <mat-option *ngFor="let feligres of feligresesFiltradosTestigo1ModalMatrimonio | async" 
+                          [value]="feligres">
+                <div class="flex items-center justify-between">
+                  <span>{{feligres.primer_nombre}} {{feligres.primer_apellido}}</span>
+                  <span class="text-xs text-gray-500 ml-2">{{feligres.comunidad_nombre}}</span>
+                </div>
+              </mat-option>
+            </mat-autocomplete>
           </mat-form-field>
         </div>
         
-        <!-- Estado de pago y comentarios -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Testigo 2</label>
+          <mat-form-field appearance="outline" class="w-full">
+            <input matInput 
+                   [formControl]="controladorTestigo2ModalMatrimonio"
+                   placeholder="Buscar o seleccionar testigo..."
+                   [matAutocomplete]="autoTestigo2ModalMatrimonio"
+                   (click)="activarAutocomplete(controladorTestigo2ModalMatrimonio)"
+                   (focus)="activarAutocomplete(controladorTestigo2ModalMatrimonio)">
+            <mat-autocomplete #autoTestigo2ModalMatrimonio="matAutocomplete" 
+                              (optionSelected)="seleccionarTestigo2ModalMatrimonio($event.option.value)"
+                              [displayWith]="displayFeligres">
+              <mat-option *ngFor="let feligres of feligresesFiltradosTestigo2ModalMatrimonio | async" 
+                          [value]="feligres">
+                <div class="flex items-center justify-between">
+                  <span>{{feligres.primer_nombre}} {{feligres.primer_apellido}}</span>
+                  <span class="text-xs text-gray-500 ml-2">{{feligres.comunidad_nombre}}</span>
+                </div>
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
+        </div>
+      </div>
+      
+      <!-- Fecha de celebración -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Celebración *</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <input matInput 
+                 [matDatepicker]="pickerModalMatrimonio"
+                 formControlName="fecha_celebracion"
+                 placeholder="Seleccionar fecha">
+          <mat-datepicker-toggle matSuffix [for]="pickerModalMatrimonio"></mat-datepicker-toggle>
+          <mat-datepicker #pickerModalMatrimonio></mat-datepicker>
+        </mat-form-field>
+      </div>
+      
+      <!-- Estado de pago y comentarios -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="flex items-center">
             <mat-checkbox formControlName="pagado" class="mr-2">
@@ -959,7 +1253,7 @@
           </button>
           <button type="button" 
                   (click)="guardarModalMatrimonio()"
-                  [disabled]="loading || !formularioModalMatrimonio.valid || !feligresSeleccionadoModalNovio || !feligresSeleccionadoModalNovia"
+                  [disabled]="loading || !puedeGuardarModalMatrimonio()"
                   class="bg-pink-600 hover:bg-pink-700 disabled:bg-gray-400 text-white px-6 py-2 rounded-lg transition-colors">
             <mat-spinner *ngIf="loading" diameter="20" class="inline mr-2"></mat-spinner>
             Guardar Cambios

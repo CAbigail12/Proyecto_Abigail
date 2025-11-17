@@ -166,4 +166,48 @@ router.put('/tipos-espacio/:id', mantenimientoController3.actualizarTipoEspacio)
 // DELETE /api/mantenimiento/tipos-espacio/:id - Eliminar tipo de espacio
 router.delete('/tipos-espacio/:id', mantenimientoController3.eliminarTipoEspacio);
 
+// ============================================================
+// RUTAS DE TIPOS DE TESTIGOS/PADRINOS
+// ============================================================
+
+// GET /api/mantenimiento/tipos-testigo-padrino - Obtener todos los tipos de testigos/padrinos
+router.get('/tipos-testigo-padrino', mantenimientoController3.obtenerTiposTestigoPadrino);
+
+// GET /api/mantenimiento/tipos-testigo-padrino/activos - Obtener tipos de testigos/padrinos activos
+router.get('/tipos-testigo-padrino/activos', mantenimientoController3.obtenerTiposTestigoPadrinoActivos);
+
+// GET /api/mantenimiento/tipos-testigo-padrino/:id - Obtener tipo de testigo/padrino por ID
+router.get('/tipos-testigo-padrino/:id', mantenimientoController3.obtenerTipoTestigoPadrinoPorId);
+
+// POST /api/mantenimiento/tipos-testigo-padrino - Crear nuevo tipo de testigo/padrino
+router.post('/tipos-testigo-padrino', mantenimientoController3.crearTipoTestigoPadrino);
+
+// PUT /api/mantenimiento/tipos-testigo-padrino/:id - Actualizar tipo de testigo/padrino
+router.put('/tipos-testigo-padrino/:id', mantenimientoController3.actualizarTipoTestigoPadrino);
+
+// DELETE /api/mantenimiento/tipos-testigo-padrino/:id - Eliminar tipo de testigo/padrino
+router.delete('/tipos-testigo-padrino/:id', mantenimientoController3.eliminarTipoTestigoPadrino);
+
+// ============================================================
+// RUTAS DE PÁRROCOS
+// ============================================================
+
+// GET /api/mantenimiento/parrocos - Obtener todos los párrocos
+router.get('/parrocos', mantenimientoController3.obtenerParrocos);
+
+// GET /api/mantenimiento/parrocos/activos - Obtener párrocos activos
+router.get('/parrocos/activos', mantenimientoController3.obtenerParrocosActivos);
+
+// GET /api/mantenimiento/parrocos/:id - Obtener párroco por ID
+router.get('/parrocos/:id', mantenimientoController3.obtenerParrocoPorId);
+
+// POST /api/mantenimiento/parrocos - Crear nuevo párroco
+router.post('/parrocos', mantenimientoController3.crearParroco);
+
+// PUT /api/mantenimiento/parrocos/:id - Actualizar párroco
+router.put('/parrocos/:id', mantenimientoController3.actualizarParroco);
+
+// DELETE /api/mantenimiento/parrocos/:id - Eliminar párroco
+router.delete('/parrocos/:id', mantenimientoController3.eliminarParroco);
+
 module.exports = router;

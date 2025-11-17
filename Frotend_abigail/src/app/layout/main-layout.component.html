@@ -1,45 +1,43 @@
 <div class="min-h-screen bg-gray-100">
   <!-- Header con fondo oscuro y textura de libro -->
   <header class="bg-gradient-to-r from-green-700 to-green-800 shadow-xl border-b-2 border-green-600 relative z-10">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center h-20">
-        <!-- Logo y título de la Parroquia -->
-        <div class="flex items-center">
-          <div class="flex-shrink-0 flex items-center">
-            <div class="w-16 h-16 flex items-center justify-center mr-4 bg-white rounded-full shadow-lg">
-              <img src="assets/images/logos/logo-parroquia.png" alt="Logo Parroquia San Pablo Apóstol" class="w-14 h-14 object-cover rounded-full">
-            </div>
-            <div class="flex flex-col -space-y-4 mt-1">
-              <h1 class="text-2xl font-bold text-white leading-none">Parroquia San Pablo</h1>
-              <h2 class="text-xl font-semibold text-green-100 leading-none">Apóstol</h2>
-            </div>
+    <div class="flex justify-between items-center h-20 w-full">
+      <!-- Logo y título de la Parroquia - Pegado a la izquierda -->
+      <div class="flex items-center pl-4 sm:pl-6">
+        <div class="flex-shrink-0 flex items-center">
+          <div class="w-16 h-16 flex items-center justify-center mr-4 bg-white rounded-full shadow-lg">
+            <img src="assets/images/logos/logo-parroquia.png" alt="Logo Parroquia San Pablo Apóstol" class="w-14 h-14 object-cover rounded-full">
+          </div>
+          <div class="flex flex-col -space-y-4 mt-1">
+            <h1 class="text-2xl font-bold text-white leading-none">Parroquia San Pablo</h1>
+            <h2 class="text-xl font-semibold text-green-100 leading-none">Apóstol</h2>
           </div>
         </div>
+      </div>
 
-        <!-- Información del usuario y controles -->
-        <div class="flex items-center space-x-6">
-          <!-- Información del usuario visible directamente -->
-          <div class="hidden md:flex items-center space-x-4 bg-white bg-opacity-10 rounded-xl px-4 py-2 backdrop-blur-sm border border-white border-opacity-20 user-info-bar glass-effect-enhanced">
-            <!-- Avatar del usuario -->
-            <div class="w-14 h-14 bg-gradient-to-br from-green-400 to-yellow-400 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white ring-opacity-50 user-avatar">
-              <mat-icon class="text-white text-2xl">person</mat-icon>
-            </div>
-            
-            <!-- Información del usuario -->
-            <div class="text-right">
-              <p class="text-sm font-semibold text-white leading-tight">{{ currentUser?.nombre || 'Abigail Chiroy' }}</p>
-              <p class="text-xs text-green-100 leading-tight">{{ currentUser?.rol || 'Administrador' }}</p>
-            </div>
+      <!-- Información del usuario y controles - Pegado a la derecha -->
+      <div class="flex items-center space-x-6 pr-4 sm:pr-6">
+        <!-- Información del usuario visible directamente -->
+        <div class="hidden md:flex items-center space-x-4 bg-white bg-opacity-10 rounded-xl px-4 py-2 backdrop-blur-sm border border-white border-opacity-20 user-info-bar glass-effect-enhanced">
+          <!-- Avatar del usuario -->
+          <div class="w-14 h-14 bg-gradient-to-br from-green-400 to-yellow-400 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white ring-opacity-50 user-avatar">
+            <mat-icon class="text-white text-2xl">person</mat-icon>
           </div>
           
-          <!-- Botón de menú hamburguesa para móvil -->
-          <button 
-            (click)="toggleMenu()"
-            class="md:hidden p-2 rounded-lg text-white hover:bg-white hover:bg-opacity-10 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 transition-all duration-200"
-          >
-            <mat-icon>{{ menuAbierto ? 'close' : 'menu' }}</mat-icon>
-          </button>
+          <!-- Información del usuario -->
+          <div class="text-right">
+            <p class="text-sm font-semibold text-white leading-tight">{{ currentUser?.nombre || 'Abigail Chiroy' }}</p>
+            <p class="text-xs text-green-100 leading-tight">{{ currentUser?.rol || 'Administrador' }}</p>
+          </div>
         </div>
+        
+        <!-- Botón de menú hamburguesa para móvil -->
+        <button 
+          (click)="toggleMenu()"
+          class="md:hidden p-2 rounded-lg text-white hover:bg-white hover:bg-opacity-10 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 transition-all duration-200"
+        >
+          <mat-icon>{{ menuAbierto ? 'close' : 'menu' }}</mat-icon>
+        </button>
       </div>
     </div>
   </header>

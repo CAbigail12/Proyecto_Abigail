@@ -24,6 +24,9 @@ import {
   TipoEspacio,
   TipoEspacioCreate,
   TipoEspacioUpdate,
+  Parroco,
+  ParrocoCreate,
+  ParrocoUpdate,
   ApiResponse,
   PaginatedResponse,
   FiltrosGenerales,
@@ -284,5 +287,40 @@ export class MantenimientoService {
 
   obtenerTiposEspacioActivos(): Observable<ApiResponse<OpcionSelect[]>> {
     return this.http.get<ApiResponse<OpcionSelect[]>>(`${this.baseUrl}/tipos-espacio/activos`);
+  }
+
+  // ============================================================
+  // SERVICIOS DE PÁRROCOS
+  // ============================================================
+
+  obtenerParrocos(filtros: FiltrosGenerales = {}): Observable<ApiResponse<PaginatedResponse<Parroco>>> {
+    let params = new HttpParams();
+    
+    if (filtros.pagina) params = params.set('pagina', filtros.pagina.toString());
+    if (filtros.limite) params = params.set('limite', filtros.limite.toString());
+    if (filtros.busqueda) params = params.set('busqueda', filtros.busqueda);
+    if (filtros.activo) params = params.set('activo', filtros.activo);
+
+    return this.http.get<ApiResponse<PaginatedResponse<Parroco>>>(`${this.baseUrl}/parrocos`, { params });
+  }
+
+  obtenerParrocoPorId(id: number): Observable<ApiResponse<Parroco>> {
+    return this.http.get<ApiResponse<Parroco>>(`${this.baseUrl}/parrocos/${id}`);
+  }
+
+  crearParroco(parroco: ParrocoCreate): Observable<ApiResponse<Parroco>> {
+    return this.http.post<ApiResponse<Parroco>>(`${this.baseUrl}/parrocos`, parroco);
+  }
+
+  actualizarParroco(id: number, parroco: ParrocoUpdate): Observable<ApiResponse<Parroco>> {
+    return this.http.put<ApiResponse<Parroco>>(`${this.baseUrl}/parrocos/${id}`, parroco);
+  }
+
+  eliminarParroco(id: number): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(`${this.baseUrl}/parrocos/${id}`);
+  }
+
+  obtenerParrocosActivos(): Observable<ApiResponse<OpcionSelect[]>> {
+    return this.http.get<ApiResponse<OpcionSelect[]>>(`${this.baseUrl}/parrocos/activos`);
   }
 }

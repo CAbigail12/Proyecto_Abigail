@@ -109,6 +109,30 @@ export class SacramentosAsignacionComponent implements OnInit {
   feligresSeleccionadoModalNovio: Feligres | null = null;
   feligresSeleccionadoModalNovia: Feligres | null = null;
   
+  // Padrinos/Testigos seleccionados para el modal
+  padrino1ModalBautizo: Feligres | null = null;
+  padrino2ModalBautizo: Feligres | null = null;
+  padrino1ModalConfirmacion: Feligres | null = null;
+  padrino2ModalConfirmacion: Feligres | null = null;
+  testigo1ModalMatrimonio: Feligres | null = null;
+  testigo2ModalMatrimonio: Feligres | null = null;
+  
+  // Controladores de autocomplete para padrinos/testigos del modal
+  controladorPadrino1ModalBautizo = this.fb.control<Feligres | string>('');
+  controladorPadrino2ModalBautizo = this.fb.control<Feligres | string>('');
+  controladorPadrino1ModalConfirmacion = this.fb.control<Feligres | string>('');
+  controladorPadrino2ModalConfirmacion = this.fb.control<Feligres | string>('');
+  controladorTestigo1ModalMatrimonio = this.fb.control<Feligres | string>('');
+  controladorTestigo2ModalMatrimonio = this.fb.control<Feligres | string>('');
+  
+  // Observables para autocomplete de padrinos/testigos del modal
+  feligresesFiltradosPadrino1ModalBautizo: Observable<Feligres[]> = new Observable();
+  feligresesFiltradosPadrino2ModalBautizo: Observable<Feligres[]> = new Observable();
+  feligresesFiltradosPadrino1ModalConfirmacion: Observable<Feligres[]> = new Observable();
+  feligresesFiltradosPadrino2ModalConfirmacion: Observable<Feligres[]> = new Observable();
+  feligresesFiltradosTestigo1ModalMatrimonio: Observable<Feligres[]> = new Observable();
+  feligresesFiltradosTestigo2ModalMatrimonio: Observable<Feligres[]> = new Observable();
+  
   // Observables para autocomplete del modal
   feligresesFiltradosModalBautizo: Observable<Feligres[]> = new Observable();
   feligresesFiltradosModalConfirmacion: Observable<Feligres[]> = new Observable();
@@ -138,6 +162,31 @@ export class SacramentosAsignacionComponent implements OnInit {
   rolesParticipante: RolParticipanteCatalogo[] = [];
   feligreses: Feligres[] = [];
   estadisticas: EstadisticasSacramentos | null = null;
+  tiposTestigoPadrino: any[] = [];
+  
+  // Padrinos/Testigos seleccionados
+  padrino1Bautizo: Feligres | null = null;
+  padrino2Bautizo: Feligres | null = null;
+  padrino1Confirmacion: Feligres | null = null;
+  padrino2Confirmacion: Feligres | null = null;
+  testigo1Matrimonio: Feligres | null = null;
+  testigo2Matrimonio: Feligres | null = null;
+  
+  // Controladores de autocomplete para padrinos/testigos
+  controladorPadrino1Bautizo = this.fb.control<Feligres | string>('');
+  controladorPadrino2Bautizo = this.fb.control<Feligres | string>('');
+  controladorPadrino1Confirmacion = this.fb.control<Feligres | string>('');
+  controladorPadrino2Confirmacion = this.fb.control<Feligres | string>('');
+  controladorTestigo1Matrimonio = this.fb.control<Feligres | string>('');
+  controladorTestigo2Matrimonio = this.fb.control<Feligres | string>('');
+  
+  // Observables para autocomplete de padrinos/testigos
+  feligresesFiltradosPadrino1Bautizo: Observable<Feligres[]> = new Observable();
+  feligresesFiltradosPadrino2Bautizo: Observable<Feligres[]> = new Observable();
+  feligresesFiltradosPadrino1Confirmacion: Observable<Feligres[]> = new Observable();
+  feligresesFiltradosPadrino2Confirmacion: Observable<Feligres[]> = new Observable();
+  feligresesFiltradosTestigo1Matrimonio: Observable<Feligres[]> = new Observable();
+  feligresesFiltradosTestigo2Matrimonio: Observable<Feligres[]> = new Observable();
 
   // Autocomplete para feligreses
   feligresesFiltrados: Observable<Feligres[]>[] = [];
@@ -340,7 +389,8 @@ export class SacramentosAsignacionComponent implements OnInit {
       this.cargarRolesParticipante(),
       this.cargarFeligreses(),
       this.cargarEstadisticas(),
-      this.cargarAsignaciones()
+      this.cargarAsignaciones(),
+      this.cargarTiposTestigoPadrino()
     ]).finally(() => {
       this.loading = false;
     });
@@ -362,6 +412,28 @@ export class SacramentosAsignacionComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error al cargar sacramentos:', error);
+          reject(error);
+        }
+      });
+    });
+  }
+
+  /**
+   * Cargar catálogo de tipos de testigos/padrinos
+   */
+  cargarTiposTestigoPadrino(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.sacramentoAsignacionService.obtenerTiposTestigoPadrino().subscribe({
+        next: (response) => {
+          if (response.ok) {
+            this.tiposTestigoPadrino = response.datos;
+            resolve();
+          } else {
+            reject(new Error('Error al cargar tipos de testigos/padrinos'));
+          }
+        },
+        error: (error) => {
+          console.error('Error al cargar tipos de testigos/padrinos:', error);
           reject(error);
         }
       });
@@ -436,31 +508,62 @@ export class SacramentosAsignacionComponent implements OnInit {
   }
 
   /**
+   * Helper para obtener el ID del tipo de testigo/padrino
+   * El backend devuelve 'id' para activos, pero puede venir como 'id_tipo_testigo_padrino' en otros casos
+   */
+  private obtenerIdTipoTestigoPadrino(tipo: any): number | undefined {
+    return tipo?.id || tipo?.id_tipo_testigo_padrino;
+  }
+
+  /**
    * Cargar asignaciones existentes
    */
   cargarAsignaciones(): void {
     this.loadingAsignaciones = true;
+    console.log('📥 Cargando asignaciones con filtros:', this.filtros);
     
     this.sacramentoAsignacionService.obtenerAsignaciones(this.filtros).subscribe({
       next: (response) => {
+        console.log('✅ Respuesta recibida:', response);
+        console.log('✅ response.ok:', response.ok);
+        console.log('✅ response.datos:', response.datos);
+        
         if (response.ok) {
           // AsignacionResponse tiene la estructura: { asignaciones, total, pagina, limite, totalPaginas }
-          this.dataSource.data = response.datos.asignaciones;
-          this.totalAsignaciones = response.datos.total;
+          console.log('✅ Asignaciones recibidas:', response.datos?.asignaciones?.length || 0);
+          console.log('✅ Total:', response.datos?.total || 0);
+          console.log('✅ Datos completos:', JSON.stringify(response.datos, null, 2));
           
-          // Actualizar paginator después de cargar datos
-          if (this.paginator) {
-            this.paginator.length = this.totalAsignaciones;
-            this.paginator.pageIndex = this.currentPage - 1;
-            this.paginator.pageSize = this.pageSize;
+          if (response.datos && response.datos.asignaciones) {
+            this.dataSource.data = response.datos.asignaciones;
+            this.totalAsignaciones = response.datos.total || response.datos.asignaciones.length;
+            
+            console.log('✅ DataSource actualizado con', this.dataSource.data.length, 'asignaciones');
+            console.log('✅ Primeras asignaciones:', this.dataSource.data.slice(0, 3));
+            
+            // Actualizar paginator después de cargar datos
+            if (this.paginator) {
+              this.paginator.length = this.totalAsignaciones;
+              this.paginator.pageIndex = this.currentPage - 1;
+              this.paginator.pageSize = this.pageSize;
+            }
+          } else {
+            console.warn('⚠️ No se encontraron asignaciones en la respuesta');
+            this.dataSource.data = [];
+            this.totalAsignaciones = 0;
           }
           
+          this.loadingAsignaciones = false;
+        } else {
+          console.error('❌ Respuesta no exitosa:', response);
+          this.snackBar.open(response.mensaje || 'Error al cargar asignaciones', 'Cerrar', { duration: 3000 });
           this.loadingAsignaciones = false;
         }
       },
       error: (error) => {
-        console.error('Error al cargar asignaciones:', error);
-        this.snackBar.open('Error al cargar asignaciones', 'Cerrar', { duration: 3000 });
+        console.error('❌ Error al cargar asignaciones:', error);
+        console.error('❌ Error completo:', JSON.stringify(error, null, 2));
+        this.snackBar.open('Error al cargar asignaciones: ' + (error.error?.mensaje || error.message || 'Error desconocido'), 'Cerrar', { duration: 5000 });
         this.loadingAsignaciones = false;
       }
     });
@@ -490,6 +593,37 @@ export class SacramentosAsignacionComponent implements OnInit {
 
     // Autocomplete para novia
     this.feligresesFiltradosNovia = this.controladorFeligresNovia.valueChanges.pipe(
+      startWith(''),
+      map(value => this._filtrarFeligreses(value || ''))
+    );
+    
+    // Autocompletes para padrinos/testigos
+    this.feligresesFiltradosPadrino1Bautizo = this.controladorPadrino1Bautizo.valueChanges.pipe(
+      startWith(''),
+      map(value => this._filtrarFeligreses(value || ''))
+    );
+    
+    this.feligresesFiltradosPadrino2Bautizo = this.controladorPadrino2Bautizo.valueChanges.pipe(
+      startWith(''),
+      map(value => this._filtrarFeligreses(value || ''))
+    );
+    
+    this.feligresesFiltradosPadrino1Confirmacion = this.controladorPadrino1Confirmacion.valueChanges.pipe(
+      startWith(''),
+      map(value => this._filtrarFeligreses(value || ''))
+    );
+    
+    this.feligresesFiltradosPadrino2Confirmacion = this.controladorPadrino2Confirmacion.valueChanges.pipe(
+      startWith(''),
+      map(value => this._filtrarFeligreses(value || ''))
+    );
+    
+    this.feligresesFiltradosTestigo1Matrimonio = this.controladorTestigo1Matrimonio.valueChanges.pipe(
+      startWith(''),
+      map(value => this._filtrarFeligreses(value || ''))
+    );
+    
+    this.feligresesFiltradosTestigo2Matrimonio = this.controladorTestigo2Matrimonio.valueChanges.pipe(
       startWith(''),
       map(value => this._filtrarFeligreses(value || ''))
     );
@@ -529,6 +663,37 @@ export class SacramentosAsignacionComponent implements OnInit {
         const filterValue = typeof value === 'string' ? value : (value ? `${value.primer_nombre} ${value.primer_apellido}` : '');
         return this._filtrarFeligreses(filterValue);
       })
+    );
+    
+    // Autocompletes para padrinos/testigos del modal
+    this.feligresesFiltradosPadrino1ModalBautizo = this.controladorPadrino1ModalBautizo.valueChanges.pipe(
+      startWith(''),
+      map(value => this._filtrarFeligreses(value || ''))
+    );
+    
+    this.feligresesFiltradosPadrino2ModalBautizo = this.controladorPadrino2ModalBautizo.valueChanges.pipe(
+      startWith(''),
+      map(value => this._filtrarFeligreses(value || ''))
+    );
+    
+    this.feligresesFiltradosPadrino1ModalConfirmacion = this.controladorPadrino1ModalConfirmacion.valueChanges.pipe(
+      startWith(''),
+      map(value => this._filtrarFeligreses(value || ''))
+    );
+    
+    this.feligresesFiltradosPadrino2ModalConfirmacion = this.controladorPadrino2ModalConfirmacion.valueChanges.pipe(
+      startWith(''),
+      map(value => this._filtrarFeligreses(value || ''))
+    );
+    
+    this.feligresesFiltradosTestigo1ModalMatrimonio = this.controladorTestigo1ModalMatrimonio.valueChanges.pipe(
+      startWith(''),
+      map(value => this._filtrarFeligreses(value || ''))
+    );
+    
+    this.feligresesFiltradosTestigo2ModalMatrimonio = this.controladorTestigo2ModalMatrimonio.valueChanges.pipe(
+      startWith(''),
+      map(value => this._filtrarFeligreses(value || ''))
     );
   }
 
@@ -620,6 +785,39 @@ export class SacramentosAsignacionComponent implements OnInit {
   }
 
   /**
+   * Seleccionar padrinos/testigos
+   */
+  seleccionarPadrino1Bautizo(feligres: Feligres): void {
+    this.padrino1Bautizo = feligres;
+    this.controladorPadrino1Bautizo.setValue(`${feligres.primer_nombre} ${feligres.primer_apellido}`);
+  }
+
+  seleccionarPadrino2Bautizo(feligres: Feligres): void {
+    this.padrino2Bautizo = feligres;
+    this.controladorPadrino2Bautizo.setValue(`${feligres.primer_nombre} ${feligres.primer_apellido}`);
+  }
+
+  seleccionarPadrino1Confirmacion(feligres: Feligres): void {
+    this.padrino1Confirmacion = feligres;
+    this.controladorPadrino1Confirmacion.setValue(`${feligres.primer_nombre} ${feligres.primer_apellido}`);
+  }
+
+  seleccionarPadrino2Confirmacion(feligres: Feligres): void {
+    this.padrino2Confirmacion = feligres;
+    this.controladorPadrino2Confirmacion.setValue(`${feligres.primer_nombre} ${feligres.primer_apellido}`);
+  }
+
+  seleccionarTestigo1Matrimonio(feligres: Feligres): void {
+    this.testigo1Matrimonio = feligres;
+    this.controladorTestigo1Matrimonio.setValue(`${feligres.primer_nombre} ${feligres.primer_apellido}`);
+  }
+
+  seleccionarTestigo2Matrimonio(feligres: Feligres): void {
+    this.testigo2Matrimonio = feligres;
+    this.controladorTestigo2Matrimonio.setValue(`${feligres.primer_nombre} ${feligres.primer_apellido}`);
+  }
+
+  /**
    * Asignar bautizo
    */
   asignarBautizo(): void {
@@ -640,6 +838,32 @@ export class SacramentosAsignacionComponent implements OnInit {
         montoPagado = isNaN(monto) ? null : monto;
       }
       
+      // Preparar testigos/padrinos
+      const testigosPadrinos: any[] = [];
+      const tipoPadrinoBautizo = this.tiposTestigoPadrino.find(t => 
+        t.nombre.toLowerCase().includes('padrino') && t.nombre.toLowerCase().includes('bautizo')
+      );
+      
+      if (tipoPadrinoBautizo) {
+        const idTipo = this.obtenerIdTipoTestigoPadrino(tipoPadrinoBautizo);
+        if (idTipo) {
+          if (this.padrino1Bautizo) {
+            testigosPadrinos.push({
+              id_feligres: this.padrino1Bautizo.id_feligres,
+              id_tipo_testigo_padrino: idTipo,
+              numero_orden: 1
+            });
+          }
+          if (this.padrino2Bautizo) {
+            testigosPadrinos.push({
+              id_feligres: this.padrino2Bautizo.id_feligres,
+              id_tipo_testigo_padrino: idTipo,
+              numero_orden: 2
+            });
+          }
+        }
+      }
+      
       const asignacion: SacramentoAsignacionCreate = {
         id_sacramento: 1, // Bautizo
         fecha_celebracion: fechaFormateada,
@@ -649,7 +873,8 @@ export class SacramentosAsignacionComponent implements OnInit {
         participantes: [{
           id_feligres: this.feligresSeleccionadoBautizo.id_feligres,
           id_rol_participante: 1 // Bautizado
-        }]
+        }],
+        testigos_padrinos: testigosPadrinos.length > 0 ? testigosPadrinos : []
       };
 
       if (this.modoEdicion && this.asignacionEditando) {
@@ -683,6 +908,32 @@ export class SacramentosAsignacionComponent implements OnInit {
         montoPagado = isNaN(monto) ? null : monto;
       }
       
+      // Preparar testigos/padrinos
+      const testigosPadrinos: any[] = [];
+      const tipoPadrinoConfirmacion = this.tiposTestigoPadrino.find(t => 
+        t.nombre.toLowerCase().includes('padrino') && t.nombre.toLowerCase().includes('confirmación')
+      );
+      
+      if (tipoPadrinoConfirmacion) {
+        const idTipo = this.obtenerIdTipoTestigoPadrino(tipoPadrinoConfirmacion);
+        if (idTipo) {
+          if (this.padrino1Confirmacion) {
+            testigosPadrinos.push({
+              id_feligres: this.padrino1Confirmacion.id_feligres,
+              id_tipo_testigo_padrino: idTipo,
+              numero_orden: 1
+            });
+          }
+          if (this.padrino2Confirmacion) {
+            testigosPadrinos.push({
+              id_feligres: this.padrino2Confirmacion.id_feligres,
+              id_tipo_testigo_padrino: idTipo,
+              numero_orden: 2
+            });
+          }
+        }
+      }
+      
       const asignacion: SacramentoAsignacionCreate = {
         id_sacramento: 3, // Confirmación
         fecha_celebracion: fechaFormateada,
@@ -692,7 +943,8 @@ export class SacramentosAsignacionComponent implements OnInit {
         participantes: [{
           id_feligres: this.feligresSeleccionadoConfirmacion.id_feligres,
           id_rol_participante: 2 // Confirmando
-        }]
+        }],
+        testigos_padrinos: testigosPadrinos.length > 0 ? testigosPadrinos : []
       };
 
       if (this.modoEdicion && this.asignacionEditando) {
@@ -726,6 +978,32 @@ export class SacramentosAsignacionComponent implements OnInit {
         montoPagado = isNaN(monto) ? null : monto;
       }
       
+      // Preparar testigos/padrinos
+      const testigosPadrinos: any[] = [];
+      const tipoTestigoMatrimonio = this.tiposTestigoPadrino.find(t => 
+        t.nombre.toLowerCase().includes('testigo') && t.nombre.toLowerCase().includes('matrimonio')
+      );
+      
+      if (tipoTestigoMatrimonio) {
+        const idTipo = this.obtenerIdTipoTestigoPadrino(tipoTestigoMatrimonio);
+        if (idTipo) {
+          if (this.testigo1Matrimonio) {
+            testigosPadrinos.push({
+              id_feligres: this.testigo1Matrimonio.id_feligres,
+              id_tipo_testigo_padrino: idTipo,
+              numero_orden: 1
+            });
+          }
+          if (this.testigo2Matrimonio) {
+            testigosPadrinos.push({
+              id_feligres: this.testigo2Matrimonio.id_feligres,
+              id_tipo_testigo_padrino: idTipo,
+              numero_orden: 2
+            });
+          }
+        }
+      }
+      
       const asignacion: SacramentoAsignacionCreate = {
         id_sacramento: 4, // Matrimonio
         fecha_celebracion: fechaFormateada,
@@ -741,7 +1019,8 @@ export class SacramentosAsignacionComponent implements OnInit {
             id_feligres: this.feligresSeleccionadoNovia.id_feligres,
             id_rol_participante: 4 // Novio/Novia
           }
-        ]
+        ],
+        testigos_padrinos: testigosPadrinos.length > 0 ? testigosPadrinos : []
       };
 
       if (this.modoEdicion && this.asignacionEditando) {
@@ -819,7 +1098,8 @@ export class SacramentosAsignacionComponent implements OnInit {
       pagado: asignacion.pagado,
       monto_pagado: asignacion.monto_pagado,
       comentarios: asignacion.comentarios,
-      participantes: asignacion.participantes
+      participantes: asignacion.participantes,
+      testigos_padrinos: asignacion.testigos_padrinos
     };
     
     this.sacramentoAsignacionService.actualizarAsignacion(this.asignacionEditando.id_asignacion, asignacionUpdate).subscribe({
@@ -857,6 +1137,21 @@ export class SacramentosAsignacionComponent implements OnInit {
     this.controladorFeligresConfirmacion.setValue('');
     this.controladorFeligresNovio.setValue('');
     this.controladorFeligresNovia.setValue('');
+    
+    // Limpiar padrinos/testigos
+    this.padrino1Bautizo = null;
+    this.padrino2Bautizo = null;
+    this.padrino1Confirmacion = null;
+    this.padrino2Confirmacion = null;
+    this.testigo1Matrimonio = null;
+    this.testigo2Matrimonio = null;
+    
+    this.controladorPadrino1Bautizo.setValue('');
+    this.controladorPadrino2Bautizo.setValue('');
+    this.controladorPadrino1Confirmacion.setValue('');
+    this.controladorPadrino2Confirmacion.setValue('');
+    this.controladorTestigo1Matrimonio.setValue('');
+    this.controladorTestigo2Matrimonio.setValue('');
     
     this.modoEdicion = false;
     this.asignacionEditando = null;
@@ -978,6 +1273,21 @@ export class SacramentosAsignacionComponent implements OnInit {
     this.controladorFeligresModalConfirmacion.setValue('');
     this.controladorFeligresModalNovio.setValue('');
     this.controladorFeligresModalNovia.setValue('');
+    
+    // Limpiar padrinos/testigos del modal
+    this.padrino1ModalBautizo = null;
+    this.padrino2ModalBautizo = null;
+    this.padrino1ModalConfirmacion = null;
+    this.padrino2ModalConfirmacion = null;
+    this.testigo1ModalMatrimonio = null;
+    this.testigo2ModalMatrimonio = null;
+    
+    this.controladorPadrino1ModalBautizo.setValue('');
+    this.controladorPadrino2ModalBautizo.setValue('');
+    this.controladorPadrino1ModalConfirmacion.setValue('');
+    this.controladorPadrino2ModalConfirmacion.setValue('');
+    this.controladorTestigo1ModalMatrimonio.setValue('');
+    this.controladorTestigo2ModalMatrimonio.setValue('');
   }
 
   /**
@@ -1020,6 +1330,91 @@ export class SacramentosAsignacionComponent implements OnInit {
       monto_pagado: asignacion.monto_pagado || '',
       comentarios: asignacion.comentarios || ''
     });
+    
+    // Cargar padrinos si existen
+    console.log('📋 Tipos de testigos/padrinos disponibles:', this.tiposTestigoPadrino);
+    console.log('📋 Testigos/padrinos en asignación:', asignacion.testigos_padrinos);
+    
+    if (asignacion.testigos_padrinos && asignacion.testigos_padrinos.length > 0) {
+      // Buscar tipo de padrino para bautizo (ID = 1 según la base de datos)
+      // Intentar primero por ID directo, luego por nombre
+      let tipoPadrinoBautizo = this.tiposTestigoPadrino.find(t => {
+        const id = this.obtenerIdTipoTestigoPadrino(t);
+        return id === 1;
+      });
+      
+      // Si no se encuentra por ID, buscar por nombre
+      if (!tipoPadrinoBautizo) {
+        tipoPadrinoBautizo = this.tiposTestigoPadrino.find(t => 
+          t.nombre.toLowerCase().includes('padrino') && t.nombre.toLowerCase().includes('bautizo')
+        );
+      }
+      
+      console.log('🔍 Tipo padrino bautizo encontrado:', tipoPadrinoBautizo);
+      console.log('🔍 Total tipos disponibles:', this.tiposTestigoPadrino.length);
+      
+      if (tipoPadrinoBautizo) {
+        const idTipoPadrino = this.obtenerIdTipoTestigoPadrino(tipoPadrinoBautizo);
+        console.log('🔍 ID tipo padrino bautizo:', idTipoPadrino);
+        
+        // Filtrar padrinos comparando IDs (manejar tanto string como number)
+        const padrinos = asignacion.testigos_padrinos.filter(tp => {
+          const idTp = typeof tp.id_tipo_testigo_padrino === 'string' 
+            ? parseInt(tp.id_tipo_testigo_padrino, 10) 
+            : tp.id_tipo_testigo_padrino;
+          const idTipo = typeof idTipoPadrino === 'string' 
+            ? parseInt(idTipoPadrino, 10) 
+            : idTipoPadrino;
+          return idTp === idTipo || String(idTp) === String(idTipo);
+        });
+        
+        console.log('📋 Padrinos filtrados (total:', padrinos.length, '):', padrinos);
+        console.log('📋 Total feligreses disponibles:', this.feligreses.length);
+        
+        padrinos.forEach((padrino, index) => {
+          console.log(`🔍 Procesando padrino ${index + 1}:`, padrino);
+          console.log(`🔍 ID feligres del padrino:`, padrino.id_feligres, '| Tipo:', typeof padrino.id_feligres);
+          
+          const feligres = this.feligreses.find(f => {
+            const idF = typeof f.id_feligres === 'string' ? parseInt(f.id_feligres, 10) : f.id_feligres;
+            const idP = typeof padrino.id_feligres === 'string' ? parseInt(padrino.id_feligres, 10) : padrino.id_feligres;
+            const match = idF === idP || f.id_feligres === padrino.id_feligres || String(f.id_feligres) === String(padrino.id_feligres);
+            if (match) {
+              console.log(`✅ Match encontrado: Feligres ID ${f.id_feligres} (${typeof f.id_feligres}) === Padrino ID ${padrino.id_feligres} (${typeof padrino.id_feligres})`);
+            }
+            return match;
+          });
+          
+          console.log('🔍 Feligres encontrado para padrino:', feligres);
+          
+          if (feligres) {
+            const numeroOrden = padrino.numero_orden || (index + 1);
+            console.log(`🔍 Número de orden del padrino: ${numeroOrden}`);
+            
+            if (numeroOrden === 1 || (padrinos.length === 1 && index === 0)) {
+              this.padrino1ModalBautizo = feligres;
+              this.controladorPadrino1ModalBautizo.setValue(feligres);
+              console.log('✅ Padrino 1 cargado:', feligres.primer_nombre, feligres.primer_apellido);
+            } else if (numeroOrden === 2 || (padrinos.length === 2 && index === 1)) {
+              this.padrino2ModalBautizo = feligres;
+              this.controladorPadrino2ModalBautizo.setValue(feligres);
+              console.log('✅ Padrino 2 cargado:', feligres.primer_nombre, feligres.primer_apellido);
+            } else {
+              console.warn(`⚠️ Número de orden ${numeroOrden} no reconocido para padrino`);
+            }
+          } else {
+            console.warn('⚠️ No se encontró el feligres para padrino con ID:', padrino.id_feligres);
+            console.warn('⚠️ IDs de feligreses disponibles:', this.feligreses.map(f => ({ id: f.id_feligres, tipo: typeof f.id_feligres, nombre: `${f.primer_nombre} ${f.primer_apellido}` })));
+          }
+        });
+      } else {
+        console.warn('⚠️ No se encontró el tipo de padrino para bautizo');
+        console.warn('⚠️ Tipos disponibles:', this.tiposTestigoPadrino.map(t => ({ id: this.obtenerIdTipoTestigoPadrino(t), nombre: t.nombre })));
+      }
+    } else {
+      console.log('ℹ️ No hay testigos/padrinos en esta asignación');
+      console.log('ℹ️ asignacion.testigos_padrinos:', asignacion.testigos_padrinos);
+    }
   }
 
   /**
@@ -1056,6 +1451,76 @@ export class SacramentosAsignacionComponent implements OnInit {
       monto_pagado: asignacion.monto_pagado || '',
       comentarios: asignacion.comentarios || ''
     });
+    
+    // Cargar padrinos si existen
+    console.log('📋 Tipos de testigos/padrinos disponibles:', this.tiposTestigoPadrino);
+    console.log('📋 Testigos/padrinos en asignación:', asignacion.testigos_padrinos);
+    
+    if (asignacion.testigos_padrinos && asignacion.testigos_padrinos.length > 0) {
+      // Buscar tipo de padrino para confirmación (ID = 2 según la base de datos)
+      let tipoPadrinoConfirmacion = this.tiposTestigoPadrino.find(t => {
+        const id = this.obtenerIdTipoTestigoPadrino(t);
+        return id === 2;
+      });
+      
+      if (!tipoPadrinoConfirmacion) {
+        tipoPadrinoConfirmacion = this.tiposTestigoPadrino.find(t => 
+          t.nombre.toLowerCase().includes('padrino') && t.nombre.toLowerCase().includes('confirmación')
+        );
+      }
+      
+      console.log('🔍 Tipo padrino confirmación encontrado:', tipoPadrinoConfirmacion);
+      
+      if (tipoPadrinoConfirmacion) {
+        const idTipoPadrino = this.obtenerIdTipoTestigoPadrino(tipoPadrinoConfirmacion);
+        console.log('🔍 ID tipo padrino confirmación:', idTipoPadrino);
+        
+        const padrinos = asignacion.testigos_padrinos.filter(tp => {
+          const idTp = typeof tp.id_tipo_testigo_padrino === 'string' 
+            ? parseInt(tp.id_tipo_testigo_padrino, 10) 
+            : tp.id_tipo_testigo_padrino;
+          const idTipo = typeof idTipoPadrino === 'string' 
+            ? parseInt(idTipoPadrino, 10) 
+            : idTipoPadrino;
+          return idTp === idTipo || String(idTp) === String(idTipo);
+        });
+        
+        console.log('📋 Padrinos filtrados (total:', padrinos.length, '):', padrinos);
+        
+        padrinos.forEach((padrino, index) => {
+          console.log(`🔍 Procesando padrino ${index + 1}:`, padrino);
+          
+          const feligres = this.feligreses.find(f => {
+            const idF = typeof f.id_feligres === 'string' ? parseInt(f.id_feligres, 10) : f.id_feligres;
+            const idP = typeof padrino.id_feligres === 'string' ? parseInt(padrino.id_feligres, 10) : padrino.id_feligres;
+            const match = idF === idP || f.id_feligres === padrino.id_feligres || String(f.id_feligres) === String(padrino.id_feligres);
+            if (match) {
+              console.log(`✅ Match encontrado: Feligres ID ${f.id_feligres} === Padrino ID ${padrino.id_feligres}`);
+            }
+            return match;
+          });
+          
+          if (feligres) {
+            const numeroOrden = padrino.numero_orden || (index + 1);
+            if (numeroOrden === 1 || (padrinos.length === 1 && index === 0)) {
+              this.padrino1ModalConfirmacion = feligres;
+              this.controladorPadrino1ModalConfirmacion.setValue(feligres);
+              console.log('✅ Padrino 1 cargado:', feligres.primer_nombre, feligres.primer_apellido);
+            } else if (numeroOrden === 2 || (padrinos.length === 2 && index === 1)) {
+              this.padrino2ModalConfirmacion = feligres;
+              this.controladorPadrino2ModalConfirmacion.setValue(feligres);
+              console.log('✅ Padrino 2 cargado:', feligres.primer_nombre, feligres.primer_apellido);
+            }
+          } else {
+            console.warn('⚠️ No se encontró el feligres para padrino con ID:', padrino.id_feligres);
+          }
+        });
+      } else {
+        console.warn('⚠️ No se encontró el tipo de padrino para confirmación');
+      }
+    } else {
+      console.log('ℹ️ No hay testigos/padrinos en esta asignación');
+    }
   }
 
   /**
@@ -1111,6 +1576,76 @@ export class SacramentosAsignacionComponent implements OnInit {
       monto_pagado: asignacion.monto_pagado || '',
       comentarios: asignacion.comentarios || ''
     });
+    
+    // Cargar testigos si existen
+    console.log('📋 Tipos de testigos/padrinos disponibles:', this.tiposTestigoPadrino);
+    console.log('📋 Testigos/padrinos en asignación:', asignacion.testigos_padrinos);
+    
+    if (asignacion.testigos_padrinos && asignacion.testigos_padrinos.length > 0) {
+      // Buscar tipo de testigo para matrimonio (ID = 3 según la base de datos)
+      let tipoTestigoMatrimonio = this.tiposTestigoPadrino.find(t => {
+        const id = this.obtenerIdTipoTestigoPadrino(t);
+        return id === 3;
+      });
+      
+      if (!tipoTestigoMatrimonio) {
+        tipoTestigoMatrimonio = this.tiposTestigoPadrino.find(t => 
+          t.nombre.toLowerCase().includes('testigo') && t.nombre.toLowerCase().includes('matrimonio')
+        );
+      }
+      
+      console.log('🔍 Tipo testigo matrimonio encontrado:', tipoTestigoMatrimonio);
+      
+      if (tipoTestigoMatrimonio) {
+        const idTipoTestigo = this.obtenerIdTipoTestigoPadrino(tipoTestigoMatrimonio);
+        console.log('🔍 ID tipo testigo matrimonio:', idTipoTestigo);
+        
+        const testigos = asignacion.testigos_padrinos.filter(tp => {
+          const idTp = typeof tp.id_tipo_testigo_padrino === 'string' 
+            ? parseInt(tp.id_tipo_testigo_padrino, 10) 
+            : tp.id_tipo_testigo_padrino;
+          const idTipo = typeof idTipoTestigo === 'string' 
+            ? parseInt(idTipoTestigo, 10) 
+            : idTipoTestigo;
+          return idTp === idTipo || String(idTp) === String(idTipo);
+        });
+        
+        console.log('📋 Testigos filtrados (total:', testigos.length, '):', testigos);
+        
+        testigos.forEach((testigo, index) => {
+          console.log(`🔍 Procesando testigo ${index + 1}:`, testigo);
+          
+          const feligres = this.feligreses.find(f => {
+            const idF = typeof f.id_feligres === 'string' ? parseInt(f.id_feligres, 10) : f.id_feligres;
+            const idP = typeof testigo.id_feligres === 'string' ? parseInt(testigo.id_feligres, 10) : testigo.id_feligres;
+            const match = idF === idP || f.id_feligres === testigo.id_feligres || String(f.id_feligres) === String(testigo.id_feligres);
+            if (match) {
+              console.log(`✅ Match encontrado: Feligres ID ${f.id_feligres} === Testigo ID ${testigo.id_feligres}`);
+            }
+            return match;
+          });
+          
+          if (feligres) {
+            const numeroOrden = testigo.numero_orden || (index + 1);
+            if (numeroOrden === 1 || (testigos.length === 1 && index === 0)) {
+              this.testigo1ModalMatrimonio = feligres;
+              this.controladorTestigo1ModalMatrimonio.setValue(feligres);
+              console.log('✅ Testigo 1 cargado:', feligres.primer_nombre, feligres.primer_apellido);
+            } else if (numeroOrden === 2 || (testigos.length === 2 && index === 1)) {
+              this.testigo2ModalMatrimonio = feligres;
+              this.controladorTestigo2ModalMatrimonio.setValue(feligres);
+              console.log('✅ Testigo 2 cargado:', feligres.primer_nombre, feligres.primer_apellido);
+            }
+          } else {
+            console.warn('⚠️ No se encontró el feligres para testigo con ID:', testigo.id_feligres);
+          }
+        });
+      } else {
+        console.warn('⚠️ No se encontró el tipo de testigo para matrimonio');
+      }
+    } else {
+      console.log('ℹ️ No hay testigos/padrinos en esta asignación');
+    }
   }
 
   /**
@@ -1146,10 +1681,72 @@ export class SacramentosAsignacionComponent implements OnInit {
   }
 
   /**
+   * Seleccionar padrinos/testigos en modal
+   */
+  seleccionarPadrino1ModalBautizo(feligres: Feligres): void {
+    this.padrino1ModalBautizo = feligres;
+    this.controladorPadrino1ModalBautizo.setValue(feligres);
+  }
+
+  seleccionarPadrino2ModalBautizo(feligres: Feligres): void {
+    this.padrino2ModalBautizo = feligres;
+    this.controladorPadrino2ModalBautizo.setValue(feligres);
+  }
+
+  seleccionarPadrino1ModalConfirmacion(feligres: Feligres): void {
+    this.padrino1ModalConfirmacion = feligres;
+    this.controladorPadrino1ModalConfirmacion.setValue(feligres);
+  }
+
+  seleccionarPadrino2ModalConfirmacion(feligres: Feligres): void {
+    this.padrino2ModalConfirmacion = feligres;
+    this.controladorPadrino2ModalConfirmacion.setValue(feligres);
+  }
+
+  seleccionarTestigo1ModalMatrimonio(feligres: Feligres): void {
+    this.testigo1ModalMatrimonio = feligres;
+    this.controladorTestigo1ModalMatrimonio.setValue(feligres);
+  }
+
+  seleccionarTestigo2ModalMatrimonio(feligres: Feligres): void {
+    this.testigo2ModalMatrimonio = feligres;
+    this.controladorTestigo2ModalMatrimonio.setValue(feligres);
+  }
+
+  /**
+   * Verificar si se puede guardar el modal de bautizo
+   * Permite guardar si el formulario es válido O si solo se cambiaron los padrinos
+   */
+  puedeGuardarModalBautizo(): boolean {
+    if (!this.feligresSeleccionadoModalBautizo || !this.asignacionEditando) {
+      return false;
+    }
+    
+    // Si el formulario es válido, se puede guardar
+    if (this.formularioModalBautizo.valid) {
+      return true;
+    }
+    
+    // Si el formulario no es válido, verificar si solo falta monto_pagado cuando pagado está marcado
+    // pero hay cambios en los padrinos
+    const formData = this.formularioModalBautizo.value;
+    const tieneErrorSoloEnMonto = formData.pagado && 
+      this.formularioModalBautizo.get('monto_pagado')?.hasError('required');
+    
+    // Si solo falta el monto pero hay padrinos seleccionados, permitir guardar
+    // (el backend manejará el monto_pagado correctamente)
+    if (tieneErrorSoloEnMonto && (this.padrino1ModalBautizo || this.padrino2ModalBautizo)) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
    * Guardar cambios desde el modal - Bautizo
    */
   guardarModalBautizo(): void {
-    if (this.formularioModalBautizo.valid && this.feligresSeleccionadoModalBautizo && this.asignacionEditando) {
+    if (this.puedeGuardarModalBautizo()) {
       const formData = this.formularioModalBautizo.value;
       
       const fechaFormateada = formData.fecha_celebracion instanceof Date 
@@ -1165,6 +1762,54 @@ export class SacramentosAsignacionComponent implements OnInit {
         montoPagado = isNaN(monto) ? null : monto;
       }
       
+      // Preparar testigos/padrinos
+      const testigosPadrinos: any[] = [];
+      const tipoPadrinoBautizo = this.tiposTestigoPadrino.find(t => 
+        t.nombre.toLowerCase().includes('padrino') && t.nombre.toLowerCase().includes('bautizo')
+      );
+      
+      console.log('🔍 Tipos de testigo/padrino disponibles:', this.tiposTestigoPadrino);
+      console.log('🔍 Tipo padrino bautizo encontrado:', tipoPadrinoBautizo);
+      
+      const idTipoPadrino = this.obtenerIdTipoTestigoPadrino(tipoPadrinoBautizo);
+      
+      if (!tipoPadrinoBautizo || !idTipoPadrino) {
+        console.error('❌ No se encontró el tipo de padrino para bautizo o no tiene id');
+        console.error('❌ Tipos disponibles:', this.tiposTestigoPadrino.map(t => ({ nombre: t.nombre, id: this.obtenerIdTipoTestigoPadrino(t) })));
+      } else {
+        if (this.padrino1ModalBautizo) {
+          testigosPadrinos.push({
+            id_feligres: this.padrino1ModalBautizo.id_feligres,
+            id_tipo_testigo_padrino: idTipoPadrino,
+            numero_orden: 1
+          });
+          console.log('✅ Padrino 1 agregado:', {
+            id_feligres: this.padrino1ModalBautizo.id_feligres,
+            id_tipo_testigo_padrino: idTipoPadrino,
+            numero_orden: 1
+          });
+        }
+        if (this.padrino2ModalBautizo) {
+          testigosPadrinos.push({
+            id_feligres: this.padrino2ModalBautizo.id_feligres,
+            id_tipo_testigo_padrino: idTipoPadrino,
+            numero_orden: 2
+          });
+          console.log('✅ Padrino 2 agregado:', {
+            id_feligres: this.padrino2ModalBautizo.id_feligres,
+            id_tipo_testigo_padrino: idTipoPadrino,
+            numero_orden: 2
+          });
+        }
+      }
+      
+      console.log('📤 Testigos/padrinos a enviar:', testigosPadrinos);
+      
+      if (!this.feligresSeleccionadoModalBautizo) {
+        this.snackBar.open('Por favor seleccione un feligrés', 'Cerrar', { duration: 3000 });
+        return;
+      }
+
       const asignacion: SacramentoAsignacionCreate = {
         id_sacramento: 1,
         fecha_celebracion: fechaFormateada,
@@ -1174,7 +1819,8 @@ export class SacramentosAsignacionComponent implements OnInit {
         participantes: [{
           id_feligres: this.feligresSeleccionadoModalBautizo.id_feligres,
           id_rol_participante: 1
-        }]
+        }],
+        testigos_padrinos: testigosPadrinos.length > 0 ? testigosPadrinos : []
       };
 
       this.actualizarAsignacion(asignacion, 'Bautizo actualizado correctamente');
@@ -1184,10 +1830,38 @@ export class SacramentosAsignacionComponent implements OnInit {
   }
 
   /**
+   * Verificar si se puede guardar el modal de confirmación
+   * Permite guardar si el formulario es válido O si solo se cambiaron los padrinos
+   */
+  puedeGuardarModalConfirmacion(): boolean {
+    if (!this.feligresSeleccionadoModalConfirmacion || !this.asignacionEditando) {
+      return false;
+    }
+    
+    // Si el formulario es válido, se puede guardar
+    if (this.formularioModalConfirmacion.valid) {
+      return true;
+    }
+    
+    // Si el formulario no es válido, verificar si solo falta monto_pagado cuando pagado está marcado
+    // pero hay cambios en los padrinos
+    const formData = this.formularioModalConfirmacion.value;
+    const tieneErrorSoloEnMonto = formData.pagado && 
+      this.formularioModalConfirmacion.get('monto_pagado')?.hasError('required');
+    
+    // Si solo falta el monto pero hay padrinos seleccionados, permitir guardar
+    if (tieneErrorSoloEnMonto && (this.padrino1ModalConfirmacion || this.padrino2ModalConfirmacion)) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
    * Guardar cambios desde el modal - Confirmación
    */
   guardarModalConfirmacion(): void {
-    if (this.formularioModalConfirmacion.valid && this.feligresSeleccionadoModalConfirmacion && this.asignacionEditando) {
+    if (this.puedeGuardarModalConfirmacion()) {
       const formData = this.formularioModalConfirmacion.value;
       
       const fechaFormateada = formData.fecha_celebracion instanceof Date 
@@ -1203,6 +1877,37 @@ export class SacramentosAsignacionComponent implements OnInit {
         montoPagado = isNaN(monto) ? null : monto;
       }
       
+      // Preparar testigos/padrinos
+      const testigosPadrinos: any[] = [];
+      const tipoPadrinoConfirmacion = this.tiposTestigoPadrino.find(t => 
+        t.nombre.toLowerCase().includes('padrino') && t.nombre.toLowerCase().includes('confirmación')
+      );
+      
+      if (tipoPadrinoConfirmacion) {
+        const idTipo = this.obtenerIdTipoTestigoPadrino(tipoPadrinoConfirmacion);
+        if (idTipo) {
+          if (this.padrino1ModalConfirmacion) {
+            testigosPadrinos.push({
+              id_feligres: this.padrino1ModalConfirmacion.id_feligres,
+              id_tipo_testigo_padrino: idTipo,
+              numero_orden: 1
+            });
+          }
+          if (this.padrino2ModalConfirmacion) {
+            testigosPadrinos.push({
+              id_feligres: this.padrino2ModalConfirmacion.id_feligres,
+              id_tipo_testigo_padrino: idTipo,
+              numero_orden: 2
+            });
+          }
+        }
+      }
+      
+      if (!this.feligresSeleccionadoModalConfirmacion) {
+        this.snackBar.open('Por favor seleccione un feligrés', 'Cerrar', { duration: 3000 });
+        return;
+      }
+
       const asignacion: SacramentoAsignacionCreate = {
         id_sacramento: 3,
         fecha_celebracion: fechaFormateada,
@@ -1212,7 +1917,8 @@ export class SacramentosAsignacionComponent implements OnInit {
         participantes: [{
           id_feligres: this.feligresSeleccionadoModalConfirmacion.id_feligres,
           id_rol_participante: 2
-        }]
+        }],
+        testigos_padrinos: testigosPadrinos.length > 0 ? testigosPadrinos : []
       };
 
       this.actualizarAsignacion(asignacion, 'Confirmación actualizada correctamente');
@@ -1222,10 +1928,38 @@ export class SacramentosAsignacionComponent implements OnInit {
   }
 
   /**
+   * Verificar si se puede guardar el modal de matrimonio
+   * Permite guardar si el formulario es válido O si solo se cambiaron los testigos
+   */
+  puedeGuardarModalMatrimonio(): boolean {
+    if (!this.feligresSeleccionadoModalNovio || !this.feligresSeleccionadoModalNovia || !this.asignacionEditando) {
+      return false;
+    }
+    
+    // Si el formulario es válido, se puede guardar
+    if (this.formularioModalMatrimonio.valid) {
+      return true;
+    }
+    
+    // Si el formulario no es válido, verificar si solo falta monto_pagado cuando pagado está marcado
+    // pero hay cambios en los testigos
+    const formData = this.formularioModalMatrimonio.value;
+    const tieneErrorSoloEnMonto = formData.pagado && 
+      this.formularioModalMatrimonio.get('monto_pagado')?.hasError('required');
+    
+    // Si solo falta el monto pero hay testigos seleccionados, permitir guardar
+    if (tieneErrorSoloEnMonto && (this.testigo1ModalMatrimonio || this.testigo2ModalMatrimonio)) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
    * Guardar cambios desde el modal - Matrimonio
    */
   guardarModalMatrimonio(): void {
-    if (this.formularioModalMatrimonio.valid && this.feligresSeleccionadoModalNovio && this.feligresSeleccionadoModalNovia && this.asignacionEditando) {
+    if (this.puedeGuardarModalMatrimonio()) {
       const formData = this.formularioModalMatrimonio.value;
       
       const fechaFormateada = formData.fecha_celebracion instanceof Date 
@@ -1241,6 +1975,37 @@ export class SacramentosAsignacionComponent implements OnInit {
         montoPagado = isNaN(monto) ? null : monto;
       }
       
+      // Preparar testigos/padrinos
+      const testigosPadrinos: any[] = [];
+      const tipoTestigoMatrimonio = this.tiposTestigoPadrino.find(t => 
+        t.nombre.toLowerCase().includes('testigo') && t.nombre.toLowerCase().includes('matrimonio')
+      );
+      
+      if (tipoTestigoMatrimonio) {
+        const idTipo = this.obtenerIdTipoTestigoPadrino(tipoTestigoMatrimonio);
+        if (idTipo) {
+          if (this.testigo1ModalMatrimonio) {
+            testigosPadrinos.push({
+              id_feligres: this.testigo1ModalMatrimonio.id_feligres,
+              id_tipo_testigo_padrino: idTipo,
+              numero_orden: 1
+            });
+          }
+          if (this.testigo2ModalMatrimonio) {
+            testigosPadrinos.push({
+              id_feligres: this.testigo2ModalMatrimonio.id_feligres,
+              id_tipo_testigo_padrino: idTipo,
+              numero_orden: 2
+            });
+          }
+        }
+      }
+      
+      if (!this.feligresSeleccionadoModalNovio || !this.feligresSeleccionadoModalNovia) {
+        this.snackBar.open('Por favor seleccione novio y novia', 'Cerrar', { duration: 3000 });
+        return;
+      }
+
       const asignacion: SacramentoAsignacionCreate = {
         id_sacramento: 4,
         fecha_celebracion: fechaFormateada,
@@ -1256,7 +2021,8 @@ export class SacramentosAsignacionComponent implements OnInit {
             id_feligres: this.feligresSeleccionadoModalNovia.id_feligres,
             id_rol_participante: 4
           }
-        ]
+        ],
+        testigos_padrinos: testigosPadrinos.length > 0 ? testigosPadrinos : []
       };
 
       this.actualizarAsignacion(asignacion, 'Matrimonio actualizado correctamente');

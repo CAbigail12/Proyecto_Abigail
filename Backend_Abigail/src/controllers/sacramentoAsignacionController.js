@@ -62,7 +62,32 @@ const esquemaAsignacion = Joi.object({
     .messages({
       'array.min': 'Debe incluir al menos un participante',
       'any.required': 'Los participantes son requeridos'
+    }),
+  
+  testigos_padrinos: Joi.array().items(
+    Joi.object({
+      id_feligres: Joi.number().integer().min(1).required()
+        .messages({
+          'number.base': 'El ID del feligrés debe ser un número',
+          'number.integer': 'El ID del feligrés debe ser un número entero',
+          'number.min': 'El ID del feligrés debe ser mayor a 0',
+          'any.required': 'El ID del feligrés es requerido'
+        }),
+      id_tipo_testigo_padrino: Joi.number().integer().min(1).required()
+        .messages({
+          'number.base': 'El ID del tipo de testigo/padrino debe ser un número',
+          'number.integer': 'El ID del tipo de testigo/padrino debe ser un número entero',
+          'number.min': 'El ID del tipo de testigo/padrino debe ser mayor a 0',
+          'any.required': 'El ID del tipo de testigo/padrino es requerido'
+        }),
+      numero_orden: Joi.number().integer().valid(1, 2).default(1)
+        .messages({
+          'number.base': 'El número de orden debe ser un número',
+          'number.integer': 'El número de orden debe ser un número entero',
+          'any.only': 'El número de orden debe ser 1 o 2'
+        })
     })
+  ).optional()
 });
 
 class SacramentoAsignacionController {
@@ -254,7 +279,10 @@ class SacramentoAsignacionController {
   // Obtener todas las asignaciones
   static async obtenerTodos(req, res) {
     try {
-      console.log('📥 GET /api/sacramentos/asignaciones - Query params:', req.query);
+      console.log('📥 GET /api/sacramentos/asignaciones - Ruta recibida');
+      console.log('📥 URL completa:', req.originalUrl);
+      console.log('📥 Query params:', req.query);
+      console.log('📥 Método:', req.method);
       
       const filtros = {
         id_sacramento: req.query.id_sacramento,
