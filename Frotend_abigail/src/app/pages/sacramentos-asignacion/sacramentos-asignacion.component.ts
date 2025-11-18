@@ -153,6 +153,18 @@ export class SacramentosAsignacionComponent implements OnInit {
   feligresesFiltradosModalConfirmacion: Observable<Feligres[]> = new Observable();
   feligresesFiltradosModalNovio: Observable<Feligres[]> = new Observable();
   feligresesFiltradosModalNovia: Observable<Feligres[]> = new Observable();
+  
+  // Testigos seleccionados para constancia
+  testigo1Constancia: Feligres | null = null;
+  testigo2Constancia: Feligres | null = null;
+  
+  // Controladores de autocomplete para testigos de constancia
+  controladorTestigo1Constancia = this.fb.control<Feligres | string>('');
+  controladorTestigo2Constancia = this.fb.control<Feligres | string>('');
+  
+  // Observables para autocomplete de testigos de constancia
+  feligresesFiltradosTestigo1Constancia: Observable<Feligres[]> = new Observable();
+  feligresesFiltradosTestigo2Constancia: Observable<Feligres[]> = new Observable();
 
   // Datos de la tabla
   displayedColumns: string[] = ['id_asignacion', 'sacramento', 'participantes', 'fecha_celebracion', 'pagado', 'acciones'];
@@ -296,7 +308,8 @@ export class SacramentosAsignacionComponent implements OnInit {
       libro: [''],
       folio: [''],
       acta: [''],
-      fecha_constancia: [new Date()]
+      fecha_constancia: [new Date()],
+      al_margen: ['']
     });
   }
 
@@ -720,6 +733,23 @@ export class SacramentosAsignacionComponent implements OnInit {
     this.feligresesFiltradosTestigo2ModalMatrimonio = this.controladorTestigo2ModalMatrimonio.valueChanges.pipe(
       startWith(''),
       map(value => this._filtrarFeligreses(value || ''))
+    );
+
+    // Autocompletes para testigos de constancia
+    this.feligresesFiltradosTestigo1Constancia = this.controladorTestigo1Constancia.valueChanges.pipe(
+      startWith(''),
+      map(value => {
+        const filterValue = typeof value === 'string' ? value : (value ? `${value.primer_nombre} ${value.primer_apellido}` : '');
+        return this._filtrarFeligreses(filterValue);
+      })
+    );
+
+    this.feligresesFiltradosTestigo2Constancia = this.controladorTestigo2Constancia.valueChanges.pipe(
+      startWith(''),
+      map(value => {
+        const filterValue = typeof value === 'string' ? value : (value ? `${value.primer_nombre} ${value.primer_apellido}` : '');
+        return this._filtrarFeligreses(filterValue);
+      })
     );
   }
 
@@ -1740,6 +1770,19 @@ export class SacramentosAsignacionComponent implements OnInit {
   }
 
   /**
+   * Seleccionar testigos para constancia
+   */
+  seleccionarTestigo1Constancia(feligres: Feligres): void {
+    this.testigo1Constancia = feligres;
+    this.controladorTestigo1Constancia.setValue(feligres);
+  }
+
+  seleccionarTestigo2Constancia(feligres: Feligres): void {
+    this.testigo2Constancia = feligres;
+    this.controladorTestigo2Constancia.setValue(feligres);
+  }
+
+  /**
    * Verificar si se puede guardar el modal de bautizo
    * Permite guardar si el formulario es válido O si solo se cambiaron los padrinos
    */
@@ -2329,7 +2372,8 @@ export class SacramentosAsignacionComponent implements OnInit {
             libro: response.datos.libro || '',
             folio: response.datos.folio || '',
             acta: response.datos.acta || '',
-            fecha_constancia: fechaConstancia
+            fecha_constancia: fechaConstancia,
+            al_margen: response.datos.al_margen || ''
           });
         } else {
           // Limpiar formulario si no existe constancia
@@ -2338,7 +2382,8 @@ export class SacramentosAsignacionComponent implements OnInit {
             libro: '',
             folio: '',
             acta: '',
-            fecha_constancia: new Date()
+            fecha_constancia: new Date(),
+            al_margen: ''
           });
         }
       },
@@ -2352,7 +2397,8 @@ export class SacramentosAsignacionComponent implements OnInit {
           libro: '',
           folio: '',
           acta: '',
-          fecha_constancia: new Date()
+          fecha_constancia: new Date(),
+          al_margen: ''
         });
       }
     });
@@ -2418,6 +2464,13 @@ export class SacramentosAsignacionComponent implements OnInit {
   cargarDatosPadrinos(): void {
     if (!this.asignacionParaConstancia || !this.asignacionParaConstancia.testigos_padrinos) {
       this.datosPadrinos = [];
+      // Limpiar testigos de constancia si no hay datos
+      if (this.esMatrimonio()) {
+        this.testigo1Constancia = null;
+        this.testigo2Constancia = null;
+        this.controladorTestigo1Constancia.setValue('');
+        this.controladorTestigo2Constancia.setValue('');
+      }
       return;
     }
 
@@ -2425,15 +2478,63 @@ export class SacramentosAsignacionComponent implements OnInit {
     this.datosPadrinos = [];
 
     if (!testigosPadrinos || testigosPadrinos.length === 0) {
+      // Limpiar testigos de constancia si no hay datos
+      if (this.esMatrimonio()) {
+        this.testigo1Constancia = null;
+        this.testigo2Constancia = null;
+        this.controladorTestigo1Constancia.setValue('');
+        this.controladorTestigo2Constancia.setValue('');
+      }
       return;
     }
 
+    // Si es matrimonio, buscar tipo de testigo
+    let tipoTestigoId: number | null = null;
+    if (this.esMatrimonio()) {
+      const tipoTestigo = this.tiposTestigoPadrino.find(t => {
+        const id = this.obtenerIdTipoTestigoPadrino(t);
+        return id === 3 || t.nombre.toLowerCase().includes('testigo');
+      });
+      if (tipoTestigo) {
+        const id = this.obtenerIdTipoTestigoPadrino(tipoTestigo);
+        tipoTestigoId = id !== undefined ? id : null;
+      }
+    }
+
+    let testigosCargados = 0;
     testigosPadrinos.forEach((tp) => {
       if (tp && tp.id_feligres) {
+        // Si es matrimonio, solo cargar testigos (no padrinos)
+        if (this.esMatrimonio() && tipoTestigoId) {
+          const idTp = typeof tp.id_tipo_testigo_padrino === 'string' 
+            ? parseInt(tp.id_tipo_testigo_padrino, 10) 
+            : tp.id_tipo_testigo_padrino;
+          const idTipo = typeof tipoTestigoId === 'string' 
+            ? parseInt(tipoTestigoId, 10) 
+            : tipoTestigoId;
+          if (idTp !== idTipo && String(idTp) !== String(idTipo)) {
+            return; // Saltar si no es testigo
+          }
+        }
+
         this.feligresService.obtenerFeligresPorId(tp.id_feligres).subscribe({
           next: (response) => {
             if (response && response.ok && response.datos) {
               this.datosPadrinos.push(response.datos);
+              
+              // Si es matrimonio, cargar en los campos del modal
+              if (this.esMatrimonio()) {
+                const numeroOrden = tp.numero_orden || 1;
+                if (numeroOrden === 1 || testigosCargados === 0) {
+                  this.testigo1Constancia = response.datos;
+                  this.controladorTestigo1Constancia.setValue(response.datos);
+                  testigosCargados++;
+                } else if (numeroOrden === 2 || testigosCargados === 1) {
+                  this.testigo2Constancia = response.datos;
+                  this.controladorTestigo2Constancia.setValue(response.datos);
+                  testigosCargados++;
+                }
+              }
             }
           },
           error: (error) => {
@@ -2455,6 +2556,10 @@ export class SacramentosAsignacionComponent implements OnInit {
     this.datosFeligresCompleto = null;
     this.datosFeligresCompleto2 = null;
     this.datosPadrinos = [];
+    this.testigo1Constancia = null;
+    this.testigo2Constancia = null;
+    this.controladorTestigo1Constancia.setValue('');
+    this.controladorTestigo2Constancia.setValue('');
     this.formularioConstancia.reset();
   }
 
@@ -2467,12 +2572,29 @@ export class SacramentosAsignacionComponent implements OnInit {
       return;
     }
 
+    // Si es matrimonio, verificar que se hayan seleccionado testigos
+    if (this.esMatrimonio() && !this.testigo1Constancia) {
+      this.snackBar.open('Por favor seleccione al menos un testigo', 'Cerrar', { duration: 3000 });
+      return;
+    }
+
     const formData = this.formularioConstancia.value;
     const tipoSacramento = this.obtenerTipoSacramento(this.asignacionParaConstancia.id_sacramento);
 
     if (!tipoSacramento) {
       this.snackBar.open('Tipo de sacramento no válido', 'Cerrar', { duration: 3000 });
       return;
+    }
+
+    // Si es matrimonio y hay testigos seleccionados, actualizar datosPadrinos
+    if (this.esMatrimonio()) {
+      this.datosPadrinos = [];
+      if (this.testigo1Constancia) {
+        this.datosPadrinos.push(this.testigo1Constancia);
+      }
+      if (this.testigo2Constancia) {
+        this.datosPadrinos.push(this.testigo2Constancia);
+      }
     }
 
     // Convertir fecha a string si es Date
@@ -2498,7 +2620,8 @@ export class SacramentosAsignacionComponent implements OnInit {
         folio: formData.folio || null,
         acta: formData.acta || null,
         fecha_constancia: fechaConstancia,
-        datos_json: datosJson
+        datos_json: datosJson,
+        al_margen: formData.al_margen || null
       };
       operacion = this.constanciaService.actualizarConstancia(this.constanciaExistente.id_constancia, constanciaUpdate);
     } else {
@@ -2511,7 +2634,8 @@ export class SacramentosAsignacionComponent implements OnInit {
         folio: formData.folio || null,
         acta: formData.acta || null,
         fecha_constancia: fechaConstancia,
-        datos_json: datosJson
+        datos_json: datosJson,
+        al_margen: formData.al_margen || null
       };
       operacion = this.constanciaService.crearConstancia(constanciaData);
     }
@@ -2547,6 +2671,68 @@ export class SacramentosAsignacionComponent implements OnInit {
   }
 
   /**
+   * Obtener nombre completo del párroco
+   */
+  obtenerNombreParroco(): { nombre: string; apellido: string } {
+    // Primero intentar desde constanciaExistente
+    let nombre = this.constanciaExistente?.parroco_nombre || '';
+    let apellido = this.constanciaExistente?.parroco_apellido || '';
+    
+    // Si no hay nombre en constanciaExistente, obtenerlo del párroco seleccionado en el formulario
+    if (!nombre && this.formularioConstancia.get('id_parroco')?.value) {
+      const idParroco = this.formularioConstancia.get('id_parroco')?.value;
+      const parrocoSeleccionado = this.parrocosActivos.find(p => p.id === idParroco);
+      if (parrocoSeleccionado && parrocoSeleccionado.nombre) {
+        // El nombre en OpcionSelect puede ser "Nombre Apellido" completo
+        const nombreCompleto = parrocoSeleccionado.nombre;
+        const partesNombre = nombreCompleto.split(' ');
+        if (partesNombre.length >= 2) {
+          nombre = partesNombre[0];
+          apellido = partesNombre.slice(1).join(' ');
+        } else {
+          nombre = nombreCompleto;
+          apellido = '';
+        }
+      }
+    }
+    
+    return { nombre, apellido };
+  }
+
+  /**
+   * Verificar si la asignación es de bautizo (para mostrar campo al_margen)
+   */
+  esBautizo(): boolean {
+    if (!this.asignacionParaConstancia) {
+      console.log('⚠️ esBautizo: No hay asignacionParaConstancia');
+      return false;
+    }
+    const idSacramento = typeof this.asignacionParaConstancia.id_sacramento === 'string' 
+      ? parseInt(this.asignacionParaConstancia.id_sacramento, 10) 
+      : this.asignacionParaConstancia.id_sacramento;
+    const nombreSacramento = (this.asignacionParaConstancia.sacramento_nombre || '').toLowerCase();
+    const esBautizo = idSacramento === 1 || nombreSacramento.includes('bautizo');
+    console.log('🔍 esBautizo check:', {
+      idSacramento,
+      nombreSacramento,
+      esBautizo
+    });
+    return esBautizo;
+  }
+
+  /**
+   * Verificar si la asignación es de matrimonio (para mostrar campos de testigos)
+   */
+  esMatrimonio(): boolean {
+    if (!this.asignacionParaConstancia) return false;
+    const idSacramento = typeof this.asignacionParaConstancia.id_sacramento === 'string' 
+      ? parseInt(this.asignacionParaConstancia.id_sacramento, 10) 
+      : this.asignacionParaConstancia.id_sacramento;
+    const nombreSacramento = (this.asignacionParaConstancia.sacramento_nombre || '').toLowerCase();
+    return idSacramento === 3 || nombreSacramento.includes('matrimonio');
+  }
+
+  /**
    * Generar PDF de constancia
    */
   generarPDFConstancia(): void {
@@ -2578,57 +2764,238 @@ export class SacramentosAsignacionComponent implements OnInit {
     }
 
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const marginLeft = 25;
+    const marginRight = pageWidth - 25;
+    const centerX = pageWidth / 2;
+
     const fechaCelebracion = new Date(this.asignacionParaConstancia.fecha_celebracion);
     const fechaConstancia = new Date(this.constanciaExistente.fecha_constancia);
-    const parrocoNombre = this.constanciaExistente.parroco_nombre || '';
-    const parrocoApellido = this.constanciaExistente.parroco_apellido || '';
+    const { nombre: parrocoNombre, apellido: parrocoApellido } = this.obtenerNombreParroco();
     const nombreCompleto = `${this.datosFeligresCompleto?.primer_nombre || ''} ${this.datosFeligresCompleto?.segundo_nombre || ''} ${this.datosFeligresCompleto?.primer_apellido || ''} ${this.datosFeligresCompleto?.segundo_apellido || ''}`.trim();
     const fechaNacimiento = this.datosFeligresCompleto?.fecha_nacimiento ? new Date(this.datosFeligresCompleto.fecha_nacimiento) : null;
     const padrinos = this.datosPadrinos && this.datosPadrinos.length > 0 
       ? this.datosPadrinos.map(p => p ? `${p.primer_nombre || ''} ${p.primer_apellido || ''}` : '').filter(p => p).join(' y ')
       : '';
 
-    let y = 20;
-    doc.setFontSize(12);
-    doc.text('CONSTANCIA DE BAUTISMO', 105, y, { align: 'center' });
-    y += 8;
+    // Encabezado centrado con mejor espaciado
+    let y = 30;
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CONSTANCIA DE BAUTISMO', centerX, y, { align: 'center' });
+    y += 12;
+    
     doc.setFontSize(10);
-    doc.text('DIÓCESIS DE SOLOLÁ Y CHIMALTENANGO', 105, y, { align: 'center' });
-    y += 6;
-    doc.text('PARROQUIA DE SAN PABLO APÓSTOL, TABLÓN, SOLOLÁ.', 105, y, { align: 'center' });
-    y += 10;
-    doc.text('El infrascrito párroco hace constar que :', 20, y);
-    y += 10;
-    doc.text(`Hijo (a) de ${this.datosFeligresCompleto?.nombre_padre || '________________________'} y de ${this.datosFeligresCompleto?.nombre_madre || '__________________________'}`, 20, y);
-    y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.text('DIÓCESIS DE SOLOLÁ Y CHIMALTENANGO', centerX, y, { align: 'center' });
+    y += 7;
+    doc.text('PARROQUIA DE SAN PABLO APÓSTOL, TABLÓN, SOLOLÁ.', centerX, y, { align: 'center' });
+    y += 20;
+
+    // Línea divisoria sutil
+    doc.setDrawColor(200, 200, 200);
+    doc.line(marginLeft, y, marginRight, y);
+    y += 15;
+
+    // Contenido principal con mejor espaciado y fuente más grande
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text('El infrascrito párroco hace constar que :', marginLeft, y);
+    y += 14;
+
+    doc.setFontSize(11);
+    const anchoTexto = marginRight - marginLeft;
+    const lineHeight = 7;
+    
+    // Función auxiliar para escribir texto con partes en negrita (con verificación de límites)
+    const escribirTextoConNegrita = (textoNormal: string, textoNegrita: string, textoNormal2: string = '', textoNegrita2: string = '', textoNormal3: string = '', textoNegrita3: string = '', textoNormal4: string = '') => {
+      let xActual = marginLeft;
+      let yActual = y;
+      
+      // Escribir texto normal inicial
+      doc.setFont('helvetica', 'normal');
+      const anchoNormal = doc.getTextWidth(textoNormal);
+      if (xActual + anchoNormal > marginRight) {
+        yActual += lineHeight;
+        xActual = marginLeft;
+      }
+      doc.text(textoNormal, xActual, yActual);
+      xActual += anchoNormal;
+      
+      // Escribir texto en negrita
+      if (textoNegrita) {
+        doc.setFont('helvetica', 'bold');
+        const anchoNegrita = doc.getTextWidth(textoNegrita);
+        if (xActual + anchoNegrita > marginRight) {
+          yActual += lineHeight;
+          xActual = marginLeft;
+        }
+        doc.text(textoNegrita, xActual, yActual);
+        xActual += anchoNegrita;
+      }
+      
+      // Escribir texto normal 2
+      if (textoNormal2) {
+        doc.setFont('helvetica', 'normal');
+        const anchoNormal2 = doc.getTextWidth(textoNormal2);
+        if (xActual + anchoNormal2 > marginRight) {
+          yActual += lineHeight;
+          xActual = marginLeft;
+        }
+        doc.text(textoNormal2, xActual, yActual);
+        xActual += anchoNormal2;
+      }
+      
+      // Escribir texto en negrita 2
+      if (textoNegrita2) {
+        doc.setFont('helvetica', 'bold');
+        const anchoNegrita2 = doc.getTextWidth(textoNegrita2);
+        if (xActual + anchoNegrita2 > marginRight) {
+          yActual += lineHeight;
+          xActual = marginLeft;
+        }
+        doc.text(textoNegrita2, xActual, yActual);
+        xActual += anchoNegrita2;
+      }
+      
+      // Escribir texto normal 3
+      if (textoNormal3) {
+        doc.setFont('helvetica', 'normal');
+        const anchoNormal3 = doc.getTextWidth(textoNormal3);
+        if (xActual + anchoNormal3 > marginRight) {
+          yActual += lineHeight;
+          xActual = marginLeft;
+        }
+        doc.text(textoNormal3, xActual, yActual);
+        xActual += anchoNormal3;
+      }
+      
+      // Escribir texto en negrita 3
+      if (textoNegrita3) {
+        doc.setFont('helvetica', 'bold');
+        const anchoNegrita3 = doc.getTextWidth(textoNegrita3);
+        if (xActual + anchoNegrita3 > marginRight) {
+          yActual += lineHeight;
+          xActual = marginLeft;
+        }
+        doc.text(textoNegrita3, xActual, yActual);
+        xActual += anchoNegrita3;
+      }
+      
+      // Escribir texto normal 4
+      if (textoNormal4) {
+        doc.setFont('helvetica', 'normal');
+        const anchoNormal4 = doc.getTextWidth(textoNormal4);
+        if (xActual + anchoNormal4 > marginRight) {
+          yActual += lineHeight;
+          xActual = marginLeft;
+        }
+        doc.text(textoNormal4, xActual, yActual);
+      }
+      
+      y = yActual + lineHeight;
+    };
+    
+    // Hijo (a) de... (nombres en negrita) - con manejo de texto largo
+    const nombrePadre = this.datosFeligresCompleto?.nombre_padre || '________________________';
+    const nombreMadre = this.datosFeligresCompleto?.nombre_madre || '__________________________';
+    // Verificar si los nombres son muy largos y necesitan múltiples líneas
+    const textoPadres = `Hijo (a) de ${nombrePadre} y de ${nombreMadre}`;
+    const anchoTextoPadres = doc.getTextWidth(textoPadres);
+    if (anchoTextoPadres > anchoTexto) {
+      // Si es muy largo, dividir en líneas
+      doc.setFont('helvetica', 'normal');
+      doc.text('Hijo (a) de ', marginLeft, y);
+      const xPadre = marginLeft + doc.getTextWidth('Hijo (a) de ');
+      const lineasPadre = doc.splitTextToSize(nombrePadre, anchoTexto - (xPadre - marginLeft));
+      doc.setFont('helvetica', 'bold');
+      doc.text(lineasPadre, xPadre, y);
+      y += lineasPadre.length * lineHeight;
+      doc.setFont('helvetica', 'normal');
+      doc.text('y de ', marginLeft, y);
+      const xMadre = marginLeft + doc.getTextWidth('y de ');
+      const lineasMadre = doc.splitTextToSize(nombreMadre, anchoTexto - (xMadre - marginLeft));
+      doc.setFont('helvetica', 'bold');
+      doc.text(lineasMadre, xMadre, y);
+      y += lineasMadre.length * lineHeight;
+    } else {
+      escribirTextoConNegrita('Hijo (a) de ', nombrePadre, ' y de ', nombreMadre);
+    }
+    
+    // Fecha de nacimiento (fecha en negrita)
     const diaNac = fechaNacimiento ? fechaNacimiento.getDate().toString() : '______';
     const mesNac = fechaNacimiento ? this.obtenerNombreMes(fechaNacimiento.getMonth()) : '*******';
     const anioNac = fechaNacimiento ? fechaNacimiento.getFullYear().toString() : '______';
-    doc.text(`Nacido (a) el día ${diaNac} del mes de ${mesNac} del año ${anioNac}`, 20, y);
-    y += 6;
+    escribirTextoConNegrita('Nacido (a) el día ', diaNac, ' del mes de ', mesNac, ' del año ', anioNac);
+    
+    // Fecha de bautizo (fecha en negrita)
     const diaBaut = fechaCelebracion.getDate().toString();
     const mesBaut = this.obtenerNombreMes(fechaCelebracion.getMonth());
     const anioBaut = fechaCelebracion.getFullYear().toString();
-    doc.text(`Fue bautizado (a) el día ${diaBaut} del mes de ${mesBaut} del año ${anioBaut}`, 20, y);
-    y += 6;
-    doc.text(`Sus padrinos son : ${padrinos || '_________________________ y _________________________'}`, 20, y);
-    y += 6;
-    doc.text(`Según consta en el libro No. ${this.constanciaExistente.libro || '_______'} Folio ${this.constanciaExistente.folio || '______'} Acta No. ${this.constanciaExistente.acta || '________'}`, 20, y);
-    y += 6;
-    doc.text('Al margen se lee______________________________________________', 20, y);
-    y += 10;
+    escribirTextoConNegrita('Fue bautizado (a) el día ', diaBaut, ' del mes de ', mesBaut, ' del año ', anioBaut);
+    
+    // Padrinos con salto de línea (nombres en negrita)
+    doc.setFont('helvetica', 'normal');
+    doc.text('Sus padrinos son : ', marginLeft, y);
+    const xPadrinos = marginLeft + doc.getTextWidth('Sus padrinos son : ');
+    if (padrinos) {
+      const lineasPadrinos = doc.splitTextToSize(padrinos, anchoTexto - (xPadrinos - marginLeft));
+      doc.setFont('helvetica', 'bold');
+      doc.text(lineasPadrinos, xPadrinos, y);
+      y += lineasPadrinos.length * lineHeight;
+    } else {
+      doc.setFont('helvetica', 'normal');
+      doc.text('_________________________ y _________________________', xPadrinos, y);
+      y += lineHeight;
+    }
+    
+    // Libro, Folio, Acta (números en negrita)
+    const libro = this.constanciaExistente.libro || '_______';
+    const folio = this.constanciaExistente.folio || '______';
+    const acta = this.constanciaExistente.acta || '________';
+    escribirTextoConNegrita('Según consta en el libro No. ', libro, ' Folio ', folio, ' Acta No. ', acta);
+    
+    // Al margen se lee con salto de línea
+    const alMargen = this.constanciaExistente?.al_margen || '';
+    const textoAlMargen = `Al margen se lee ${alMargen || '______________________________________________'}`;
+    const lineasAlMargen = doc.splitTextToSize(textoAlMargen, anchoTexto);
+    doc.setFont('helvetica', 'normal');
+    doc.text(lineasAlMargen, marginLeft, y);
+    y += lineasAlMargen.length * lineHeight + 4;
+
+    // Fecha de constancia (fecha en negrita) - dividir en líneas automáticamente
     const diaConst = fechaConstancia.getDate().toString();
     const mesConst = this.obtenerNombreMes(fechaConstancia.getMonth());
     const anioConst = fechaConstancia.getFullYear().toString();
-    doc.text(`Se extiende la presente constancia en la parroquia de San Pablo Apóstol a los ${diaConst} días del mes de ${mesConst} del año ${anioConst}`, 20, y);
+    const textoFechaConstancia = 'Se extiende la presente constancia en la parroquia de San Pablo Apóstol a los ';
+    
+    // Dividir el texto largo en líneas usando splitTextToSize para evitar desbordamiento
+    doc.setFont('helvetica', 'normal');
+    const textoCompleto = `${textoFechaConstancia}${diaConst} días del mes de ${mesConst} del año ${anioConst}`;
+    const lineasFecha = doc.splitTextToSize(textoCompleto, anchoTexto);
+    
+    // Escribir cada línea
+    lineasFecha.forEach((linea: string) => {
+      doc.setFont('helvetica', 'normal');
+      doc.text(linea, marginLeft, y);
+      y += lineHeight;
+    });
+
+    // Firma con mejor espaciado
+    doc.text('Doy fe.', marginLeft, y);
+    y += 12;
+    doc.text('Sello', marginLeft, y);
+    y += 12;
+    doc.setFont('helvetica', 'bold');
+    const nombreParrocoCompletoBautizo = `${parrocoNombre} ${parrocoApellido}`.trim();
+    if (nombreParrocoCompletoBautizo) {
+      doc.text(`P. ${nombreParrocoCompletoBautizo}`, marginLeft, y);
+    } else {
+      doc.text('P.', marginLeft, y);
+    }
     y += 8;
-    doc.text('Doy fe.', 20, y);
-    y += 6;
-    doc.text('Sello', 20, y);
-    y += 8;
-    doc.text(`P. ${parrocoNombre} ${parrocoApellido}`, 20, y);
-    y += 6;
-    doc.text('Párroco', 20, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Párroco', marginLeft, y);
 
     const nombreArchivo = `Constancia_Bautizo_${nombreCompleto.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`;
     doc.save(nombreArchivo);
@@ -2646,10 +3013,14 @@ export class SacramentosAsignacionComponent implements OnInit {
     }
 
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const marginLeft = 25;
+    const marginRight = pageWidth - 25;
+    const centerX = pageWidth / 2;
+
     const fechaCelebracion = new Date(this.asignacionParaConstancia.fecha_celebracion);
     const fechaConstancia = new Date(this.constanciaExistente.fecha_constancia);
-    const parrocoNombre = this.constanciaExistente.parroco_nombre || '';
-    const parrocoApellido = this.constanciaExistente.parroco_apellido || '';
+    const { nombre: parrocoNombre, apellido: parrocoApellido } = this.obtenerNombreParroco();
     const nombreCompleto = `${this.datosFeligresCompleto?.primer_nombre || ''} ${this.datosFeligresCompleto?.segundo_nombre || ''} ${this.datosFeligresCompleto?.primer_apellido || ''} ${this.datosFeligresCompleto?.segundo_apellido || ''}`.trim();
     const fechaNacimiento = this.datosFeligresCompleto?.fecha_nacimiento ? new Date(this.datosFeligresCompleto.fecha_nacimiento) : null;
     const edad = fechaNacimiento ? this.calcularEdad(fechaNacimiento, fechaCelebracion) : '______';
@@ -2657,46 +3028,175 @@ export class SacramentosAsignacionComponent implements OnInit {
       ? this.datosPadrinos.map(p => p ? `${p.primer_nombre || ''} ${p.primer_apellido || ''}` : '').filter(p => p).join(' y ')
       : '';
 
-    let y = 20;
+    // Encabezado centrado con mejor espaciado
+    let y = 30;
     doc.setFontSize(12);
-    doc.text('PARROQUIA "SAN PABLO APÓSTOL", TABLÓN', 105, y, { align: 'center' });
-    y += 6;
-    doc.setFontSize(10);
-    doc.text('DIOCESIS DE SOLOLÀ-CHIMALTENANGO', 105, y, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    doc.text('PARROQUIA "SAN PABLO APÓSTOL", TABLÓN', centerX, y, { align: 'center' });
     y += 8;
-    doc.setFontSize(12);
-    doc.text('CONSTANCIA DE CONFIRMACIÓN', 105, y, { align: 'center' });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text('DIOCESIS DE SOLOLÀ-CHIMALTENANGO', centerX, y, { align: 'center' });
+    y += 12;
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CONSTANCIA DE CONFIRMACIÓN', centerX, y, { align: 'center' });
+    y += 20;
+
+    // Línea divisoria sutil
+    doc.setDrawColor(200, 200, 200);
+    doc.line(marginLeft, y, marginRight, y);
+    y += 15;
+
+    // Contenido principal con mejor espaciado y fuente más grande
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    const anchoTexto = marginRight - marginLeft;
+    const lineHeight = 7;
+    
+    // Función auxiliar para escribir texto con partes en negrita
+    const escribirTextoConNegrita = (textoNormal: string, textoNegrita: string, textoNormal2: string = '', textoNegrita2: string = '', textoNormal3: string = '', textoNegrita3: string = '', textoNormal4: string = '') => {
+      let xActual = marginLeft;
+      doc.setFont('helvetica', 'normal');
+      doc.text(textoNormal, xActual, y);
+      xActual += doc.getTextWidth(textoNormal);
+      
+      if (textoNegrita) {
+        doc.setFont('helvetica', 'bold');
+        doc.text(textoNegrita, xActual, y);
+        xActual += doc.getTextWidth(textoNegrita);
+      }
+      
+      if (textoNormal2) {
+        doc.setFont('helvetica', 'normal');
+        doc.text(textoNormal2, xActual, y);
+        xActual += doc.getTextWidth(textoNormal2);
+      }
+      
+      if (textoNegrita2) {
+        doc.setFont('helvetica', 'bold');
+        doc.text(textoNegrita2, xActual, y);
+        xActual += doc.getTextWidth(textoNegrita2);
+      }
+      
+      if (textoNormal3) {
+        doc.setFont('helvetica', 'normal');
+        doc.text(textoNormal3, xActual, y);
+        xActual += doc.getTextWidth(textoNormal3);
+      }
+      
+      if (textoNegrita3) {
+        doc.setFont('helvetica', 'bold');
+        doc.text(textoNegrita3, xActual, y);
+        xActual += doc.getTextWidth(textoNegrita3);
+      }
+      
+      if (textoNormal4) {
+        doc.setFont('helvetica', 'normal');
+        doc.text(textoNormal4, xActual, y);
+      }
+      
+      y += lineHeight;
+    };
+    
+    doc.text('En la parroquia de San Pablo Apóstol, tablón, Sololà.', marginLeft, y);
     y += 10;
-    doc.setFontSize(10);
-    doc.text('En la parroquia de San Pablo Apóstol, tablón, Sololà.', 20, y);
-    y += 8;
+    
+    // Fecha de celebración (fecha en negrita)
     const dia = fechaCelebracion.getDate().toString();
     const mes = this.obtenerNombreMes(fechaCelebracion.getMonth());
     const anio = fechaCelebracion.getFullYear().toString();
-    doc.text(`El día ${dia} de ${mes} de ${anio}`, 20, y);
+    escribirTextoConNegrita('El día ', dia, ' de ', mes, ' de ', anio);
+    
+    // Libro y Folio (números en negrita)
+    const libro = this.constanciaExistente.libro || '***********************';
+    const folio = this.constanciaExistente.folio || '***********************';
+    escribirTextoConNegrita('En el libro No. ', libro, ' Folio ', folio);
+    
+    // Monseñor con salto de línea (nombre en negrita)
+    const nombreParrocoCompleto = `${parrocoNombre} ${parrocoApellido}`.trim();
+    doc.setFont('helvetica', 'normal');
+    doc.text('El excmo. Monseñor ( o delegado ) ', marginLeft, y);
+    const xMonsenor = marginLeft + doc.getTextWidth('El excmo. Monseñor ( o delegado ) ');
+    if (nombreParrocoCompleto) {
+      const lineasMonsenor = doc.splitTextToSize(nombreParrocoCompleto, anchoTexto - (xMonsenor - marginLeft));
+      doc.setFont('helvetica', 'bold');
+      doc.text(lineasMonsenor, xMonsenor, y);
+      y += lineasMonsenor.length * lineHeight + 4;
+    } else {
+      y += lineHeight;
+    }
+    
+    doc.text('Confirió el Sacramento de la Confirmación a:', marginLeft, y);
+    y += 12;
+    
+    // Nombre completo con salto de línea
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    const lineasNombre = doc.splitTextToSize(nombreCompleto, anchoTexto);
+    doc.text(lineasNombre, marginLeft, y);
+    y += lineasNombre.length * lineHeight + 6;
+    
+    doc.setFontSize(11);
+    // Edad y parroquia con salto de línea (edad en negrita)
+    doc.setFont('helvetica', 'normal');
+    doc.text('De ', marginLeft, y);
+    const xEdad = marginLeft + doc.getTextWidth('De ');
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${edad} años de edad`, xEdad, y);
+    const xDespuesEdad = xEdad + doc.getTextWidth(`${edad} años de edad`);
+    doc.setFont('helvetica', 'normal');
+    doc.text('; bautizado en la parroquia: ', xDespuesEdad, y);
+    const xParroquia = xDespuesEdad + doc.getTextWidth('; bautizado en la parroquia: ');
+    const comunidadNombre = this.datosFeligresCompleto?.comunidad_nombre || '_________________________';
+    const lineasParroquia = doc.splitTextToSize(comunidadNombre, anchoTexto - (xParroquia - marginLeft));
+    doc.setFont('helvetica', 'bold');
+    doc.text(lineasParroquia, xParroquia, y);
+    y += Math.max(lineHeight, lineasParroquia.length * lineHeight);
+    
+    // Padres (nombres en negrita)
+    const nombrePadre = this.datosFeligresCompleto?.nombre_padre || '______________________________';
+    const nombreMadre = this.datosFeligresCompleto?.nombre_madre || '______________________________';
+    escribirTextoConNegrita('Hijo (a) de ', nombrePadre, ' y de ', nombreMadre);
+    
+    // Padrinos con salto de línea (nombres en negrita)
+    doc.setFont('helvetica', 'normal');
+    doc.text('Fueron sus padrinos: ', marginLeft, y);
+    const xPadrinos = marginLeft + doc.getTextWidth('Fueron sus padrinos: ');
+    if (padrinos) {
+      const lineasPadrinos = doc.splitTextToSize(padrinos, anchoTexto - (xPadrinos - marginLeft));
+      doc.setFont('helvetica', 'bold');
+      doc.text(lineasPadrinos, xPadrinos, y);
+      y += lineasPadrinos.length * lineHeight;
+      doc.setFont('helvetica', 'normal');
+      doc.text('.', marginLeft + anchoTexto - 5, y - (lineasPadrinos.length > 1 ? lineHeight : 0));
+    } else {
+      doc.setFont('helvetica', 'normal');
+      doc.text('________________________________________________________', xPadrinos, y);
+      y += lineHeight;
+    }
     y += 6;
-    doc.text(`En el libro No. ${this.constanciaExistente.libro || '***********************'} Folio ${this.constanciaExistente.folio || '***********************'}`, 20, y);
-    y += 6;
-    doc.text('El excmo. Monseñor ( o delegado )_____________________________________________', 20, y);
-    y += 6;
-    doc.text('Confirió el Sacramento de la Confirmación a:', 20, y);
-    y += 8;
-    doc.text(nombreCompleto, 20, y);
-    y += 8;
-    doc.text(`De ${edad} años de edad; bautizado en la parroquia: ${this.datosFeligresCompleto?.comunidad_nombre || '_________________________'}`, 20, y);
-    y += 6;
-    doc.text(`Hijo (a) de ${this.datosFeligresCompleto?.nombre_padre || '______________________________'} y de ${this.datosFeligresCompleto?.nombre_madre || '______________________________'}`, 20, y);
-    y += 6;
-    doc.text(`Fueron sus padrinos: ${padrinos || '________________________________________________________'}.`, 20, y);
-    y += 10;
+
+    // Fecha de constancia (fecha en negrita)
     const diaConst = fechaConstancia.getDate().toString();
     const mesConst = this.obtenerNombreMes(fechaConstancia.getMonth());
     const anioConst = fechaConstancia.getFullYear().toString();
-    doc.text(`Tablón a los ${diaConst} días del mes de ${mesConst} del año ${anioConst}`, 20, y);
+    escribirTextoConNegrita('Tablón a los ', diaConst, ' días del mes de ', mesConst, ' del año ', anioConst);
     y += 8;
-    doc.text('F.______________________________', 20, y);
-    y += 6;
-    doc.text(`P. ${parrocoNombre} ${parrocoApellido}`, 20, y);
+
+    // Firma con mejor espaciado
+    doc.text('Sello', marginLeft, y);
+    y += 12;
+    doc.setFont('helvetica', 'bold');
+    const nombreParrocoCompletoConfirmacion = `${parrocoNombre} ${parrocoApellido}`.trim();
+    if (nombreParrocoCompletoConfirmacion) {
+      doc.text(`P. ${nombreParrocoCompletoConfirmacion}`, marginLeft, y);
+    } else {
+      doc.text('P.', marginLeft, y);
+    }
+    y += 8;
+    doc.setFont('helvetica', 'normal');
+    doc.text('Párroco', marginLeft, y);
 
     const nombreArchivo = `Constancia_Confirmacion_${nombreCompleto.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`;
     doc.save(nombreArchivo);
@@ -2720,10 +3220,14 @@ export class SacramentosAsignacionComponent implements OnInit {
     }
 
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const marginLeft = 25;
+    const marginRight = pageWidth - 25;
+    const centerX = pageWidth / 2;
+
     const fechaCelebracion = new Date(this.asignacionParaConstancia.fecha_celebracion);
     const fechaConstancia = new Date(this.constanciaExistente.fecha_constancia);
-    const parrocoNombre = this.constanciaExistente.parroco_nombre || '';
-    const parrocoApellido = this.constanciaExistente.parroco_apellido || '';
+    const { nombre: parrocoNombre, apellido: parrocoApellido } = this.obtenerNombreParroco();
     const novio = this.datosFeligresCompleto;
     const novia = this.datosFeligresCompleto2;
     const nombreNovio = novio ? `${novio.primer_nombre || ''} ${novio.segundo_nombre || ''} ${novio.primer_apellido || ''} ${novio.segundo_apellido || ''}`.trim() : '';
@@ -2732,48 +3236,161 @@ export class SacramentosAsignacionComponent implements OnInit {
       ? this.datosPadrinos.map(p => p ? `${p.primer_nombre || ''} ${p.primer_apellido || ''}` : '').filter(p => p).join(' Y ')
       : '';
 
-    let y = 20;
+    // Encabezado centrado con mejor espaciado
+    let y = 30;
     doc.setFontSize(12);
-    doc.text('PARROQUIA SAN PABLO APÓSTOL, TABLON', 105, y, { align: 'center' });
-    y += 6;
-    doc.setFontSize(10);
-    doc.text('Diòcesis de Sololà-Chimaltenango.', 105, y, { align: 'center' });
-    y += 10;
-    doc.setFontSize(12);
-    doc.text('CERTIFICO:', 20, y);
+    doc.setFont('helvetica', 'bold');
+    doc.text('PARROQUIA SAN PABLO APÓSTOL, TABLON', centerX, y, { align: 'center' });
     y += 8;
     doc.setFontSize(10);
-    doc.text('Que conforme consta en el libro de actas matrimoniales de esta parroquia, se encuentra registrados en el:', 20, y);
-    y += 6;
-    doc.text(`Libro No. ${this.constanciaExistente.libro || '______'} Folio No. ${this.constanciaExistente.folio || '________'} Acta No. ${this.constanciaExistente.acta || '______'}`, 20, y);
-    y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.text('Diòcesis de Sololà-Chimaltenango.', centerX, y, { align: 'center' });
+    y += 20;
+
+    // Línea divisoria sutil
+    doc.setDrawColor(200, 200, 200);
+    doc.line(marginLeft, y, marginRight, y);
+    y += 15;
+
+    // Contenido principal con mejor espaciado y fuente más grande
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CERTIFICO:', marginLeft, y);
+    y += 14;
+    
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    const anchoTexto = marginRight - marginLeft;
+    const lineHeight = 7;
+    
+    // Función auxiliar para escribir texto con partes en negrita
+    const escribirTextoConNegrita = (textoNormal: string, textoNegrita: string, textoNormal2: string = '', textoNegrita2: string = '', textoNormal3: string = '', textoNegrita3: string = '', textoNormal4: string = '') => {
+      let xActual = marginLeft;
+      doc.setFont('helvetica', 'normal');
+      doc.text(textoNormal, xActual, y);
+      xActual += doc.getTextWidth(textoNormal);
+      
+      if (textoNegrita) {
+        doc.setFont('helvetica', 'bold');
+        doc.text(textoNegrita, xActual, y);
+        xActual += doc.getTextWidth(textoNegrita);
+      }
+      
+      if (textoNormal2) {
+        doc.setFont('helvetica', 'normal');
+        doc.text(textoNormal2, xActual, y);
+        xActual += doc.getTextWidth(textoNormal2);
+      }
+      
+      if (textoNegrita2) {
+        doc.setFont('helvetica', 'bold');
+        doc.text(textoNegrita2, xActual, y);
+        xActual += doc.getTextWidth(textoNegrita2);
+      }
+      
+      if (textoNormal3) {
+        doc.setFont('helvetica', 'normal');
+        doc.text(textoNormal3, xActual, y);
+        xActual += doc.getTextWidth(textoNormal3);
+      }
+      
+      if (textoNegrita3) {
+        doc.setFont('helvetica', 'bold');
+        doc.text(textoNegrita3, xActual, y);
+        xActual += doc.getTextWidth(textoNegrita3);
+      }
+      
+      if (textoNormal4) {
+        doc.setFont('helvetica', 'normal');
+        doc.text(textoNormal4, xActual, y);
+      }
+      
+      y += lineHeight;
+    };
+    
+    // Texto largo con salto de línea
+    const textoCertifico = 'Que conforme consta en el libro de actas matrimoniales de esta parroquia, se encuentra registrados en el:';
+    const lineasCertifico = doc.splitTextToSize(textoCertifico, anchoTexto);
+    doc.text(lineasCertifico, marginLeft, y);
+    y += lineasCertifico.length * lineHeight + 4;
+    
+    // Libro, Folio, Acta (números en negrita)
+    const libro = this.constanciaExistente.libro || '______';
+    const folio = this.constanciaExistente.folio || '________';
+    const acta = this.constanciaExistente.acta || '______';
+    escribirTextoConNegrita('Libro No. ', libro, ' Folio No. ', folio, ' Acta No. ', acta);
+    
+    // Fecha de celebración (fecha en negrita)
     const dia = fechaCelebracion.getDate().toString();
     const mes = this.obtenerNombreMes(fechaCelebracion.getMonth());
     const anio = fechaCelebracion.getFullYear().toString();
-    doc.text(`El día ${dia} del mes de ${mes} del año ${anio}`, 20, y);
+    escribirTextoConNegrita('El día ', dia, ' del mes de ', mes, ' del año ', anio);
     y += 8;
+    
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CONTRAJERON MATRIMONIO CANÓNICO :', marginLeft, y);
+    y += 12;
+    
+    // Nombres con salto de línea
     doc.setFontSize(12);
-    doc.text('CONTRAJERON MATRIMONIO CANÓNICO :', 20, y);
+    doc.setFont('helvetica', 'bold');
+    const textoNombres = `${nombreNovio} Y ${nombreNovia}`;
+    const lineasNombres = doc.splitTextToSize(textoNombres, anchoTexto);
+    doc.text(lineasNombres, marginLeft, y);
+    y += lineasNombres.length * lineHeight + 9;
+    
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ASISTIENDO COMO TESTIGOS:', marginLeft, y);
+    y += 12;
+    
+    // Testigos con salto de línea (nombres en negrita)
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    if (testigos) {
+      const lineasTestigos = doc.splitTextToSize(testigos, anchoTexto);
+      doc.setFont('helvetica', 'bold');
+      doc.text(lineasTestigos, marginLeft, y);
+      y += lineasTestigos.length * lineHeight;
+    } else {
+      doc.setFont('helvetica', 'normal');
+      doc.text('__________________________ Y ______________________________', marginLeft, y);
+      y += lineHeight;
+    }
     y += 6;
-    doc.setFontSize(10);
-    doc.text(`${nombreNovio} Y ${nombreNovia}`, 20, y);
-    y += 8;
-    doc.setFontSize(12);
-    doc.text('ASISTIENDO COMO TESTIGOS:', 20, y);
-    y += 6;
-    doc.setFontSize(10);
-    doc.text(`${testigos || '__________________________ Y ______________________________'}`, 20, y);
-    y += 10;
+
+    // Fecha de constancia (fecha en negrita) - dividir en líneas automáticamente
     const diaConst = fechaConstancia.getDate().toString();
     const mesConst = this.obtenerNombreMes(fechaConstancia.getMonth());
     const anioConst = fechaConstancia.getFullYear().toString();
-    doc.text(`Para que así conste y convenga, firmo y sello en la parroquia a los ${diaConst} días del mes ${mesConst} del año ${anioConst}`, 20, y);
+    const textoFechaConstancia = 'Para que así conste y convenga, firmo y sello en la parroquia a los ';
+    
+    // Dividir el texto largo en líneas usando splitTextToSize para evitar desbordamiento
+    doc.setFont('helvetica', 'normal');
+    const textoCompleto = `${textoFechaConstancia}${diaConst} días del mes ${mesConst} del año ${anioConst}`;
+    const lineasFecha = doc.splitTextToSize(textoCompleto, anchoTexto);
+    
+    // Escribir cada línea
+    lineasFecha.forEach((linea: string) => {
+      doc.setFont('helvetica', 'normal');
+      doc.text(linea, marginLeft, y);
+      y += lineHeight;
+    });
+
+    // Firma con mejor espaciado
+    doc.text('Sello', marginLeft, y);
+    y += 12;
+    doc.setFont('helvetica', 'bold');
+    const nombreParrocoCompleto = `${parrocoNombre} ${parrocoApellido}`.trim();
+    if (nombreParrocoCompleto) {
+      doc.text(`P. ${nombreParrocoCompleto}`, marginLeft, y);
+    } else {
+      doc.text('P.', marginLeft, y);
+    }
     y += 8;
-    doc.text('F. _____________________', 20, y);
-    y += 6;
-    doc.text('Pàrroco.', 20, y);
-    y += 6;
-    doc.text(`P. ${parrocoNombre} ${parrocoApellido}`, 20, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Párroco', marginLeft, y);
 
     const nombreArchivo = `Constancia_Matrimonio_${nombreNovio.replace(/\s+/g, '_')}_${nombreNovia.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`;
     doc.save(nombreArchivo);

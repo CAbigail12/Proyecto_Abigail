@@ -1467,6 +1467,69 @@
             <mat-datepicker #pickerConstancia></mat-datepicker>
           </mat-form-field>
         </div>
+
+        <!-- Al margen se lee (solo para bautizo) -->
+        <div *ngIf="esBautizo()">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Al margen se lee</label>
+          <mat-form-field appearance="outline" class="w-full">
+            <textarea matInput 
+                      formControlName="al_margen"
+                      placeholder="Texto que aparece al margen..."
+                      rows="3"></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- Testigos (solo para matrimonio) -->
+        <div *ngIf="esMatrimonio()">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Testigos <span class="text-red-500">*</span></label>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Testigo 1</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput 
+                       [formControl]="controladorTestigo1Constancia"
+                       placeholder="Buscar o seleccionar testigo..."
+                       [matAutocomplete]="autoTestigo1Constancia"
+                       (click)="activarAutocomplete(controladorTestigo1Constancia)"
+                       (focus)="activarAutocomplete(controladorTestigo1Constancia)">
+                <mat-autocomplete #autoTestigo1Constancia="matAutocomplete" 
+                                  (optionSelected)="seleccionarTestigo1Constancia($event.option.value)"
+                                  [displayWith]="displayFeligres">
+                  <mat-option *ngFor="let feligres of feligresesFiltradosTestigo1Constancia | async" 
+                              [value]="feligres">
+                    <div class="flex items-center justify-between">
+                      <span>{{feligres.primer_nombre}} {{feligres.primer_apellido}}</span>
+                      <span class="text-xs text-gray-500 ml-2">{{feligres.comunidad_nombre}}</span>
+                    </div>
+                  </mat-option>
+                </mat-autocomplete>
+              </mat-form-field>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Testigo 2</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <input matInput 
+                       [formControl]="controladorTestigo2Constancia"
+                       placeholder="Buscar o seleccionar testigo..."
+                       [matAutocomplete]="autoTestigo2Constancia"
+                       (click)="activarAutocomplete(controladorTestigo2Constancia)"
+                       (focus)="activarAutocomplete(controladorTestigo2Constancia)">
+                <mat-autocomplete #autoTestigo2Constancia="matAutocomplete" 
+                                  (optionSelected)="seleccionarTestigo2Constancia($event.option.value)"
+                                  [displayWith]="displayFeligres">
+                  <mat-option *ngFor="let feligres of feligresesFiltradosTestigo2Constancia | async" 
+                              [value]="feligres">
+                    <div class="flex items-center justify-between">
+                      <span>{{feligres.primer_nombre}} {{feligres.primer_apellido}}</span>
+                      <span class="text-xs text-gray-500 ml-2">{{feligres.comunidad_nombre}}</span>
+                    </div>
+                  </mat-option>
+                </mat-autocomplete>
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
       </form>
     </div>
 

@@ -1,8 +1,4 @@
 import {
-  MatButton,
-  MatButtonModule
-} from "./chunk-MODAERGI.js";
-import {
   Overlay,
   OverlayConfig,
   OverlayModule
@@ -22,6 +18,10 @@ import {
   transition,
   trigger
 } from "./chunk-AHRZLYP6.js";
+import {
+  MatButton,
+  MatButtonModule
+} from "./chunk-MODAERGI.js";
 import {
   BreakpointObserver,
   Breakpoints,

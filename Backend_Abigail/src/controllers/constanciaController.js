@@ -31,7 +31,8 @@ const esquemaConstancia = Joi.object({
   acta: Joi.string().max(50).allow('', null).optional(),
   
   fecha_constancia: Joi.date().iso().optional(),
-  datos_json: Joi.object().optional()
+  datos_json: Joi.object().optional(),
+  al_margen: Joi.string().max(255).allow('', null).optional()
 });
 
 // Esquema de validación para actualizar constancia
@@ -41,7 +42,8 @@ const esquemaConstanciaUpdate = Joi.object({
   folio: Joi.string().max(50).allow('', null).optional(),
   acta: Joi.string().max(50).allow('', null).optional(),
   fecha_constancia: Joi.date().iso().optional(),
-  datos_json: Joi.object().optional()
+  datos_json: Joi.object().optional(),
+  al_margen: Joi.string().max(255).allow('', null).optional()
 });
 
 // Obtener constancia por id_asignacion

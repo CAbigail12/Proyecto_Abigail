@@ -12,6 +12,7 @@ export interface Constancia {
   acta?: string | null;
   fecha_constancia: string;
   datos_json?: any;
+  al_margen?: string | null;
   created_at: string;
   updated_at: string;
   parroco_nombre?: string;
@@ -27,6 +28,7 @@ export interface ConstanciaCreate {
   acta?: string | null;
   fecha_constancia?: string;
   datos_json?: any;
+  al_margen?: string | null;
 }
 
 export interface ConstanciaUpdate {
@@ -36,6 +38,7 @@ export interface ConstanciaUpdate {
   acta?: string | null;
   fecha_constancia?: string;
   datos_json?: any;
+  al_margen?: string | null;
 }
 
 

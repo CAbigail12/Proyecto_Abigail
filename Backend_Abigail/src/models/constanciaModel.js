@@ -14,6 +14,7 @@ class ConstanciaModel {
         c.acta,
         c.fecha_constancia,
         c.datos_json,
+        c.al_margen,
         c.created_at,
         c.updated_at,
         p.nombre as parroco_nombre,
@@ -39,6 +40,7 @@ class ConstanciaModel {
         c.acta,
         c.fecha_constancia,
         c.datos_json,
+        c.al_margen,
         c.created_at,
         c.updated_at,
         p.nombre as parroco_nombre,
@@ -61,7 +63,8 @@ class ConstanciaModel {
       folio,
       acta,
       fecha_constancia,
-      datos_json
+      datos_json,
+      al_margen
     } = datos;
 
     const query = `
@@ -73,9 +76,10 @@ class ConstanciaModel {
         folio,
         acta,
         fecha_constancia,
-        datos_json
+        datos_json,
+        al_margen
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       ON CONFLICT (id_asignacion) 
       DO UPDATE SET
         tipo_sacramento = EXCLUDED.tipo_sacramento,
@@ -85,9 +89,10 @@ class ConstanciaModel {
         acta = EXCLUDED.acta,
         fecha_constancia = EXCLUDED.fecha_constancia,
         datos_json = EXCLUDED.datos_json,
+        al_margen = EXCLUDED.al_margen,
         updated_at = NOW()
       RETURNING id_constancia, id_asignacion, tipo_sacramento, id_parroco, 
-                libro, folio, acta, fecha_constancia, datos_json, created_at, updated_at
+                libro, folio, acta, fecha_constancia, datos_json, al_margen, created_at, updated_at
     `;
 
     const result = await pool.query(query, [
@@ -98,7 +103,8 @@ class ConstanciaModel {
       folio || null,
       acta || null,
       fecha_constancia || new Date().toISOString().split('T')[0],
-      datos_json ? JSON.stringify(datos_json) : null
+      datos_json ? JSON.stringify(datos_json) : null,
+      al_margen || null
     ]);
 
     return result.rows[0];
@@ -112,7 +118,8 @@ class ConstanciaModel {
       folio,
       acta,
       fecha_constancia,
-      datos_json
+      datos_json,
+      al_margen
     } = datos;
 
     const campos = [];
@@ -149,6 +156,11 @@ class ConstanciaModel {
       valores.push(datos_json ? JSON.stringify(datos_json) : null);
       contador++;
     }
+    if (al_margen !== undefined) {
+      campos.push(`al_margen = $${contador}`);
+      valores.push(al_margen || null);
+      contador++;
+    }
 
     if (campos.length === 0) {
       throw new Error('No hay campos para actualizar');
@@ -160,7 +172,7 @@ class ConstanciaModel {
       SET ${campos.join(', ')}
       WHERE id_constancia = $${contador}
       RETURNING id_constancia, id_asignacion, tipo_sacramento, id_parroco, 
-                libro, folio, acta, fecha_constancia, datos_json, created_at, updated_at
+                libro, folio, acta, fecha_constancia, datos_json, al_margen, created_at, updated_at
     `;
 
     const result = await pool.query(query, valores);
