@@ -726,6 +726,12 @@
                   <th mat-header-cell *matHeaderCellDef>Acciones</th>
                   <td mat-cell *matCellDef="let element">
                     <div class="flex items-center gap-1">
+                      <!-- Generar Constancia -->
+                      <button (click)="generarConstancia(element)" 
+                              class="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
+                              matTooltip="Generar constancia">
+                        <mat-icon class="text-lg">description</mat-icon>
+                      </button>
                       <!-- Editar -->
                       <button (click)="editarAsignacion(element)" 
                               class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
@@ -1346,6 +1352,138 @@
           <span *ngIf="loading">Eliminando...</span>
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Constancia -->
+<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4"
+     *ngIf="mostrarModalConstancia" (click)="cerrarModalConstancia()">
+  <div class="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative"
+       (click)="$event.stopPropagation()">
+    <!-- Header del modal -->
+    <div class="flex justify-between items-center p-4 border-b border-gray-200 sticky top-0 bg-white z-10">
+      <h2 class="text-xl font-semibold text-gray-900">
+        Generar Constancia - {{asignacionParaConstancia?.sacramento_nombre}}
+      </h2>
+      <button type="button"
+              (click)="cerrarModalConstancia()"
+              class="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors duration-200">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <!-- Contenido del modal -->
+    <div class="p-6">
+      <!-- Información de la asignación (solo lectura) -->
+      <div class="mb-6 bg-gray-50 rounded-lg p-4">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Información de la Asignación</h3>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Sacramento</label>
+            <p class="text-gray-900">{{asignacionParaConstancia?.sacramento_nombre}}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Fecha de Celebración</label>
+            <p class="text-gray-900">{{formatearFecha(asignacionParaConstancia?.fecha_celebracion || '')}}</p>
+          </div>
+          <div *ngIf="tieneParticipantes()" class="col-span-2">
+            <label class="block text-sm font-medium text-gray-700">Participante(s)</label>
+            <p class="text-gray-900" *ngFor="let participante of obtenerParticipantesModal()">
+              {{participante?.nombre_completo}}
+            </p>
+          </div>
+          <div *ngIf="datosFeligresCompleto" class="col-span-2">
+            <label class="block text-sm font-medium text-gray-700">Fecha de Nacimiento</label>
+            <p class="text-gray-900">
+              <ng-container *ngIf="datosFeligresCompleto.fecha_nacimiento; else noFecha">
+                {{formatearFecha(datosFeligresCompleto.fecha_nacimiento)}}
+              </ng-container>
+              <ng-template #noFecha>No registrada</ng-template>
+            </p>
+          </div>
+          <div *ngIf="datosFeligresCompleto?.nombre_padre" class="col-span-2">
+            <label class="block text-sm font-medium text-gray-700">Padre</label>
+            <p class="text-gray-900">{{datosFeligresCompleto?.nombre_padre}}</p>
+          </div>
+          <div *ngIf="datosFeligresCompleto?.nombre_madre" class="col-span-2">
+            <label class="block text-sm font-medium text-gray-700">Madre</label>
+            <p class="text-gray-900">{{datosFeligresCompleto?.nombre_madre}}</p>
+          </div>
+          <div *ngIf="datosPadrinos && datosPadrinos.length > 0" class="col-span-2">
+            <label class="block text-sm font-medium text-gray-700">Padrinos/Testigos</label>
+            <p class="text-gray-900" *ngFor="let padrino of datosPadrinos">
+              {{padrino?.primer_nombre}} {{padrino?.primer_apellido}}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulario de constancia -->
+      <form [formGroup]="formularioConstancia" class="space-y-4">
+        <!-- Párroco -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Párroco <span class="text-red-500">*</span></label>
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-select formControlName="id_parroco" placeholder="Seleccione el párroco">
+              <mat-option *ngFor="let parroco of parrocosActivos" [value]="parroco.id">
+                {{parroco.nombre}}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="formularioConstancia.get('id_parroco')?.hasError('required')">
+              El párroco es requerido
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Libro, Folio, Acta -->
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Libro</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <input matInput formControlName="libro" placeholder="Número de libro">
+            </mat-form-field>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Folio</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <input matInput formControlName="folio" placeholder="Número de folio">
+            </mat-form-field>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Acta</label>
+            <mat-form-field appearance="outline" class="w-full">
+              <input matInput formControlName="acta" placeholder="Número de acta">
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Fecha de constancia -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Fecha de Constancia</label>
+          <mat-form-field appearance="outline" class="w-full">
+            <input matInput [matDatepicker]="pickerConstancia" formControlName="fecha_constancia">
+            <mat-datepicker-toggle matSuffix [for]="pickerConstancia"></mat-datepicker-toggle>
+            <mat-datepicker #pickerConstancia></mat-datepicker>
+          </mat-form-field>
+        </div>
+      </form>
+    </div>
+
+    <!-- Footer del modal -->
+    <div class="flex justify-end gap-3 p-4 border-t border-gray-200 sticky bottom-0 bg-white">
+      <button type="button"
+              (click)="cerrarModalConstancia()"
+              class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200">
+        Cancelar
+      </button>
+      <button type="button"
+              (click)="guardarConstancia()"
+              [disabled]="!formularioConstancia.valid"
+              class="px-4 py-2 text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed">
+        <span *ngIf="!constanciaExistente">Guardar y Generar</span>
+        <span *ngIf="constanciaExistente">Actualizar y Generar</span>
+      </button>
     </div>
   </div>
 </div>

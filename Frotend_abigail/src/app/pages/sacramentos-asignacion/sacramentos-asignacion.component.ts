@@ -8,7 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -25,6 +25,8 @@ import { Observable, map, startWith } from 'rxjs';
 
 import { SacramentoAsignacionService } from '../../services/sacramento-asignacion.service';
 import { FeligresService } from '../../services/feligres.service';
+import { ConstanciaService } from '../../services/constancia.service';
+import { MantenimientoService } from '../../services/mantenimiento.service';
 import { environment } from '../../../environments/environment';
 import { 
   SacramentoAsignacion, 
@@ -38,7 +40,9 @@ import {
   FormularioMatrimonio,
   EstadisticasSacramentos
 } from '../../models/sacramento-asignacion.model';
-import { Feligres } from '../../models/mantenimiento.model';
+import { Feligres, OpcionSelect } from '../../models/mantenimiento.model';
+import { Constancia, ConstanciaCreate, ConstanciaUpdate } from '../../models/constancia.model';
+import jsPDF from 'jspdf';
 
 @Component({
   selector: 'app-sacramentos-asignacion',
@@ -64,7 +68,8 @@ import { Feligres } from '../../models/mantenimiento.model';
     MatNativeDateModule,
     MatCheckboxModule,
     MatAutocompleteModule,
-    MatDialogModule
+    MatDialogModule,
+    MatSnackBarModule
   ],
   templateUrl: './sacramentos-asignacion.component.html',
   styleUrls: ['./sacramentos-asignacion.component.css']
@@ -91,6 +96,16 @@ export class SacramentosAsignacionComponent implements OnInit {
   // Modal de confirmación de eliminación
   mostrarModalEliminar = false;
   asignacionAEliminar: SacramentoAsignacion | null = null;
+  
+  // Modal de constancia
+  mostrarModalConstancia = false;
+  asignacionParaConstancia: SacramentoAsignacion | null = null;
+  constanciaExistente: Constancia | null = null;
+  parrocosActivos: OpcionSelect[] = [];
+  datosFeligresCompleto: Feligres | null = null;
+  datosFeligresCompleto2: Feligres | null = null; // Para matrimonio
+  datosPadrinos: Feligres[] = [];
+  formularioConstancia: FormGroup;
   
   // Formularios para el modal
   formularioModalBautizo: FormGroup;
@@ -213,6 +228,8 @@ export class SacramentosAsignacionComponent implements OnInit {
   constructor(
     private sacramentoAsignacionService: SacramentoAsignacionService,
     private feligresService: FeligresService,
+    private constanciaService: ConstanciaService,
+    private mantenimientoService: MantenimientoService,
     private fb: FormBuilder,
     private snackBar: MatSnackBar,
     private router: Router,
@@ -271,6 +288,15 @@ export class SacramentosAsignacionComponent implements OnInit {
       pagado: [false],
       monto_pagado: ['', []],
       comentarios: ['']
+    });
+
+    // Formulario para constancia
+    this.formularioConstancia = this.fb.group({
+      id_parroco: ['', [Validators.required]],
+      libro: [''],
+      folio: [''],
+      acta: [''],
+      fecha_constancia: [new Date()]
     });
   }
 
@@ -2236,6 +2262,543 @@ export class SacramentosAsignacionComponent implements OnInit {
    */
   formatearFecha(fecha: string): string {
     return new Date(fecha).toLocaleDateString('es-ES');
+  }
+
+  /**
+   * Verificar si hay participantes
+   */
+  tieneParticipantes(): boolean {
+    return !!(this.asignacionParaConstancia?.participantes && this.asignacionParaConstancia.participantes.length > 0);
+  }
+
+  /**
+   * Obtener participantes para el modal
+   */
+  obtenerParticipantesModal(): any[] {
+    return this.asignacionParaConstancia?.participantes || [];
+  }
+
+  // ============================================================
+  // MÉTODOS PARA CONSTANCIAS
+  // ============================================================
+
+  /**
+   * Abrir modal para generar constancia
+   */
+  generarConstancia(asignacion: SacramentoAsignacion): void {
+    this.asignacionParaConstancia = asignacion;
+    this.mostrarModalConstancia = true;
+    this.cargarParrocosActivos();
+    this.cargarDatosConstancia();
+  }
+
+  /**
+   * Cargar párrocos activos
+   */
+  cargarParrocosActivos(): void {
+    this.mantenimientoService.obtenerParrocosActivos().subscribe({
+      next: (response) => {
+        if (response.ok && response.datos) {
+          this.parrocosActivos = response.datos;
+        }
+      },
+      error: (error) => {
+        console.error('Error al cargar párrocos:', error);
+        this.snackBar.open('Error al cargar párrocos', 'Cerrar', { duration: 3000 });
+      }
+    });
+  }
+
+  /**
+   * Cargar datos de constancia existente y datos completos
+   */
+  cargarDatosConstancia(): void {
+    if (!this.asignacionParaConstancia) return;
+
+    // Cargar constancia existente si existe
+    this.constanciaService.obtenerConstancia(this.asignacionParaConstancia.id_asignacion).subscribe({
+      next: (response) => {
+        if (response.ok && response.datos) {
+          this.constanciaExistente = response.datos;
+          // Llenar formulario con datos existentes
+          const fechaConstancia = response.datos.fecha_constancia 
+            ? new Date(response.datos.fecha_constancia) 
+            : new Date();
+          this.formularioConstancia.patchValue({
+            id_parroco: response.datos.id_parroco,
+            libro: response.datos.libro || '',
+            folio: response.datos.folio || '',
+            acta: response.datos.acta || '',
+            fecha_constancia: fechaConstancia
+          });
+        } else {
+          // Limpiar formulario si no existe constancia
+          this.formularioConstancia.reset({
+            id_parroco: '',
+            libro: '',
+            folio: '',
+            acta: '',
+            fecha_constancia: new Date()
+          });
+        }
+      },
+      error: (error) => {
+        // Si no existe constancia, es normal que devuelva 404
+        if (error.status !== 404) {
+          console.error('Error al cargar constancia:', error);
+        }
+        this.formularioConstancia.reset({
+          id_parroco: '',
+          libro: '',
+          folio: '',
+          acta: '',
+          fecha_constancia: new Date()
+        });
+      }
+    });
+
+    // Cargar datos completos del feligrés(es)
+    this.cargarDatosFeligresCompleto();
+  }
+
+  /**
+   * Cargar datos completos del feligrés y padrinos
+   */
+  cargarDatosFeligresCompleto(): void {
+    if (!this.asignacionParaConstancia || !this.asignacionParaConstancia.participantes) {
+      this.datosFeligresCompleto = null;
+      this.datosFeligresCompleto2 = null;
+      return;
+    }
+
+    const participantes = this.asignacionParaConstancia.participantes;
+    
+    // Cargar primer participante (bautizo/confirmación) o ambos (matrimonio)
+    if (participantes.length > 0 && participantes[0] && participantes[0].id_feligres) {
+      this.feligresService.obtenerFeligresPorId(participantes[0].id_feligres).subscribe({
+        next: (response) => {
+          if (response && response.ok && response.datos) {
+            this.datosFeligresCompleto = response.datos;
+          }
+        },
+        error: (error) => {
+          console.error('Error al cargar datos del feligrés:', error);
+          this.datosFeligresCompleto = null;
+        }
+      });
+    } else {
+      this.datosFeligresCompleto = null;
+    }
+
+    // Para matrimonio, cargar segundo participante
+    if (participantes.length > 1 && participantes[1] && participantes[1].id_feligres && 
+        this.asignacionParaConstancia.sacramento_nombre === 'Matrimonio') {
+      this.feligresService.obtenerFeligresPorId(participantes[1].id_feligres).subscribe({
+        next: (response) => {
+          if (response && response.ok && response.datos) {
+            this.datosFeligresCompleto2 = response.datos;
+          }
+        },
+        error: (error) => {
+          console.error('Error al cargar datos del segundo feligrés:', error);
+          this.datosFeligresCompleto2 = null;
+        }
+      });
+    } else {
+      this.datosFeligresCompleto2 = null;
+    }
+
+    // Cargar padrinos/testigos
+    this.cargarDatosPadrinos();
+  }
+
+  /**
+   * Cargar datos de padrinos/testigos
+   */
+  cargarDatosPadrinos(): void {
+    if (!this.asignacionParaConstancia || !this.asignacionParaConstancia.testigos_padrinos) {
+      this.datosPadrinos = [];
+      return;
+    }
+
+    const testigosPadrinos = this.asignacionParaConstancia.testigos_padrinos;
+    this.datosPadrinos = [];
+
+    if (!testigosPadrinos || testigosPadrinos.length === 0) {
+      return;
+    }
+
+    testigosPadrinos.forEach((tp) => {
+      if (tp && tp.id_feligres) {
+        this.feligresService.obtenerFeligresPorId(tp.id_feligres).subscribe({
+          next: (response) => {
+            if (response && response.ok && response.datos) {
+              this.datosPadrinos.push(response.datos);
+            }
+          },
+          error: (error) => {
+            console.error('Error al cargar datos del padrino/testigo:', error);
+            // No agregar nada al array si hay error
+          }
+        });
+      }
+    });
+  }
+
+  /**
+   * Cerrar modal de constancia
+   */
+  cerrarModalConstancia(): void {
+    this.mostrarModalConstancia = false;
+    this.asignacionParaConstancia = null;
+    this.constanciaExistente = null;
+    this.datosFeligresCompleto = null;
+    this.datosFeligresCompleto2 = null;
+    this.datosPadrinos = [];
+    this.formularioConstancia.reset();
+  }
+
+  /**
+   * Guardar constancia y generar PDF
+   */
+  guardarConstancia(): void {
+    if (!this.formularioConstancia.valid || !this.asignacionParaConstancia) {
+      this.snackBar.open('Por favor complete todos los campos requeridos', 'Cerrar', { duration: 3000 });
+      return;
+    }
+
+    const formData = this.formularioConstancia.value;
+    const tipoSacramento = this.obtenerTipoSacramento(this.asignacionParaConstancia.id_sacramento);
+
+    if (!tipoSacramento) {
+      this.snackBar.open('Tipo de sacramento no válido', 'Cerrar', { duration: 3000 });
+      return;
+    }
+
+    // Convertir fecha a string si es Date
+    const fechaConstancia = formData.fecha_constancia instanceof Date 
+      ? formData.fecha_constancia.toISOString().split('T')[0]
+      : formData.fecha_constancia || new Date().toISOString().split('T')[0];
+
+    // Preparar datos JSON
+    const datosJson = {
+      asignacion: this.asignacionParaConstancia,
+      feligres: this.datosFeligresCompleto,
+      feligres2: this.datosFeligresCompleto2,
+      padrinos: this.datosPadrinos
+    };
+
+    // Guardar o actualizar constancia
+    let operacion;
+    if (this.constanciaExistente) {
+      // Actualizar constancia existente
+      const constanciaUpdate: ConstanciaUpdate = {
+        id_parroco: parseInt(formData.id_parroco),
+        libro: formData.libro || null,
+        folio: formData.folio || null,
+        acta: formData.acta || null,
+        fecha_constancia: fechaConstancia,
+        datos_json: datosJson
+      };
+      operacion = this.constanciaService.actualizarConstancia(this.constanciaExistente.id_constancia, constanciaUpdate);
+    } else {
+      // Crear nueva constancia
+      const constanciaData: ConstanciaCreate = {
+        id_asignacion: this.asignacionParaConstancia.id_asignacion,
+        tipo_sacramento: tipoSacramento,
+        id_parroco: parseInt(formData.id_parroco),
+        libro: formData.libro || null,
+        folio: formData.folio || null,
+        acta: formData.acta || null,
+        fecha_constancia: fechaConstancia,
+        datos_json: datosJson
+      };
+      operacion = this.constanciaService.crearConstancia(constanciaData);
+    }
+
+    operacion.subscribe({
+      next: (response) => {
+        if (response.ok) {
+          this.constanciaExistente = response.datos;
+          // Generar PDF
+          this.generarPDFConstancia();
+        }
+      },
+      error: (error) => {
+        console.error('Error al guardar constancia:', error);
+        this.snackBar.open(
+          error.error?.mensaje || 'Error al guardar constancia',
+          'Cerrar',
+          { duration: 3000 }
+        );
+      }
+    });
+  }
+
+  /**
+   * Obtener tipo de sacramento
+   */
+  obtenerTipoSacramento(idSacramento: number): 'bautizo' | 'confirmacion' | 'matrimonio' | null {
+    const nombre = this.obtenerNombreSacramento(idSacramento).toLowerCase();
+    if (nombre.includes('bautizo')) return 'bautizo';
+    if (nombre.includes('confirmación') || nombre.includes('confirmacion')) return 'confirmacion';
+    if (nombre.includes('matrimonio')) return 'matrimonio';
+    return null;
+  }
+
+  /**
+   * Generar PDF de constancia
+   */
+  generarPDFConstancia(): void {
+    if (!this.asignacionParaConstancia || !this.constanciaExistente) return;
+
+    const tipo = this.constanciaExistente.tipo_sacramento;
+    
+    switch (tipo) {
+      case 'bautizo':
+        this.generarPDFBautizo();
+        break;
+      case 'confirmacion':
+        this.generarPDFConfirmacion();
+        break;
+      case 'matrimonio':
+        this.generarPDFMatrimonio();
+        break;
+    }
+  }
+
+  /**
+   * Generar PDF de Bautizo
+   */
+  generarPDFBautizo(): void {
+    if (!this.asignacionParaConstancia || !this.constanciaExistente || !this.datosFeligresCompleto) {
+      console.error('Error: Faltan datos para generar PDF de bautizo');
+      this.snackBar.open('Error: Faltan datos para generar la constancia', 'Cerrar', { duration: 3000 });
+      return;
+    }
+
+    const doc = new jsPDF();
+    const fechaCelebracion = new Date(this.asignacionParaConstancia.fecha_celebracion);
+    const fechaConstancia = new Date(this.constanciaExistente.fecha_constancia);
+    const parrocoNombre = this.constanciaExistente.parroco_nombre || '';
+    const parrocoApellido = this.constanciaExistente.parroco_apellido || '';
+    const nombreCompleto = `${this.datosFeligresCompleto?.primer_nombre || ''} ${this.datosFeligresCompleto?.segundo_nombre || ''} ${this.datosFeligresCompleto?.primer_apellido || ''} ${this.datosFeligresCompleto?.segundo_apellido || ''}`.trim();
+    const fechaNacimiento = this.datosFeligresCompleto?.fecha_nacimiento ? new Date(this.datosFeligresCompleto.fecha_nacimiento) : null;
+    const padrinos = this.datosPadrinos && this.datosPadrinos.length > 0 
+      ? this.datosPadrinos.map(p => p ? `${p.primer_nombre || ''} ${p.primer_apellido || ''}` : '').filter(p => p).join(' y ')
+      : '';
+
+    let y = 20;
+    doc.setFontSize(12);
+    doc.text('CONSTANCIA DE BAUTISMO', 105, y, { align: 'center' });
+    y += 8;
+    doc.setFontSize(10);
+    doc.text('DIÓCESIS DE SOLOLÁ Y CHIMALTENANGO', 105, y, { align: 'center' });
+    y += 6;
+    doc.text('PARROQUIA DE SAN PABLO APÓSTOL, TABLÓN, SOLOLÁ.', 105, y, { align: 'center' });
+    y += 10;
+    doc.text('El infrascrito párroco hace constar que :', 20, y);
+    y += 10;
+    doc.text(`Hijo (a) de ${this.datosFeligresCompleto?.nombre_padre || '________________________'} y de ${this.datosFeligresCompleto?.nombre_madre || '__________________________'}`, 20, y);
+    y += 6;
+    const diaNac = fechaNacimiento ? fechaNacimiento.getDate().toString() : '______';
+    const mesNac = fechaNacimiento ? this.obtenerNombreMes(fechaNacimiento.getMonth()) : '*******';
+    const anioNac = fechaNacimiento ? fechaNacimiento.getFullYear().toString() : '______';
+    doc.text(`Nacido (a) el día ${diaNac} del mes de ${mesNac} del año ${anioNac}`, 20, y);
+    y += 6;
+    const diaBaut = fechaCelebracion.getDate().toString();
+    const mesBaut = this.obtenerNombreMes(fechaCelebracion.getMonth());
+    const anioBaut = fechaCelebracion.getFullYear().toString();
+    doc.text(`Fue bautizado (a) el día ${diaBaut} del mes de ${mesBaut} del año ${anioBaut}`, 20, y);
+    y += 6;
+    doc.text(`Sus padrinos son : ${padrinos || '_________________________ y _________________________'}`, 20, y);
+    y += 6;
+    doc.text(`Según consta en el libro No. ${this.constanciaExistente.libro || '_______'} Folio ${this.constanciaExistente.folio || '______'} Acta No. ${this.constanciaExistente.acta || '________'}`, 20, y);
+    y += 6;
+    doc.text('Al margen se lee______________________________________________', 20, y);
+    y += 10;
+    const diaConst = fechaConstancia.getDate().toString();
+    const mesConst = this.obtenerNombreMes(fechaConstancia.getMonth());
+    const anioConst = fechaConstancia.getFullYear().toString();
+    doc.text(`Se extiende la presente constancia en la parroquia de San Pablo Apóstol a los ${diaConst} días del mes de ${mesConst} del año ${anioConst}`, 20, y);
+    y += 8;
+    doc.text('Doy fe.', 20, y);
+    y += 6;
+    doc.text('Sello', 20, y);
+    y += 8;
+    doc.text(`P. ${parrocoNombre} ${parrocoApellido}`, 20, y);
+    y += 6;
+    doc.text('Párroco', 20, y);
+
+    const nombreArchivo = `Constancia_Bautizo_${nombreCompleto.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`;
+    doc.save(nombreArchivo);
+    this.snackBar.open('Constancia de bautizo generada correctamente', 'Cerrar', { duration: 3000 });
+  }
+
+  /**
+   * Generar PDF de Confirmación
+   */
+  generarPDFConfirmacion(): void {
+    if (!this.asignacionParaConstancia || !this.constanciaExistente || !this.datosFeligresCompleto) {
+      console.error('Error: Faltan datos para generar PDF de confirmación');
+      this.snackBar.open('Error: Faltan datos para generar la constancia', 'Cerrar', { duration: 3000 });
+      return;
+    }
+
+    const doc = new jsPDF();
+    const fechaCelebracion = new Date(this.asignacionParaConstancia.fecha_celebracion);
+    const fechaConstancia = new Date(this.constanciaExistente.fecha_constancia);
+    const parrocoNombre = this.constanciaExistente.parroco_nombre || '';
+    const parrocoApellido = this.constanciaExistente.parroco_apellido || '';
+    const nombreCompleto = `${this.datosFeligresCompleto?.primer_nombre || ''} ${this.datosFeligresCompleto?.segundo_nombre || ''} ${this.datosFeligresCompleto?.primer_apellido || ''} ${this.datosFeligresCompleto?.segundo_apellido || ''}`.trim();
+    const fechaNacimiento = this.datosFeligresCompleto?.fecha_nacimiento ? new Date(this.datosFeligresCompleto.fecha_nacimiento) : null;
+    const edad = fechaNacimiento ? this.calcularEdad(fechaNacimiento, fechaCelebracion) : '______';
+    const padrinos = this.datosPadrinos && this.datosPadrinos.length > 0 
+      ? this.datosPadrinos.map(p => p ? `${p.primer_nombre || ''} ${p.primer_apellido || ''}` : '').filter(p => p).join(' y ')
+      : '';
+
+    let y = 20;
+    doc.setFontSize(12);
+    doc.text('PARROQUIA "SAN PABLO APÓSTOL", TABLÓN', 105, y, { align: 'center' });
+    y += 6;
+    doc.setFontSize(10);
+    doc.text('DIOCESIS DE SOLOLÀ-CHIMALTENANGO', 105, y, { align: 'center' });
+    y += 8;
+    doc.setFontSize(12);
+    doc.text('CONSTANCIA DE CONFIRMACIÓN', 105, y, { align: 'center' });
+    y += 10;
+    doc.setFontSize(10);
+    doc.text('En la parroquia de San Pablo Apóstol, tablón, Sololà.', 20, y);
+    y += 8;
+    const dia = fechaCelebracion.getDate().toString();
+    const mes = this.obtenerNombreMes(fechaCelebracion.getMonth());
+    const anio = fechaCelebracion.getFullYear().toString();
+    doc.text(`El día ${dia} de ${mes} de ${anio}`, 20, y);
+    y += 6;
+    doc.text(`En el libro No. ${this.constanciaExistente.libro || '***********************'} Folio ${this.constanciaExistente.folio || '***********************'}`, 20, y);
+    y += 6;
+    doc.text('El excmo. Monseñor ( o delegado )_____________________________________________', 20, y);
+    y += 6;
+    doc.text('Confirió el Sacramento de la Confirmación a:', 20, y);
+    y += 8;
+    doc.text(nombreCompleto, 20, y);
+    y += 8;
+    doc.text(`De ${edad} años de edad; bautizado en la parroquia: ${this.datosFeligresCompleto?.comunidad_nombre || '_________________________'}`, 20, y);
+    y += 6;
+    doc.text(`Hijo (a) de ${this.datosFeligresCompleto?.nombre_padre || '______________________________'} y de ${this.datosFeligresCompleto?.nombre_madre || '______________________________'}`, 20, y);
+    y += 6;
+    doc.text(`Fueron sus padrinos: ${padrinos || '________________________________________________________'}.`, 20, y);
+    y += 10;
+    const diaConst = fechaConstancia.getDate().toString();
+    const mesConst = this.obtenerNombreMes(fechaConstancia.getMonth());
+    const anioConst = fechaConstancia.getFullYear().toString();
+    doc.text(`Tablón a los ${diaConst} días del mes de ${mesConst} del año ${anioConst}`, 20, y);
+    y += 8;
+    doc.text('F.______________________________', 20, y);
+    y += 6;
+    doc.text(`P. ${parrocoNombre} ${parrocoApellido}`, 20, y);
+
+    const nombreArchivo = `Constancia_Confirmacion_${nombreCompleto.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`;
+    doc.save(nombreArchivo);
+    this.snackBar.open('Constancia de confirmación generada correctamente', 'Cerrar', { duration: 3000 });
+  }
+
+  /**
+   * Generar PDF de Matrimonio
+   */
+  generarPDFMatrimonio(): void {
+    if (!this.asignacionParaConstancia || !this.constanciaExistente || !this.datosFeligresCompleto) {
+      console.error('Error: Faltan datos para generar PDF de matrimonio');
+      this.snackBar.open('Error: Faltan datos para generar la constancia', 'Cerrar', { duration: 3000 });
+      return;
+    }
+    
+    if (!this.datosFeligresCompleto2) {
+      console.error('Error: Falta el segundo feligrés para generar PDF de matrimonio');
+      this.snackBar.open('Error: Faltan datos del segundo participante', 'Cerrar', { duration: 3000 });
+      return;
+    }
+
+    const doc = new jsPDF();
+    const fechaCelebracion = new Date(this.asignacionParaConstancia.fecha_celebracion);
+    const fechaConstancia = new Date(this.constanciaExistente.fecha_constancia);
+    const parrocoNombre = this.constanciaExistente.parroco_nombre || '';
+    const parrocoApellido = this.constanciaExistente.parroco_apellido || '';
+    const novio = this.datosFeligresCompleto;
+    const novia = this.datosFeligresCompleto2;
+    const nombreNovio = novio ? `${novio.primer_nombre || ''} ${novio.segundo_nombre || ''} ${novio.primer_apellido || ''} ${novio.segundo_apellido || ''}`.trim() : '';
+    const nombreNovia = novia ? `${novia.primer_nombre || ''} ${novia.segundo_nombre || ''} ${novia.primer_apellido || ''} ${novia.segundo_apellido || ''}`.trim() : '';
+    const testigos = this.datosPadrinos && this.datosPadrinos.length > 0 
+      ? this.datosPadrinos.map(p => p ? `${p.primer_nombre || ''} ${p.primer_apellido || ''}` : '').filter(p => p).join(' Y ')
+      : '';
+
+    let y = 20;
+    doc.setFontSize(12);
+    doc.text('PARROQUIA SAN PABLO APÓSTOL, TABLON', 105, y, { align: 'center' });
+    y += 6;
+    doc.setFontSize(10);
+    doc.text('Diòcesis de Sololà-Chimaltenango.', 105, y, { align: 'center' });
+    y += 10;
+    doc.setFontSize(12);
+    doc.text('CERTIFICO:', 20, y);
+    y += 8;
+    doc.setFontSize(10);
+    doc.text('Que conforme consta en el libro de actas matrimoniales de esta parroquia, se encuentra registrados en el:', 20, y);
+    y += 6;
+    doc.text(`Libro No. ${this.constanciaExistente.libro || '______'} Folio No. ${this.constanciaExistente.folio || '________'} Acta No. ${this.constanciaExistente.acta || '______'}`, 20, y);
+    y += 6;
+    const dia = fechaCelebracion.getDate().toString();
+    const mes = this.obtenerNombreMes(fechaCelebracion.getMonth());
+    const anio = fechaCelebracion.getFullYear().toString();
+    doc.text(`El día ${dia} del mes de ${mes} del año ${anio}`, 20, y);
+    y += 8;
+    doc.setFontSize(12);
+    doc.text('CONTRAJERON MATRIMONIO CANÓNICO :', 20, y);
+    y += 6;
+    doc.setFontSize(10);
+    doc.text(`${nombreNovio} Y ${nombreNovia}`, 20, y);
+    y += 8;
+    doc.setFontSize(12);
+    doc.text('ASISTIENDO COMO TESTIGOS:', 20, y);
+    y += 6;
+    doc.setFontSize(10);
+    doc.text(`${testigos || '__________________________ Y ______________________________'}`, 20, y);
+    y += 10;
+    const diaConst = fechaConstancia.getDate().toString();
+    const mesConst = this.obtenerNombreMes(fechaConstancia.getMonth());
+    const anioConst = fechaConstancia.getFullYear().toString();
+    doc.text(`Para que así conste y convenga, firmo y sello en la parroquia a los ${diaConst} días del mes ${mesConst} del año ${anioConst}`, 20, y);
+    y += 8;
+    doc.text('F. _____________________', 20, y);
+    y += 6;
+    doc.text('Pàrroco.', 20, y);
+    y += 6;
+    doc.text(`P. ${parrocoNombre} ${parrocoApellido}`, 20, y);
+
+    const nombreArchivo = `Constancia_Matrimonio_${nombreNovio.replace(/\s+/g, '_')}_${nombreNovia.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`;
+    doc.save(nombreArchivo);
+    this.snackBar.open('Constancia de matrimonio generada correctamente', 'Cerrar', { duration: 3000 });
+  }
+
+  /**
+   * Obtener nombre del mes en español
+   */
+  obtenerNombreMes(mes: number): string {
+    const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
+                   'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    return meses[mes] || '';
+  }
+
+  /**
+   * Calcular edad
+   */
+  calcularEdad(fechaNacimiento: Date, fechaReferencia: Date): number {
+    let edad = fechaReferencia.getFullYear() - fechaNacimiento.getFullYear();
+    const mes = fechaReferencia.getMonth() - fechaNacimiento.getMonth();
+    if (mes < 0 || (mes === 0 && fechaReferencia.getDate() < fechaNacimiento.getDate())) {
+      edad--;
+    }
+    return edad;
   }
 
   /**
