@@ -111,6 +111,10 @@ export const routes: Routes = [
       {
         path: 'actividades-religiosas',
         loadComponent: () => import('./pages/actividades-religiosas/actividades-religiosas.component').then(m => m.ActividadesReligiosasComponent)
+      },
+      {
+        path: 'constancias-externas',
+        loadComponent: () => import('./pages/constancias-externas/constancias-externas.component').then(m => m.ConstanciasExternasComponent)
       }
     ]
   },

@@ -42,13 +42,20 @@ class SacramentoAsignacionModel {
       
       // Insertar testigos/padrinos si existen
       if (datos.testigos_padrinos && datos.testigos_padrinos.length > 0) {
-        const testigosPadrinosData = datos.testigos_padrinos.map(tp => ({
-          id_asignacion: idAsignacion,
-          id_feligres: tp.id_feligres,
-          id_tipo_testigo_padrino: tp.id_tipo_testigo_padrino,
-          numero_orden: tp.numero_orden || 1
-        }));
-        await TestigosPadrinosModel.crearMultiples(testigosPadrinosData);
+        // Validar y convertir los datos de testigos/padrinos
+        const testigosPadrinosData = datos.testigos_padrinos
+          .filter(tp => tp && tp.id_feligres && tp.id_tipo_testigo_padrino) // Filtrar datos inválidos
+          .map(tp => ({
+            id_asignacion: idAsignacion,
+            id_feligres: parseInt(tp.id_feligres), // Asegurar que sea número
+            id_tipo_testigo_padrino: parseInt(tp.id_tipo_testigo_padrino), // Asegurar que sea número
+            numero_orden: tp.numero_orden || 1
+          }));
+        
+        if (testigosPadrinosData.length > 0) {
+          // Pasar el cliente para usar la misma transacción
+          await TestigosPadrinosModel.crearMultiples(testigosPadrinosData, cliente);
+        }
       }
       
       await cliente.query('COMMIT');
@@ -382,23 +389,49 @@ class SacramentoAsignacionModel {
         WHERE activo = true
       `);
       
-      // Buscar IDs de los sacramentos principales
+      console.log('📊 Sacramentos encontrados en BD:', sacramentosQuery.rows);
+      
+      // Buscar IDs de los sacramentos principales (normalizar nombres)
       let idBautizo = null;
       let idConfirmacion = null;
       let idMatrimonio = null;
       
       sacramentosQuery.rows.forEach(sacramento => {
-        const nombre = sacramento.nombre.toLowerCase();
-        if (nombre.includes('bautizo') || nombre.includes('bautismo')) {
-          idBautizo = sacramento.id_sacramento;
-        } else if (nombre.includes('confirmación') || nombre.includes('confirmacion')) {
-          idConfirmacion = sacramento.id_sacramento;
-        } else if (nombre.includes('matrimonio')) {
-          idMatrimonio = sacramento.id_sacramento;
+        const nombre = sacramento.nombre.toLowerCase().trim();
+        // Normalizar: quitar acentos, espacios extra y caracteres especiales
+        const nombreNormalizado = nombre
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '') // Quitar acentos
+          .replace(/\s+/g, ' ') // Normalizar espacios
+          .replace(/[^\w\s]/g, ''); // Quitar caracteres especiales
+        
+        console.log(`🔍 Comparando: "${nombreNormalizado}" (ID: ${sacramento.id_sacramento}, Original: "${sacramento.nombre}")`);
+        
+        // Búsqueda más flexible para bautizo/bautismo
+        if (nombreNormalizado.includes('bautiz') || nombreNormalizado.includes('bautism')) {
+          if (!idBautizo) { // Solo asignar si no se ha encontrado uno antes
+            idBautizo = sacramento.id_sacramento;
+            console.log(`✅ Bautizo encontrado con ID: ${idBautizo} (Nombre: "${sacramento.nombre}")`);
+          }
+        } 
+        // Búsqueda más flexible para confirmación
+        else if (nombreNormalizado.includes('confirm')) {
+          if (!idConfirmacion) { // Solo asignar si no se ha encontrado uno antes
+            idConfirmacion = sacramento.id_sacramento;
+            console.log(`✅ Confirmación encontrada con ID: ${idConfirmacion} (Nombre: "${sacramento.nombre}")`);
+          }
+        } 
+        // Búsqueda más flexible para matrimonio
+        else if (nombreNormalizado.includes('matrim')) {
+          if (!idMatrimonio) { // Solo asignar si no se ha encontrado uno antes
+            idMatrimonio = sacramento.id_sacramento;
+            console.log(`✅ Matrimonio encontrado con ID: ${idMatrimonio} (Nombre: "${sacramento.nombre}")`);
+          }
         }
       });
       
-      // Construir la consulta con los IDs encontrados
+      // Construir la consulta dinámicamente según los IDs encontrados
+      // Usar parámetros preparados para evitar SQL injection
       let query = `
         SELECT 
           COUNT(*) as total_asignaciones,
@@ -407,23 +440,34 @@ class SacramentoAsignacionModel {
           COUNT(CASE WHEN fecha_celebracion >= CURRENT_DATE THEN 1 END) as proximas_celebraciones
       `;
       
-      // Agregar conteos por sacramento solo si se encontraron los IDs
+      const parametros = [];
+      let contadorParametros = 1;
+      
+      // Agregar conteo de bautizos si se encontró el ID
       if (idBautizo) {
-        query += `, COUNT(CASE WHEN id_sacramento = ${idBautizo} THEN 1 END) as total_bautizos`;
+        query += `, COUNT(CASE WHEN id_sacramento = $${contadorParametros} THEN 1 END)::integer as total_bautizos`;
+        parametros.push(idBautizo);
+        contadorParametros++;
       } else {
-        query += `, 0 as total_bautizos`;
+        query += `, 0::integer as total_bautizos`;
       }
       
+      // Agregar conteo de confirmaciones si se encontró el ID
       if (idConfirmacion) {
-        query += `, COUNT(CASE WHEN id_sacramento = ${idConfirmacion} THEN 1 END) as total_confirmaciones`;
+        query += `, COUNT(CASE WHEN id_sacramento = $${contadorParametros} THEN 1 END)::integer as total_confirmaciones`;
+        parametros.push(idConfirmacion);
+        contadorParametros++;
       } else {
-        query += `, 0 as total_confirmaciones`;
+        query += `, 0::integer as total_confirmaciones`;
       }
       
+      // Agregar conteo de matrimonios si se encontró el ID
       if (idMatrimonio) {
-        query += `, COUNT(CASE WHEN id_sacramento = ${idMatrimonio} THEN 1 END) as total_matrimonios`;
+        query += `, COUNT(CASE WHEN id_sacramento = $${contadorParametros} THEN 1 END)::integer as total_matrimonios`;
+        parametros.push(idMatrimonio);
+        contadorParametros++;
       } else {
-        query += `, 0 as total_matrimonios`;
+        query += `, 0::integer as total_matrimonios`;
       }
       
       query += `
@@ -431,8 +475,32 @@ class SacramentoAsignacionModel {
         WHERE activo = true
       `;
       
-      const resultado = await cliente.query(query);
-      return resultado.rows[0];
+      console.log('📊 Ejecutando consulta de estadísticas con IDs:', {
+        idBautizo,
+        idConfirmacion,
+        idMatrimonio
+      });
+      console.log('📊 Query SQL:', query);
+      console.log('📊 Parámetros:', parametros);
+      
+      const resultado = await cliente.query(query, parametros);
+      
+      const estadisticas = resultado.rows[0];
+      console.log('📊 Estadísticas obtenidas:', estadisticas);
+      
+      // Asegurar que los valores sean números enteros
+      return {
+        total_asignaciones: parseInt(estadisticas.total_asignaciones) || 0,
+        asignaciones_pagadas: parseInt(estadisticas.asignaciones_pagadas) || 0,
+        asignaciones_pendientes: parseInt(estadisticas.asignaciones_pendientes) || 0,
+        proximas_celebraciones: parseInt(estadisticas.proximas_celebraciones) || 0,
+        total_bautizos: parseInt(estadisticas.total_bautizos) || 0,
+        total_confirmaciones: parseInt(estadisticas.total_confirmaciones) || 0,
+        total_matrimonios: parseInt(estadisticas.total_matrimonios) || 0
+      };
+    } catch (error) {
+      console.error('❌ Error al obtener estadísticas:', error);
+      throw error;
     } finally {
       cliente.release();
     }

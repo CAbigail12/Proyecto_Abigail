@@ -25,13 +25,25 @@ class TestigosPadrinosModel {
   }
 
   // Crear múltiples testigos/padrinos
-  static async crearMultiples(datos) {
-    const cliente = await pool.connect();
+  // Si se pasa un cliente, usar esa conexión (para transacciones compartidas)
+  // Si no se pasa, crear una nueva conexión
+  static async crearMultiples(datos, clienteExterno = null) {
+    const usarClienteExterno = clienteExterno !== null;
+    const cliente = clienteExterno || await pool.connect();
+    
     try {
-      await cliente.query('BEGIN');
+      // Solo iniciar transacción si no estamos usando un cliente externo
+      if (!usarClienteExterno) {
+        await cliente.query('BEGIN');
+      }
       
       const resultados = [];
       for (const item of datos) {
+        // Validar que los datos requeridos estén presentes
+        if (!item.id_asignacion || !item.id_feligres || !item.id_tipo_testigo_padrino) {
+          throw new Error(`Datos incompletos para testigo/padrino: ${JSON.stringify(item)}`);
+        }
+
         const query = `
           INSERT INTO testigos_padrinos (id_asignacion, id_feligres, id_tipo_testigo_padrino, numero_orden)
           VALUES ($1, $2, $3, $4)
@@ -48,13 +60,22 @@ class TestigosPadrinosModel {
         resultados.push(resultado.rows[0]);
       }
       
-      await cliente.query('COMMIT');
+      // Solo hacer commit si no estamos usando un cliente externo
+      if (!usarClienteExterno) {
+        await cliente.query('COMMIT');
+      }
       return resultados;
     } catch (error) {
-      await cliente.query('ROLLBACK');
+      // Solo hacer rollback si no estamos usando un cliente externo
+      if (!usarClienteExterno) {
+        await cliente.query('ROLLBACK');
+      }
       throw error;
     } finally {
-      cliente.release();
+      // Solo liberar la conexión si la creamos nosotros
+      if (!usarClienteExterno) {
+        cliente.release();
+      }
     }
   }
 

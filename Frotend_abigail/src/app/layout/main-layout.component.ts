@@ -50,7 +50,8 @@ export class MainLayoutComponent implements OnInit {
     '/caja': 'caja_parroquial',
     '/reportes': 'reportes',
     '/usuarios': 'usuarios',
-    '/mantenimiento': 'mantenimiento'
+    '/mantenimiento': 'mantenimiento',
+    '/constancias-externas': 'constancias_externas'
   };
 
   constructor(
@@ -104,6 +105,16 @@ export class MainLayoutComponent implements OnInit {
         route: '/sacramentos-asignacion',
         disponible: tienePermisosConfigurados 
           ? permisos['sacramentos_asignacion'] === true 
+          : esAdmin,
+        expanded: false
+      },
+      {
+        title: 'Constancias Externas',
+        description: 'Registrar constancias de sacramentos realizados en otras iglesias',
+        icon: 'description',
+        route: '/constancias-externas',
+        disponible: tienePermisosConfigurados 
+          ? (permisos['constancias_externas'] === true || esAdmin)
           : esAdmin,
         expanded: false
       },

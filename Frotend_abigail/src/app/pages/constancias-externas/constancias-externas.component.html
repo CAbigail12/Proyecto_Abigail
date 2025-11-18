@@ -1,0 +1,312 @@
+<!-- Fondo con gradiente -->
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
+  <!-- Header -->
+  <div class="relative mb-8">
+    <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl opacity-10"></div>
+    <div class="relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/50 p-8">
+      <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-6">
+        <div class="flex items-center gap-4">
+          <div class="relative">
+            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center shadow-lg">
+              <mat-icon class="text-white text-2xl">description</mat-icon>
+            </div>
+            <div class="absolute -top-1 -right-1 w-6 h-6 bg-blue-400 rounded-full flex items-center justify-center">
+              <span class="text-xs font-bold text-gray-800">{{totalConstancias}}</span>
+            </div>
+          </div>
+          <div>
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              Constancias Externas
+            </h1>
+            <p class="text-gray-600 mt-2 text-lg">Registrar constancias de sacramentos realizados en otras iglesias</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <button (click)="abrirModalCrear()"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg">
+            <mat-icon class="text-white">add</mat-icon>
+            Nueva Constancia
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel de búsqueda -->
+  <div class="relative mb-8">
+    <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-6">
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center">
+            <mat-icon class="text-white text-lg">search</mat-icon>
+          </div>
+          <h3 class="text-xl font-bold text-gray-900">Búsqueda</h3>
+        </div>
+        <div class="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+          {{dataSource.data.length}} de {{totalConstancias}} constancias
+        </div>
+      </div>
+      <div class="flex gap-4">
+        <div class="flex-1">
+          <input [(ngModel)]="busquedaTexto" 
+                 (keyup.enter)="buscar()"
+                 placeholder="Buscar por nombre de feligrés, tipo de sacramento, libro o folio..."
+                 class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:bg-white transition-all duration-200 text-gray-900 placeholder-gray-500">
+        </div>
+        <button (click)="buscar()"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg">
+          <mat-icon>search</mat-icon>
+          Buscar
+        </button>
+        <button (click)="limpiarBusqueda()"
+          class="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-all duration-200 border-2 border-gray-200 hover:border-gray-300">
+          <mat-icon>clear</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de constancias -->
+  <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-6">
+    <div class="overflow-x-auto">
+      <table mat-table [dataSource]="dataSource" matSort class="w-full">
+        <!-- Columna: Feligrés -->
+        <ng-container matColumnDef="nombre_feligres_completo">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Feligrés</th>
+          <td mat-cell *matCellDef="let element">{{element.nombre_feligres_completo || 'N/A'}}</td>
+        </ng-container>
+
+        <!-- Columna: Tipo de Sacramento -->
+        <ng-container matColumnDef="nombre_sacramento">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Tipo de Sacramento</th>
+          <td mat-cell *matCellDef="let element">
+            <span class="px-3 py-1 rounded-full text-sm font-semibold"
+                  [class.bg-blue-100]="element.id_sacramento === 1"
+                  [class.text-blue-800]="element.id_sacramento === 1"
+                  [class.bg-indigo-100]="element.id_sacramento === 3"
+                  [class.text-indigo-800]="element.id_sacramento === 3">
+              {{element.nombre_sacramento || 'N/A'}}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Columna: Libro -->
+        <ng-container matColumnDef="libro">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Libro</th>
+          <td mat-cell *matCellDef="let element">{{element.libro || 'N/A'}}</td>
+        </ng-container>
+
+        <!-- Columna: Folio -->
+        <ng-container matColumnDef="folio">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Folio</th>
+          <td mat-cell *matCellDef="let element">{{element.folio || 'N/A'}}</td>
+        </ng-container>
+
+        <!-- Columna: Descripción -->
+        <ng-container matColumnDef="descripcion">
+          <th mat-header-cell *matHeaderCellDef>Descripción</th>
+          <td mat-cell *matCellDef="let element">
+            <span class="text-gray-600">{{element.descripcion || '-'}}</span>
+          </td>
+        </ng-container>
+
+        <!-- Columna: Fecha de Creación -->
+        <ng-container matColumnDef="created_at">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha de Registro</th>
+          <td mat-cell *matCellDef="let element">{{formatearFecha(element.created_at)}}</td>
+        </ng-container>
+
+        <!-- Columna: Acciones -->
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef>Acciones</th>
+          <td mat-cell *matCellDef="let element">
+            <div class="flex items-center gap-2">
+              <button (click)="abrirModalEditar(element)" 
+                      class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                      matTooltip="Editar constancia">
+                <mat-icon class="text-lg">edit</mat-icon>
+              </button>
+              <button (click)="abrirModalEliminar(element)" 
+                      class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                      matTooltip="Eliminar constancia">
+                <mat-icon class="text-lg">delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+            class="hover:bg-gray-50"></tr>
+      </table>
+    </div>
+
+    <!-- Paginador -->
+    <mat-paginator [length]="totalConstancias"
+                   [pageSize]="pageSize"
+                   [pageSizeOptions]="[5, 10, 25, 100]"
+                   (page)="onPageChange($event)"
+                   showFirstLastButtons>
+    </mat-paginator>
+
+    <!-- Mensaje cuando no hay datos -->
+    <div *ngIf="dataSource.data.length === 0 && !loading" 
+         class="text-center py-8 text-gray-500">
+      <mat-icon class="text-4xl mb-2">description</mat-icon>
+      <p>No hay constancias externas registradas</p>
+    </div>
+
+    <!-- Loading spinner -->
+    <div *ngIf="loading" class="text-center py-8">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p class="mt-2 text-gray-500">Cargando constancias...</p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Crear/Editar Constancia -->
+<div *ngIf="mostrarDialogo" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-t-2xl">
+      <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-bold">
+          {{editMode ? 'Editar Constancia Externa' : 'Nueva Constancia Externa'}}
+        </h2>
+        <button (click)="cerrarModal()" class="text-white hover:text-gray-200 transition-colors">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <form [formGroup]="constanciaForm" class="p-6 space-y-6">
+      <!-- Feligrés -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Feligrés *</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <input type="text" 
+                 matInput 
+                 [formControl]="controladorFeligres"
+                 [matAutocomplete]="autoFeligres"
+                 placeholder="Buscar feligrés..."
+                 required>
+          <mat-autocomplete #autoFeligres="matAutocomplete" 
+                           [displayWith]="mostrarNombreFeligres"
+                           (optionSelected)="seleccionarFeligres($event.option.value)">
+            <mat-option *ngFor="let feligres of feligresesFiltrados | async" [value]="feligres">
+              {{mostrarNombreFeligres(feligres)}}
+            </mat-option>
+          </mat-autocomplete>
+          <mat-icon matPrefix>person</mat-icon>
+          <mat-error *ngIf="constanciaForm.get('id_feligres')?.hasError('required')">
+            El feligrés es requerido
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Tipo de Sacramento -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Sacramento *</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-select formControlName="id_sacramento" required>
+            <mat-option *ngFor="let sacramento of sacramentosPermitidos" [value]="sacramento.id">
+              {{sacramento.nombre}}
+            </mat-option>
+          </mat-select>
+          <mat-icon matPrefix>category</mat-icon>
+          <mat-error *ngIf="constanciaForm.get('id_sacramento')?.hasError('required')">
+            El tipo de sacramento es requerido
+          </mat-error>
+          <mat-error *ngIf="constanciaForm.get('id_sacramento')?.hasError('pattern')">
+            Solo se permiten Bautismo o Confirmación
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Libro -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Libro *</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <input matInput formControlName="libro" placeholder="Número de libro" required>
+          <mat-icon matPrefix>book</mat-icon>
+          <mat-error *ngIf="constanciaForm.get('libro')?.hasError('required')">
+            El libro es requerido
+          </mat-error>
+          <mat-error *ngIf="constanciaForm.get('libro')?.hasError('maxlength')">
+            El libro no puede exceder 50 caracteres
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Folio -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Folio *</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <input matInput formControlName="folio" placeholder="Número de folio" required>
+          <mat-icon matPrefix>description</mat-icon>
+          <mat-error *ngIf="constanciaForm.get('folio')?.hasError('required')">
+            El folio es requerido
+          </mat-error>
+          <mat-error *ngIf="constanciaForm.get('folio')?.hasError('maxlength')">
+            El folio no puede exceder 50 caracteres
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Descripción -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Descripción (Opcional)</label>
+        <mat-form-field appearance="outline" class="w-full">
+          <textarea matInput 
+                    formControlName="descripcion" 
+                    rows="3"
+                    placeholder="Descripción adicional de la constancia..."></textarea>
+          <mat-icon matPrefix>notes</mat-icon>
+          <mat-error *ngIf="constanciaForm.get('descripcion')?.hasError('maxlength')">
+            La descripción no puede exceder 255 caracteres
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Botones -->
+      <div class="flex justify-end gap-4 pt-4 border-t border-gray-200">
+        <button type="button" 
+                (click)="cerrarModal()"
+                class="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-semibold transition-colors">
+          Cancelar
+        </button>
+        <button type="button" 
+                (click)="guardarConstancia()"
+                [disabled]="constanciaForm.invalid || loading"
+                class="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-semibold transition-colors">
+          {{editMode ? 'Actualizar' : 'Guardar'}}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal de Confirmación de Eliminación -->
+<div *ngIf="mostrarModalEliminar" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+    <div class="text-center">
+      <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <mat-icon class="text-red-600 text-4xl">warning</mat-icon>
+      </div>
+      <h3 class="text-xl font-bold text-gray-900 mb-2">¿Eliminar Constancia Externa?</h3>
+      <p class="text-gray-600 mb-6">
+        ¿Está seguro de que desea eliminar esta constancia externa? Esta acción no se puede deshacer.
+      </p>
+      <div class="flex gap-4 justify-center">
+        <button (click)="cerrarModalEliminar()"
+                class="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-semibold transition-colors">
+          Cancelar
+        </button>
+        <button (click)="confirmarEliminar()"
+                class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors">
+          Eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+

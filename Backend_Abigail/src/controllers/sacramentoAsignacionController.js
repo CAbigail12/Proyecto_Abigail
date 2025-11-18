@@ -145,6 +145,48 @@ class SacramentoAsignacionController {
         });
       }
 
+      // Validación de sacramentos según orden sacramental
+      const ValidacionSacramentosService = require('../services/validacionSacramentosService');
+
+      // Si es Confirmación (id_sacramento = 3), validar que tenga bautismo
+      if (datos.id_sacramento == 3) {
+        const idFeligres = datos.participantes[0].id_feligres;
+        const validacion = await ValidacionSacramentosService.validarConfirmacion(idFeligres);
+        
+        if (!validacion.puedeRegistrar) {
+          return res.status(400).json({
+            ok: false,
+            mensaje: validacion.mensaje
+          });
+        }
+      }
+
+      // Si es Matrimonio (id_sacramento = 4), validar que ambos tengan bautismo y confirmación
+      if (datos.id_sacramento == 4) {
+        if (datos.participantes.length !== 2) {
+          return res.status(400).json({
+            ok: false,
+            mensaje: 'El matrimonio requiere exactamente 2 feligreses (novio y novia)'
+          });
+        }
+
+        const idFeligresNovio = datos.participantes[0].id_feligres;
+        const idFeligresNovia = datos.participantes[1].id_feligres;
+        const validacion = await ValidacionSacramentosService.validarMatrimonio(
+          idFeligresNovio,
+          idFeligresNovia
+        );
+
+        if (!validacion.puedeRegistrar) {
+          return res.status(400).json({
+            ok: false,
+            mensaje: validacion.mensaje
+          });
+        }
+      }
+
+      // Si es Bautismo (id_sacramento = 1), no requiere validación previa
+
       // Limpiar y convertir monto_pagado
       console.log('🔧 monto_pagado antes de limpiar:', datos.monto_pagado, '| Tipo:', typeof datos.monto_pagado);
       

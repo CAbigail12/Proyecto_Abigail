@@ -16,6 +16,7 @@ const actividadReligiosaRoutes = require('./routes/actividadReligiosaRoutes');
 const rolPermisosRoutes = require('./routes/rolPermisosRoutes');
 const rolRoutes = require('./routes/rolRoutes');
 const constanciaRoutes = require('./routes/constanciaRoutes');
+const constanciaExternaRoutes = require('./routes/constanciaExternaRoutes');
 
 const app = express();
 
@@ -76,6 +77,7 @@ app.use('/api/actividades-religiosas', actividadReligiosaRoutes);
 app.use('/api/rol-permisos', rolPermisosRoutes);
 app.use('/api/roles', rolRoutes);
 app.use('/api/constancias', constanciaRoutes);
+app.use('/api/constancias-externas', constanciaExternaRoutes);
 
 // Middleware para rutas no encontradas
 app.use('*', (req, res) => {

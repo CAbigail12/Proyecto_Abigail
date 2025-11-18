@@ -41,15 +41,34 @@ export class DashboardComponent implements OnInit {
     this.loading = true;
     this.sacramentoService.obtenerEstadisticas().subscribe({
       next: (response) => {
+        console.log('📊 Respuesta completa del servidor:', response);
         if (response.ok && response.datos) {
-          this.totalBautizos = response.datos.total_bautizos || 0;
-          this.totalConfirmaciones = response.datos.total_confirmaciones || 0;
-          this.totalMatrimonios = response.datos.total_matrimonios || 0;
+          console.log('📊 Datos recibidos:', response.datos);
+          // Asegurar que los valores sean números
+          this.totalBautizos = Number(response.datos.total_bautizos) || 0;
+          this.totalConfirmaciones = Number(response.datos.total_confirmaciones) || 0;
+          this.totalMatrimonios = Number(response.datos.total_matrimonios) || 0;
+          
+          console.log('📊 Contadores actualizados:', {
+            bautizos: this.totalBautizos,
+            confirmaciones: this.totalConfirmaciones,
+            matrimonios: this.totalMatrimonios
+          });
+        } else {
+          console.warn('⚠️ Respuesta sin datos válidos:', response);
+          this.totalBautizos = 0;
+          this.totalConfirmaciones = 0;
+          this.totalMatrimonios = 0;
         }
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error al cargar estadísticas:', error);
+        console.error('❌ Error al cargar estadísticas:', error);
+        console.error('❌ Detalles del error:', {
+          message: error.message,
+          status: error.status,
+          error: error.error
+        });
         this.snackBar.open('Error al cargar las estadísticas de sacramentos', 'Cerrar', {
           duration: 5000,
           panelClass: ['error-snackbar']
